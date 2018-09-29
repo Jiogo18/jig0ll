@@ -10,6 +10,7 @@ bot.on("ready", function ()
 	bot.user.setActivity("!help || @Jig0ll help", {type: 'WATCHING'})
 	.then(presence => console.log(`Activity of ` +bot.user.username+ ` set to "${presence.game ? presence.game.name : 'none'}"`))
   .catch(console.error);
+	<#386086319035514890>.send("Connexion")
 })
 
 
