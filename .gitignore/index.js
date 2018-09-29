@@ -17,38 +17,48 @@ bot.on("ready", function ()
 bot.on('message', function (message)
 {
 	if(message.channel != channelBot)//si c pas ds le channel bot
-		return
+		return;
 	if(message.author === bot.user)//si c un msg du bot lui meme, pas intérésent
-		return
+		return;
 	
 	if(message.content.startsWith("!") || message.content.startsWith(bot.user))
 	{
-		let msg=""//pas besoin après, on pourra le suppr
+		let msg="";//pas besoin après, on pourra le suppr
 		if(message.content.startsWith("!"))
-			msg = message.content.substring(1).split(" ")
+			msg = message.content.substring(1).split(" ");
 		if(message.content.startsWith(bot.user))//a une taille de 18+<@>
-			msg = message.content.substring(22).split(" ")//un espace inutile
+			msg = message.content.substring(22).split(" ");//un espace inutile
+		//msg = commande + argument(s)
 
-
-		console.log('commande par ' + message.author.username + ' : ' + commande + " . " + argument)
+		//log de commande et arguments
+		{
+			let log = 'commande par ' + message.author.username + ' : ';
+			for (let i=0; i < msg.length; i++)
+			{
+				log += msg[i];
+				if(i+1<msg.length)//si tu as un truc après
+					log += "_";
+			}
+			console.log(log);
+		}
 
 		let delMsg=true
 		switch (msg[0].toLowerCase())
 		{
 			case "help":
-				CmdHelp.action(channelBot, message, msg[1])
-				break
+				CmdHelp.action(channelBot, message, msg);
+				break;
 
 			case "ping":
 			case "id":
-				CmdRandom.action(message, msg)
-				break
+				CmdRandom.action(message, msg);
+				break;
 
 			default:
-				delMsg=false
+				delMsg=false;
 		}
 		if(delMsg)
-			message.delete()//si c une commande utile
+			message.delete();//si c une commande utile
 	}
 
 })
