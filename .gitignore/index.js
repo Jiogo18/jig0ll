@@ -56,4 +56,4 @@ bot.on('message', function (message)
 
 
 
-bot.login(process.even.TOKEN)
+bot.login(process.env.TOKEN)
