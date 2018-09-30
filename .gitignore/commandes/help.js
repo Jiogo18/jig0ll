@@ -21,14 +21,14 @@ module.exports = class CmdHelp
 			switch(args[1])
 			{
 				case "help":
-					message.channel.send("Donne la liste des commandes disponnibles");
+					message.channel.send("Donne la liste des commandes disponnibles\n!help [commande] pour détailler la commande");
 					break;
 
 				case "ping":
 					message.channel.send("Ne fait que vous retourner \"pong\", utile pour tester le ping entre 2 bots");
 					break;
 
-				case "ping":
+				case "id":
 					message.channel.send("Retourne votre ID Discord (Snowflake => https://discord.js.org/#/docs/main/stable/typedef/Snowflake)");
 					break;
 			}
