@@ -1,6 +1,9 @@
 module.exports = class CmdHelp
 {
-	static action (message, msg, bot, timeNow)
+	static isAction(msg) {
+		return msg.length>0 && (msg[0].toLowerCase()=="ping" || msg[0].toLowerCase()=="pingbot" || msg[0].toLowerCase()=="timeserv");
+	}
+	static action(message, msg, bot, timeNow)
 	{
 		//message.channel.send(msg);
 		switch(msg[0].toLowerCase())
@@ -8,9 +11,9 @@ module.exports = class CmdHelp
 			case "ping":
 				if(message.author.id == bot.user.id)
 				{
+					message.delete();
 					if(msg.length != 4)
 					{
-						message.delete();
 						return {embed:{
 							color:13369344,
 							title:"Ping",
@@ -22,15 +25,18 @@ module.exports = class CmdHelp
 					var msgReceived=msg[3].replace("receivedAt:","");
 					var currentTime=timeNow;
 					var pingBot=((currentTime-msgReceived)/2)
-					message.delete();
+
 					console.log("ping du bot : " + pingBot);
-					return "pong, "+msg[1].replace("author:","")+" ! (réponse en " + (msgReceived-msgCreated) + "msec, ping supposé : " + (msgReceived-msgCreated - pingBot) + "msec, ping du bot : " + pingBot + "msec)";
+					var ping = msgReceived-msgCreated;
+					return "pong, <@!"+msg[1].replace("author:","")+"> ! Réponse en "+ping+"ms"+
+						", ping supposé : " + (ping - pingBot) + "ms"+
+						(ping>1000?" (décalage de l'horloge système important)":"")+
+						", ping du bot : "+pingBot+"ms";
 				}
 				else
 				{
-					message.delete();
-					//message.channel.send("!ping author:"+message.author+" createdAt:"+message.createdAt.getTime()+" receivedAt:"+Date.now());
-					return "!ping author:"+message.author+" createdAt:"+message.createdAt.getTime()+" receivedAt:"+Date.now();
+					message.channel.send("<@!494587865775341578> ping author:"+message.author+" createdAt:"+message.createdAt.getTime()+" receivedAt:"+Date.now());
+					//id du bot
 				}
 				break;
 
@@ -40,6 +46,7 @@ module.exports = class CmdHelp
 			case "pingbot":
 				if(message.author.id == bot.user.id)
 				{
+					message.delete();
 					var max = parseInt(msg[2]);
 					var repete = parseInt(msg[1]);
 					repete++;
@@ -49,14 +56,13 @@ module.exports = class CmdHelp
 					pingTotal += (pingMsg/2);//aller retour
 					bot.pings.push(pingMsg/2);
 
-					message.delete();
-					if(repete < max)
+					if(repete < max)//quand c'est pas fini
 					{
-						message.channel.send("!pingbot " + repete + " " + max + " " + pingTotal + " " + Date.now());//Date.now() important
+						message.channel.send("<@!494587865775341578> pingbot " + repete + " " + max + " " + pingTotal + " " + Date.now());//Date.now() important
 					}
 					else
 					{
-						console.log("new pings du bot : " + Math.round(bot.ping) + " ["+bot.pings+"]");
+						console.log("new pings du bot : " + Math.round(pingTotal/max) + " ["+bot.pings+"]");
 						return {embed:{
 							color:3447003,
 							title:"Pingbot",
@@ -65,7 +71,7 @@ module.exports = class CmdHelp
 						}};
 					}
 				}
-				else
+				else//from user
 				{
 					var max=1;
 					if(msg.length >= 2)
@@ -77,8 +83,7 @@ module.exports = class CmdHelp
 							max=1;
 					}
 					bot.pings = new Array(0);//clear la liste des pings
-					message.delete();
-					message.channel.send("!pingbot 0 " + max + " 0 "+Date.now());//Date.now() important
+					message.channel.send("<@!494587865775341578> pingbot 0 " + max + " 0 "+Date.now());//Date.now() important
 				}
 				break;
 
@@ -92,8 +97,6 @@ module.exports = class CmdHelp
 					//permet de faire le ping entre les 2 le temps que le msg soit envoyé aux servs discord
 					var diff2 = parseInt(msg[1]) - message.createdAt;
 					//diff entre date.now et createdAt du message
-					console.log("diff1="+diff1);
-					console.log("diff2="+diff2);
 					return {embed:{
 						color:3447003,
 						title:"Timeserv",
@@ -102,11 +105,24 @@ module.exports = class CmdHelp
 					}};
 				}
 				else
-				{
-					message.delete();
-					message.channel.send("!timeServ " + Date.now());//Date.now() important
-				}
+					message.channel.send("<@!494587865775341578> timeServ " + Date.now());//Date.now() important
 		}
 		return;
+	}
+
+	static getHelp(complet) {
+		switch(complet) {
+			case "ping":
+				return "Vous retourner \"pong\" et le temps de réponse du bot";
+			case "pingbot":
+				return "Retourne le ping moyen du Bot"+
+					"\n\u200b \u200b pingBot (max) pour effectuer un certain nombre de tests";
+			case "timeserv":
+				return "timeServ: retourne la différence d'heure entre le serveur et le bot (désynchronisation possibles)"
+			default:
+				return "ping : retourne pong"+
+					"\npingBot (max): retourne le ping moyen du bots"+
+					"\ntimeServ: retourne la différence d'heure entre le serveur et le bot";
+		}
 	}
 }

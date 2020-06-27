@@ -2,7 +2,6 @@ const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const readline = require('readline')
 var token=process.env.TOKEN
-token='NDk0NTg3ODY1Nzc1MzQxNTc4.Xoy4ug.mKmKuAzDDXT5_tuuQ3exLrG6XPY'
 if(!token) {
 	console.log("Token du bot ?")
 	token=readline()

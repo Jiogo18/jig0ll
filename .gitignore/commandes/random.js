@@ -1,21 +1,20 @@
-
 module.exports = class CmdRandom
 {
-	static action (message, msg)
+	static isAction(msg) {
+		return msg.length>0 && (msg[0]=="someone" || msg[0]=="anonyme");
+	}
+	static action(message,msg)
 	{
-		const Modo = require("../moderation.js")
 		switch (msg[0].toLowerCase())
 		{
 			case "someone":
 				var randomNb=getRandomInt(message.channel.members.array().length);
 				var randomUser=message.channel.members.array()[randomNb];
-				message.delete();
-				return "@someone "+getRandomMeme()+" "+randomUser;
+				return "@someone "+getRandomMeme()+" <@!"+randomUser+">";
 
 			case "anonyme":
 				message.delete();
 				var message2=message.content.substring(msg[0].length+1);//retire le premier arg
-				message2 = Modo.corrige(message2);
 				return {embed:{
 					color:3447003,
 					description: message2,
@@ -26,13 +25,20 @@ module.exports = class CmdRandom
 				return;
 		}
 	}
-
+	static getHelp(complet) {
+		switch(complet) {
+			default:
+				return "someone : appel un membre aléatoire du channel"+
+					"\nanonyme <message> : Faire une annonce anonymement";
+		}
+		
+	}
 }
+
 
 function getRandomInt(max) {//min : 0, max : max-1
   return Math.floor(Math.random() * Math.floor(max));
 }
-
 
 function getRandomMeme() {
 	const meme = [

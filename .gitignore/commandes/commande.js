@@ -1,94 +1,144 @@
-module.exports = class CmdHelp
+////\u200b pour avoir plusieurs espaces
+module.exports = class Cmd
 {
-	static action (bot, message, msg)
+	static isAction(msg) {
+		return require("./help.js").isAction(msg) ||
+			require("./ping.js").isAction(msg) ||
+			require("./info.js").isAction(msg) ||
+			require("./test.js").isAction(msg) ||
+			require("./random.js").isAction(msg) ||
+			require("./meteo.js").isAction(msg) ||
+			require("./plenitude.js").isAction(msg);
+	}
+	static action(bot, message, msg)
 	{
 		const CmdHelp = require("./help.js");
 		const CmdPing = require("./ping.js");
 		const CmdInfo = require("./info.js");
 		const CmdTest = require("./test.js");
 		const CmdRandom = require("./random.js");
-		//var embed = new Discord.RichEmbed();
-		var reponse=[];
-		switch(msg[0].toLowerCase())
-		{
-			case "help":
-				reponse.push(CmdHelp.action(message, msg));
+		const CmdMeteo = require("./meteo.js");
+		const CmdPlenitude = require("./plenitude.js");
+
+		if(CmdHelp.isAction(msg))
+			sendMsg(bot,message,CmdHelp.action(message,msg));
+		else if(CmdRandom.isAction(msg))
+			sendMsg(bot,message,CmdRandom.action(message,msg));
+		else if(CmdPing.isAction(msg))
+			sendMsg(bot,message,CmdPing.action(message,msg,bot,Date.now()));
+		else if(CmdInfo.isAction(msg))
+			sendMsg(bot,message,CmdInfo.action(message,msg));
+		else if(CmdTest.isAction(msg))
+			sendMsg(bot,message,CmdTest.action(message,msg));
+		else if(CmdRandom.isAction(msg))
+			sendMsg(bot,message,CmdRandom.action(message,msg));
+		else if(CmdMeteo.isAction(msg))
+			CmdMeteo.action(message,msg);
+		else if(CmdPlenitude.isAction(msg))
+			CmdPlenitude.action(message,msg);//plenitude
+	}
+
+	static isCommand(bot, message) {//le message est-il une commande valide ?
+		const charsBegin = ["!", "<@!"+bot.user.id+"> "];
+		var found=false;
+		for(let i=0; i<charsBegin.length; i++) {
+			if(message.content.startsWith(charsBegin[i])) {
+				message.content = message.content.substring(charsBegin[i].length);
+				found=true;
 				break;
-
-			case "ping":
-			case "pingbot":
-			case "timeserv":
-				reponse.push(CmdPing.action(message, msg, bot, Date.now()));
-				break;
-
-			case "info":
-				reponse.push(CmdInfo.action(message, msg));
-				break;
-
-			case "test":
-				reponse.push(CmdTest.action(message, msg));
-				break;
-
-			default:
-				reponse.push(CmdRandom.action(message, msg));
-				break;
-		}
-		if(reponse.length == 0)
-		{
-			console.log("erreur avec la commande : " + message.id);
-		}
-		else
-		{
-			for(var i=0; i<reponse.length; i++)//parcours la réponse
-			{
-				if(!reponse[i])//undefined
-					continue;
-				if(reponse[i].embed)//si embed existe
-				{
-					var author = reponse[i].embed.author;
-					reponse[i].embed.author = {};
-					if(typeof(author) == "number" || typeof(author) == "boolean")//commande spéciale
-					{
-						switch(author)
-						{
-							case true://l'auteur
-							case 0:
-								author = message.author;
-								break;
-							case 1://le bot
-								author = bot.user;
-								break;
-						}
-					}
-					switch(typeof(author))
-					{
-						case "string":
-							reponse[i].embed.author.name = author;
-							break;
-						case "object"://author doit etre un User
-							if(author.user)//ou si author est un Client (ou autre chose contenant .user)
-								author = author.user//donne un ClientUser, qui est la meme chose qu'un User
-							if(author.username)//si on a la fonction username
-								reponse[i].embed.author.name = author.username
-							if(author.avatarURL)
-								reponse[i].embed.author.icon_url = author.avatarURL
-							break;
-
-						default:
-							console.log("type for author unknow : "+typeof(author) + " (commande.js)");
-							break;
-
-					}
-					if(reponse[i].embed.author == {})
-						reponse[i].embed.author = undefined;
-				}
-				//https://www.colorhexa.com/3498db => 3447003 (bleu)
-				//rouge : #cc0000 = 13369344
-
-				message.channel.send(reponse[i]);
 			}
 		}
+		if(!found)
+			return null;//not accepted
+
+		var msg=splitCommand(message.content);
+
+		if(msg.length>0 && msg[0].toLowerCase()=="cut") {//peut importe le channel
+			if(message.author.id == 175985476165959681) {//mon id
+				console.log("Stoppé par " + message.author);
+				message.channel.send("Stoppé par " + message.author)
+				bot.destroy();
+			}
+			return null;//nothing else to do
+		}
+		if(!Cmd.isAction(msg))
+			return null;//pas reconnu
+
+		if(!message.channel.topic || !message.channel.topic.includes("@Jig0ll")) {
+			message.channel.send("Disponible uniquement dans les channels avec '@Jig0ll' dans le topic");
+			return null;
+		}//c'est dans le channel bot
+		return msg;
 	}
 }
-//v1 : [(int)color, (bool)author, (str)title, (str)reponse]
-//v2 : [(str)reponse, (bool)embed, (str)title, (int)color, (bool/str)author]
+
+
+
+function sendMsg(bot,messageOriginal,messageRetour) {
+	//v1 : [(int)color, (bool)author, (str)title, (str)reponse]
+	//v2 : [(str)reponse, (bool)embed, (str)title, (int)color, (bool/str)author]
+	if(!messageRetour)//undefined
+		return
+	if(messageRetour.embed)//si embed existe
+	{
+		var author = messageRetour.embed.author;
+		messageRetour.embed.author = {};
+		if(typeof(author) == "number" || typeof(author) == "boolean")//commande spéciale
+		{
+			switch(author)
+			{
+				case true://l'auteur
+				case 0:
+					author = messageOriginal.author;
+					break;
+				case 1://le bot
+					author = bot.user;
+					break;
+			}
+		}
+		switch(typeof(author))
+		{
+			case "string":
+				messageRetour.embed.author.name = author;
+				break;
+			case "object"://author doit etre un User
+				if(author.user)//ou si author est un Client (ou autre chose contenant .user)
+					author = author.user//donne un ClientUser, qui est la meme chose qu'un User
+				if(author.username)//si on a la fonction username
+					messageRetour.embed.author.name = author.username
+				if(author.avatarURL)
+					messageRetour.embed.author.icon_url = author.avatarURL
+				break;
+		}
+		if(messageRetour.embed.author == {})
+			messageRetour.embed.author = undefined;
+	}
+	//https://www.colorhexa.com/3498db => 3447003 (bleu)
+	//rouge : #cc0000 = 13369344
+	messageOriginal.channel.send(messageRetour);
+}
+
+function splitCommand(content) {
+		var msgSplit=[""];
+		var onStr = false;
+		for(let i=0; i<content.length; i++)
+		{
+			if(content[i] == "\\") {
+				i++;
+				continue;//on saute meme le prochain char
+			}
+			if(content[i] == "\"") {
+				onStr = !onStr;
+				if(onStr && msgSplit[msgSplit.length-1].length > 0)
+					msgSplit[msgSplit.length] = "";//on ajoute une case
+				continue;//on le save pas
+			}
+			if(!onStr && content[i] == " ")
+			{//prochain arg
+				msgSplit[msgSplit.length] = "";//on ajoute une case
+				continue;//si on laisse plusieurs cases vides c'est pas grave (erreur de cmd)
+			}
+			msgSplit[msgSplit.length-1] = msgSplit[msgSplit.length-1] + content[i];//on ajoute le char
+		}
+		return msgSplit;
+	}
