@@ -1,14 +1,7 @@
+require('dotenv').config();
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
-const readline = require('readline')
-var token=process.env.TOKEN
-if(!token) {
-	console.log("Token du bot ?")
-	token=readline()
-}
-const Cmd = require("./commandes/commande.js");//charge après le token
-
-
+const Cmd = require("./commandes/commande.js");
 
 
 bot.on("ready", () => {
@@ -34,4 +27,4 @@ bot.on("message", message => {
 	
 });
 
-bot.login(token);
+bot.login();
