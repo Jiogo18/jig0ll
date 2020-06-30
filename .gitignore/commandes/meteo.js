@@ -92,7 +92,7 @@ function getMonth(date,list) {
 }
 function getMeteoDate(data,listWeekdays,listMonths) {
 	var date = new Date(data.dt*1000);//s in msec
-	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric', timeZone:"GMT+0200" });
+	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric' });
 	const [{ value:hour }] = dateTimeFormat.formatToParts(date);
 	return getWeekday(date,listWeekdays)+" "+
 			date.getDate()+" "+
