@@ -94,7 +94,7 @@ function getMeteoDate(data,listWeekdays,listMonths) {
 	return getWeekday(date,listWeekdays)+" "+
 			date.getDate()+" "+
 			getMonth(date,listMonths)+
-			" à "+(new Intl.DateTimeFormat('fr',{hour:'numeric',minute:'numeric',hc:'h24'}).format(date));
+			" à "+(new Intl.DateTimeFormat('fr',{hour:'numeric',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short"}).format(date));
 }
 function getConditionFr(condition) {
 	switch(condition) {
@@ -128,13 +128,13 @@ function getData(data) {
 		let soleilCouche = new Date(data.sys.sunset*1000);
 		retour += "Présence du soleil : de ";
 		if(data.sys.sunrise && soleilLeve) {
-			retour += (new Intl.DateTimeFormat('fr',{hour:'numeric',minute:'numeric',hc:'h24',hour12:false}).format(soleilLeve));
+			retour += (new Intl.DateTimeFormat('fr',{hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short"}).format(soleilLeve));
 		}
 		else
 			retour += "?";
 		retour += " à "
 		if(data.sys.sunset && soleilCouche) {
-			retour += (new Intl.DateTimeFormat('fr',{hour:'numeric',minute:'numeric',hc:'h23'}).format(soleilCouche));
+			retour += (new Intl.DateTimeFormat('fr',{hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short"}).format(soleilCouche));
 		}
 		else
 			retour += "?";
