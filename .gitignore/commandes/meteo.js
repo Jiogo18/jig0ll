@@ -83,7 +83,7 @@ module.exports = class CmdMeteo
 
 function getWeekday(date,list) {
 	if(!list) list=["Lundi","Mardi","Mecredi","Jeudi","Vendredi","Samedi","Dimanche"];
-	if(date.getDay()==0) return list[7];
+	if(date.getDay()==0) return list[6];
 	return list[date.getDay()-1];//décale cars Sunday==0 et Monday==1
 }
 function getMonth(date,list) {
@@ -92,10 +92,12 @@ function getMonth(date,list) {
 }
 function getMeteoDate(data,listWeekdays,listMonths) {
 	var date = new Date(data.dt*1000);//s in msec
+	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric' });
+	const [{ value:hour }] = dateTimeFormat.formatToParts(date);
 	return getWeekday(date,listWeekdays)+" "+
 			date.getDate()+" "+
 			getMonth(date,listMonths)+
-			" à "+date.getHours()+"h";
+			` à ${hour}h`;
 }
 function getConditionFr(condition) {
 	switch(condition) {
@@ -110,7 +112,7 @@ function getConditionFr(condition) {
 function getData(data) {
 	var retour=""
 	if(data.main && data.main.temp)
-		retour += "Température : "+Math.round(data.main.temp/10)+"°C\n";
+		retour += "Température : "+Math.round(data.main.temp-273.15)+"°C\n";
 	if(data.weather && data.weather.length>0) {
 		var condition=""
 		for(var i=0; i<data.weather.length; i++) {
@@ -128,18 +130,17 @@ function getData(data) {
 		let soleilLeve = new Date(data.sys.sunrise*1000);
 		let soleilCouche = new Date(data.sys.sunset*1000);
 		retour += "Présence du soleil : de ";
+		const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric', minute:'2-digit' });
 		if(data.sys.sunrise && soleilLeve) {
-			let hours=soleilLeve.getHours();
-			let minutes=soleilLeve.getMinutes();
-			retour += (hours<10?"0":"")+hours+"h"+(minutes<10?"0":"")+minutes;
+			const [{ value:hour },,{ value:minute },,] = dateTimeFormat.formatToParts(soleilLeve);
+			retour += `${hour}h${minute}`;
 		}
 		else
 			retour += "?";
 		retour += " à "
 		if(data.sys.sunset && soleilCouche) {
-			let hours=soleilCouche.getHours();
-			let minutes=soleilCouche.getMinutes()
-			retour += (hours<10?"0":"")+hours+"h"+(minutes<10?"0":"")+minutes;
+			const [{ value:hour },,{ value:minute },,] = dateTimeFormat.formatToParts(soleilCouche);
+			retour += `${hour}h${minute}`;
 		}
 		else
 			retour += "?";
