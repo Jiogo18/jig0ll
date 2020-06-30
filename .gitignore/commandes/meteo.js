@@ -91,7 +91,8 @@ function getMonth(date,list) {
 }
 function getMeteoDate(data,listWeekdays,listMonths) {
 	var date = new Date(data.dt*1000);//s in msec
-	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short" });
+	var options = { hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short",timeZone:"Europe/Paris" };
+	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', options);
 	const [{ value:hour },,{ value:minute },,{ value:timeZoneName }] = dateTimeFormat.formatToParts(date);
 	return getWeekday(date,listWeekdays)+" "+
 			date.getDate()+" "+
@@ -129,7 +130,8 @@ function getData(data) {
 		let soleilLeve = new Date(data.sys.sunrise*1000);
 		let soleilCouche = new Date(data.sys.sunset*1000);
 		retour += "Présence du soleil : de ";
-		const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short" });
+		var options = { hour:'2-digit',minute:'2-digit',hc:'h24',hour12:false,timeZoneName:"short",timeZone:"Europe/Paris" };
+		const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', options);
 		if(data.sys.sunrise && soleilLeve) {
 			const [{ value:hour },,{ value:minute },,{ value:timeZoneName }] = dateTimeFormat.formatToParts(soleilLeve);
 			retour += `${hour}h${minute} (${timeZoneName})`;
