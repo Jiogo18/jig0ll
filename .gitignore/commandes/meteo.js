@@ -1,5 +1,4 @@
 const https = require('https');
-var WeatherKey=process.env.WeatherKey;
 const meteoColor=3447003;
 const CmdPlenitude = require("./plenitude.js");
 
@@ -40,7 +39,7 @@ module.exports = class CmdMeteo
 		if(city) q+=city;
 		if(state) q+=(q.length>0?",":"")+state;
 		if(country) q+=(q.length>0?",":"")+country;
-		https.get("https://api.openweathermap.org/data/2.5/weather?q="+q+"&appid="+WeatherKey, (resp) => {
+		https.get("https://api.openweathermap.org/data/2.5/weather?q="+q+"&appid="+process.env.WEATHER_KEY, (resp) => {
 			let data = '';
 
 			// A chunk of data has been recieved.
@@ -151,14 +150,4 @@ function getData(data) {
 	if(retour.length>0)
 		retour = retour.substring(0, retour.length-1);//remove last '\n' (it's 1 char)
 	return retour;
-}
-
-
-
-
-
-
-if(!WeatherKey) {
-	console.log("Weather Key ?")
-	WeatherKey=require('readline')()
 }
