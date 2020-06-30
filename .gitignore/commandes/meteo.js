@@ -91,12 +91,10 @@ function getMonth(date,list) {
 }
 function getMeteoDate(data,listWeekdays,listMonths) {
 	var date = new Date(data.dt*1000);//s in msec
-	const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric' });
-	const [{ value:hour }] = dateTimeFormat.formatToParts(date);
 	return getWeekday(date,listWeekdays)+" "+
 			date.getDate()+" "+
 			getMonth(date,listMonths)+
-			` à ${hour}h`;
+			" à "+(new Intl.DateTimeFormat('fr-FR',{hour:'numeric',minute:'numeric'}).format(date));
 }
 function getConditionFr(condition) {
 	switch(condition) {
@@ -129,17 +127,14 @@ function getData(data) {
 		let soleilLeve = new Date(data.sys.sunrise*1000);
 		let soleilCouche = new Date(data.sys.sunset*1000);
 		retour += "Présence du soleil : de ";
-		const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', { hour:'numeric', minute:'2-digit' });
 		if(data.sys.sunrise && soleilLeve) {
-			const [{ value:hour },,{ value:minute },,] = dateTimeFormat.formatToParts(soleilLeve);
-			retour += `${hour}h${minute}`;
+			retour += (new Intl.DateTimeFormat('fr-FR',{hour:'numeric',minute:'numeric'}).format(soleilLeve));
 		}
 		else
 			retour += "?";
 		retour += " à "
 		if(data.sys.sunset && soleilCouche) {
-			const [{ value:hour },,{ value:minute },,] = dateTimeFormat.formatToParts(soleilCouche);
-			retour += `${hour}h${minute}`;
+			retour += (new Intl.DateTimeFormat('fr-FR',{hour:'numeric',minute:'numeric'}).format(soleilCouche));
 		}
 		else
 			retour += "?";
