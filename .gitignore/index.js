@@ -2,6 +2,7 @@ require('dotenv').config();
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
+var messageNotCmd = [];
 
 
 bot.on("ready", () => {
@@ -13,15 +14,27 @@ bot.on("ready", () => {
 
 
 bot.on("message", message => {
-	var msg = Cmd.isCommand(bot, message);
-	if(!msg)
+	try {
+		var msg = Cmd.isCommand(bot, message);
+		if(!msg) {
+			if(!messageNotCmd[message.guild.id])
+				messageNotCmd[message.guild.id] = 0;
+			if(++messageNotCmd[message.guild.id] >= 200) {//à 200
+				messageNotCmd[message.guild.id] = 0;
+				console.log("Plus de 200 messages dans "+message.guild.name+"@"+message.guild.id+"/"+message.channel.name+", laissez moi dormir");
+			}
+			return;
+		}
+		console.log("nouvelle commande dans " + message.id + " (par " + message.author.username + "@" + message.author.id + ") : " + message.content);
+	} catch(error) {
+		console.log("Error with a message:" + error);
 		return;
-	console.log("nouvelle commande dans " + message.id + " (par " + message.author.username + "@" + message.author.id + ") : " + message.content);
+	}
 
 	try {
 		Cmd.action(bot, message, msg);
 	} catch (error) {
-		message.channel.send("Sorry I've had an error:" + error)
+		message.channel.send("Sorry I've had an error:" + error);
 		console.error(error);
 	}
 	
