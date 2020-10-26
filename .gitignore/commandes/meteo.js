@@ -6,9 +6,7 @@ const CmdPlenitude = require("./plenitude.js");
 module.exports = class CmdMeteo
 {
 	static isAction(msg) {
-		if(msg.length>0 && (msg[0].toLowerCase()=="meteo" || msg[0].toLowerCase()=="weather"))
-			return true;
-		return false;
+		return msg.length>0 && /meteo|weather/i.test(msg[0])
 	}
 	static action(message,msg) {//main
 		if(msg.length == 1) {
@@ -105,7 +103,9 @@ function getConditionFr(condition) {
 		case "Rain": return "Pluie";
 		case "Clear": return "Dégagé";
 		case "Drizzle": return "Pluie fine";
-		case "Mist": return "Brouillard";
+		case "Fog": return "Brouillard";
+		case "Mist": return "Brume";
+		case "Haze": return "Brume sèche";
 		default: return condition;
 	}
 }
