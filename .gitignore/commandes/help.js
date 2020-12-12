@@ -1,7 +1,7 @@
 module.exports = class CmdHelp
 {
 	static isAction(msg) {
-		return msg.length>0 && msg[0].toLowerCase()=="help";
+		return msg.length>0 && /help/i.test(msg[0])
 	}
 	static action (msg) {
 		if(msg.length >= 2)
@@ -10,8 +10,8 @@ module.exports = class CmdHelp
 			if(retour != "")
 			{
 				return {embed:{
-					color:3447003,
-					title:"Help : "+msg[1],
+					color: 3447003,
+					title: "Help : "+msg[1],
 					description: retour,
 					author: true
 				}};

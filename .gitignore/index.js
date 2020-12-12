@@ -14,23 +14,35 @@ bot.on("ready", () => {
 
 
 bot.on("message", message => {
-	try {
+	//try {
 		var msg = Cmd.isCommand(bot, message);
-		if(!msg) {
-			if(!messageNotCmd[message.guild.id])
-				messageNotCmd[message.guild.id] = 0;
-			if(++messageNotCmd[message.guild.id] >= 200) {//à 200
-				messageNotCmd[message.guild.id] = 0;
-				console.log("Plus de 200 messages dans "+message.guild.name+"@"+message.guild.id+"/"+message.channel.name+", laissez moi dormir");
+		if(!msg) {//if it's not a command
+			var sourceId = 0, sourceName = "Unknow";
+			if(message.guild) {
+				sourceId = message.guild.id;
+				sourceName = message.guild.name+"@"+sourceId+"/"+message.channel.name;
+			}
+			else if(message.author) {
+				sourceId = message.author.id;
+				sourceName = "MP^";
+			}
+
+			if(!messageNotCmd[sourceId])
+				messageNotCmd[sourceId] = 0;
+			if(++messageNotCmd[sourceId] >= 200) {//à 200
+				messageNotCmd[sourceId] = 0;
+				console.warn(`Plus de 200 messages dans ${sourceName}, laissez moi dormir`);
 			}
 			return;
 		}
 		console.log("nouvelle commande dans " + message.id + " (par " + message.author.username + "@" + message.author.id + ") : " + message.content);
-	} catch(error) {
-		console.log("Error with a message:" + error);
-		return;
-	}
+	/*} catch(error) {
+		console.error("Error with a message: " + error);
 
+		return;
+	}*/
+
+	//2 try catch to answer with the error ONLY when it's a command
 	try {
 		Cmd.action(bot, message, msg);
 	} catch (error) {
@@ -41,3 +53,4 @@ bot.on("message", message => {
 });
 
 bot.login();
+

@@ -1,14 +1,33 @@
 ////\u200b pour avoir plusieurs espaces
+
+const CmdLibName = ["./help.js","./ping.js","./info.js","./test.js","./random.js","./meteo.js","./plenitude.js"];
+const CmdLib = [];
+for(const i in CmdLibName) {
+	const libPath = CmdLibName[i];
+	if(!libPath) continue;
+	try {
+		const lib= require(libPath);
+		if(!lib) {
+			console.error(`CmdLib not found : '${libPath}'`);
+			continue;
+		}
+		CmdLib.push(lib);
+	}
+	catch(error) {
+		console.error(`CmdLib not loaded : '${libPath}'`);
+		console.error(error);
+	}
+}
+
 module.exports = class Cmd
 {
 	static isAction(msg) {
-		return require("./help.js").isAction(msg) ||
-			require("./ping.js").isAction(msg) ||
-			require("./info.js").isAction(msg) ||
-			require("./test.js").isAction(msg) ||
-			require("./random.js").isAction(msg) ||
-			require("./meteo.js").isAction(msg) ||
-			require("./plenitude.js").isAction(msg);
+		for(const i in CmdLib) {
+			if(CmdLib[i].isAction(msg)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	static action(bot, message, msg)
 	{
@@ -25,7 +44,7 @@ module.exports = class Cmd
 		else if(CmdRandom.isAction(msg))
 			sendMsg(bot,message,CmdRandom.action(message,msg));
 		else if(CmdPing.isAction(msg))
-			sendMsg(bot,message,CmdPing.action(message,msg,bot,Date.now()));
+			sendMsg(bot,message,CmdPing.action(message,msg,bot));
 		else if(CmdInfo.isAction(msg))
 			sendMsg(bot,message,CmdInfo.action(message,msg));
 		else if(CmdTest.isAction(msg))
@@ -37,32 +56,31 @@ module.exports = class Cmd
 		else if(CmdPlenitude.isAction(msg))
 			CmdPlenitude.action(message,msg);//plenitude
 	}
+	//todo : call CmdLib
 
-	static isCommand(bot, message) {//le message est-il une commande valide ?
-		const charsBegin = ["!", "<@!"+bot.user.id+"> "];
+	static isCommand(bot, message) {//le message est une commande valide ?
+		const prefixs = ["!", "<@!"+bot.user.id+"> "];
 		var found=false;
-		for(let i=0; i<charsBegin.length; i++) {
-			if(message.content.startsWith(charsBegin[i])) {
-				message.content = message.content.substring(charsBegin[i].length);
+		for(let i=0; i<prefixs.length; i++) {
+			if(message.content.startsWith(prefixs[i])) {
+				message.content = message.content.substring(prefixs[i].length);
 				found=true;
 				break;
 			}
 		}
-		if(!found)
-			return null;//not accepted
+		if(!found) return null;//not accepted
 
 		var msg=splitCommand(message.content);
 
 		if(msg.length>0 && msg[0].toLowerCase()=="cut") {//peut importe le channel
-			if(message.author.id == 175985476165959681) {//mon id
+			if(message.author.id == process.env.OWNER_ID) {//moi
 				console.log("Stoppé par " + message.author);
 				message.channel.send("Stoppé par " + message.author)
 				bot.destroy();
 			}
 			return null;//nothing else to do
 		}
-		if(!Cmd.isAction(msg))
-			return null;//pas reconnu
+		if(!Cmd.isAction(msg)) return null;//pas reconnu
 
 		if(!message.channel.topic || !message.channel.topic.includes("@Jig0ll")) {
 			message.channel.send("Disponible uniquement dans les channels avec '@Jig0ll' dans le topic");

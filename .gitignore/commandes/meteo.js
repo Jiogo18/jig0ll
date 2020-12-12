@@ -1,21 +1,21 @@
 const https = require('https');
-const meteoColor=3447003;
+const meteoColor = 3447003;
 const CmdPlenitude = require("./plenitude.js");
 
 
 module.exports = class CmdMeteo
 {
 	static isAction(msg) {
-		return msg.length>0 && /meteo|weather/i.test(msg[0])
+		return msg.length > 0 && /meteo|weather/i.test(msg[0]);
 	}
 	static action(message,msg) {//main
-		if(msg.length == 1) {
+		if(msg.length < 2 || msg[1] == "help") {
 			message.channel.send({embed:{
 				color: meteoColor,
 				title: "Météo",
 				description: this.getHelp(true)
 			}});
-			return;askWeather
+			return;//askWeather
 		}
 		if(msg[1].toLowerCase()=="plenitude" || msg[1].toLowerCase()=="plénitude")
 			CmdPlenitude.askWeather(message);
@@ -33,10 +33,10 @@ module.exports = class CmdMeteo
 
 	//https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
 	static sendWeatherRequest(message,func,city,state,country) {
-		var q="";
-		if(city) q+=city;
-		if(state) q+=(q.length>0?",":"")+state;
-		if(country) q+=(q.length>0?",":"")+country;
+		var q = "";
+		if(city) q += city;
+		if(state) q += (q.length>0?",":"")+state;
+		if(country) q += (q.length>0?",":"")+country;
 		https.get("https://api.openweathermap.org/data/2.5/weather?q="+q+"&appid="+process.env.WEATHER_KEY, (resp) => {
 			let data = '';
 
