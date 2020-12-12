@@ -1,5 +1,5 @@
 const Keyv = require("keyv");//store PlenCity
-const keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
+const keyv = new Keyv('postgresql://user:pass@localhost:5432/dbname');//for Heroku
 keyv.on('error', err => console.error('Keyv connection error:', err));
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
