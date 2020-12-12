@@ -1,13 +1,14 @@
 const Keyv = require("keyv");//store PlenCity
-const keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
-keyv.on('error', err => {
-	//dernière chance (for Heroku)
+var keyv;
+console.log(process);
+if(process.env.DEBUG=="true") {
+	keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
+}
+else {//For Heroku
 	//const keyv = new Keyv('postgresql://user:pass@localhost:5432/dbname');
-	console.error('Keyv connection error:', err);
-	console.warn("Trying with PostgreSQL...");
 	keyv = new Keyv(`postgresql://user:pass@${process.env.DATABASE_URL}:5432/dbname`);
-	keyv.on('error', err => console.error('Keyv connection error:', err));
-});
+}
+keyv.on('error', err => console.error('Keyv connection error:', err));
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
 const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messidor","Thermidor","Fructidor","Vendémiaire","Brumaire","Frimaire","Nivôse"];
