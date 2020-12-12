@@ -1,8 +1,10 @@
 const Keyv = require("keyv");//store PlenCity
 const keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
-keyv.on('error', () => {
+keyv.on('error', err => {
 	//dernière chance (for Heroku)
 	//const keyv = new Keyv('postgresql://user:pass@localhost:5432/dbname');
+	console.error('Keyv connection error:', err);
+	console.warn("Trying with PostgreSQL...");
 	keyv = new Keyv(`postgresql://user:pass@${process.env.DATABASE_URL}:5432/dbname`);
 	keyv.on('error', err => console.error('Keyv connection error:', err));
 });
