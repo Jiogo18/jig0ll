@@ -14,7 +14,7 @@ bot.on("ready", () => {
 
 
 bot.on("message", message => {
-	//try {
+	try {
 		var msg = Cmd.isCommand(bot, message);
 		if(!msg) {//if it's not a command
 			var sourceId = 0, sourceName = "Unknow";
@@ -36,11 +36,11 @@ bot.on("message", message => {
 			return;
 		}
 		console.log("nouvelle commande dans " + message.id + " (par " + message.author.username + "@" + message.author.id + ") : " + message.content);
-	/*} catch(error) {
+	} catch(error) {
 		console.error("Error with a message: " + error);
 
 		return;
-	}*/
+	}
 
 	//2 try catch to answer with the error ONLY when it's a command
 	try {
