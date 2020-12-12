@@ -1,39 +1,12 @@
 const Keyv = require("keyv");//store PlenCity
 var keyv = new Keyv();
-if(process.env.DEBUG=="true") {
-	//this works
-	keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
-}
-else {//For Heroku
-	//const keyv = new Keyv('postgresql://user:pass@localhost:5432/dbname');
+if(process.env.DATABASE_URL) {//For Heroku
 	keyv = new Keyv(process.env.DATABASE_URL);
 }
+else {//local (SQLite est reset par Heroku)
+	keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
+}
 keyv.on('error', err => console.error('Keyv connection error:', err));
-
-
-
-
-
-const { Client } = require('pg');
-
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-client.connect();
-
-client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-  if (err) throw err;
-  for (let row of res.rows) {
-    console.log(JSON.stringify(row));
-  }
-  client.end();
-});
-
-
 
 
 
