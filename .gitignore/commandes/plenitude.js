@@ -1,14 +1,41 @@
 const Keyv = require("keyv");//store PlenCity
-var keyv;
-console.log(process);
-if(process.env.DEBUG=="true") {
+var keyv = new Keyv();
+//if(process.env.DEBUG=="true") {
+	//this works
 	keyv = new Keyv('sqlite://plenitude.sqlite');//create Jig0ll/plenitude.sqlite
-}
+/*}
 else {//For Heroku
 	//const keyv = new Keyv('postgresql://user:pass@localhost:5432/dbname');
 	keyv = new Keyv(`postgresql://user:pass@${process.env.DATABASE_URL}:5432/dbname`);
-}
+}*/
 keyv.on('error', err => console.error('Keyv connection error:', err));
+
+
+
+
+
+const { Client } = require('pg');
+
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+client.connect();
+
+client.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+  if (err) throw err;
+  for (let row of res.rows) {
+    console.log(JSON.stringify(row));
+  }
+  client.end();
+});
+
+
+
+
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
 const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messidor","Thermidor","Fructidor","Vendémiaire","Brumaire","Frimaire","Nivôse"];
@@ -112,7 +139,7 @@ module.exports = class CmdPlenitude {
 					this.getCmd(message, msg);
 					return;
 				}
-				await keyv.set('PlenCity', msg[3] || "Bayonne");
+				await keyv.set("PlenCity", msg[3] || "Bayonne");
 				
 				sendMsg(message.channel,
 					"La ville de Plénitude est maintenant " + await this.PlenCity()
