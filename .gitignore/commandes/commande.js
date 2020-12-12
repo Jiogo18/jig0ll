@@ -74,8 +74,8 @@ module.exports = class Cmd
 
 		if(msg.length>0 && msg[0].toLowerCase()=="cut") {//peut importe le channel
 			if(message.author.id == process.env.OWNER_ID) {//moi
-				console.log("Stoppé par " + message.author);
-				message.channel.send("Stoppé par " + message.author)
+				console.error("Stoppé par " + message.author);
+				message.channel.send(`Stoppé par <@!${message.author.id}>`);
 				bot.destroy();
 			}
 			return null;//nothing else to do
