@@ -4,20 +4,33 @@ const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
 
-const WIP = (process.argv >= 3 && process.argv[2] == "WIP");
+const WIPonly = (process.argv.length >= 3 && process.argv[2] == "WIP");
+
+
+function isWIP(user) {
+	switch(user.id) {
+		case bot.id:
+		case process.env.OWNER_ID:
+			return true;
+	}
+	return false;
+}
 
 
 bot.on("ready", () => {
-	bot.user.setActivity("!help || @"+bot.user.username+" help", {type: 'WATCHING'})
+	bot.user.setActivity(`!help || @${bot.user.username} help`, {type: 'WATCHING'})
 			.then(presence => console.log(
-				`Activitée de `+bot.user.username+` mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`))
+				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`))
 			.catch(console.error);
+	if(WIPonly) {
+		console.warn("You are in WIP mode, @Jig0ll will only answer to @Jiogo18");
+	}
 });
 
 
 bot.on("message", message => {
 	try {
-		if(WIP && message.author.id != process.env.OWNER_ID)
+		if(WIPonly && !isWIP(message.author))
 			return;//en debug je suis le seul à pouvoir l'activer
 
 		var msg = Cmd.isCommand(bot, message);
@@ -40,9 +53,9 @@ bot.on("message", message => {
 			}
 			return;
 		}
-		console.log("nouvelle commande dans " + message.id + " (par " + message.author.username + "@" + message.author.id + ") : " + message.content);
+		console.log(`nouvelle commande dans ${message.id} (par ${message.author.username}@${message.author.id}) : ${message.content}`);
 	} catch(error) {
-		console.error("Error with a message: " + error);
+		console.error(`Error with a message: ${error}`);
 
 		return;
 	}
@@ -51,7 +64,7 @@ bot.on("message", message => {
 	try {
 		Cmd.action(bot, message, msg);
 	} catch (error) {
-		message.channel.send("Sorry I've had an error:" + error);
+		message.channel.send(`Sorry I've had an error: ${error}`);
 		console.error(error);
 	}
 	
