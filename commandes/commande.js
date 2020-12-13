@@ -72,13 +72,19 @@ module.exports = class Cmd
 
 		var msg=splitCommand(message.content);
 
-		if(msg.length>0 && msg[0].toLowerCase()=="cut") {//peut importe le channel
-			if(message.author.id == process.env.OWNER_ID) {//moi
-				console.error("Stoppé par " + message.author);
-				message.channel.send(`Stoppé par <@!${message.author.id}>`);
-				bot.destroy();
+		if(msg.length > 0) {
+			//peut importe le channel
+			switch(msg[0].toLowerCase()) {
+				case "cut":
+				case "stop":
+				case "exit":
+					if(message.author.id == process.env.OWNER_ID) {//moi
+						console.error("Stoppé par " + message.author);
+						message.channel.send(`Stoppé par <@!${message.author.id}>`);
+						bot.destroy();
+					}
+					return null;//nothing else to do
 			}
-			return null;//nothing else to do
 		}
 		if(!Cmd.isAction(msg)) return null;//pas reconnu
 

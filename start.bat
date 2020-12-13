@@ -3,7 +3,7 @@ cd
 
 :start
 echo Arret : Ctrl + C
-node index.js
+npm start
 
 echo.
 echo.

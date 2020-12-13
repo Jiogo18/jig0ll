@@ -4,6 +4,8 @@ const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
 
+const WIP = (process.argv >= 3 && process.argv[2] == "WIP");
+
 
 bot.on("ready", () => {
 	bot.user.setActivity("!help || @"+bot.user.username+" help", {type: 'WATCHING'})
@@ -15,6 +17,9 @@ bot.on("ready", () => {
 
 bot.on("message", message => {
 	try {
+		if(WIP && message.author.id != process.env.OWNER_ID)
+			return;//en debug je suis le seul à pouvoir l'activer
+
 		var msg = Cmd.isCommand(bot, message);
 		if(!msg) {//if it's not a command
 			var sourceId = 0, sourceName = "Unknow";
