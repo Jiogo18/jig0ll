@@ -3,8 +3,9 @@ module.exports = class CmdHelp
 	static isAction(msg) {
 		return msg.length>0 && (msg[0].toLowerCase()=="ping" || msg[0].toLowerCase()=="pingbot" || msg[0].toLowerCase()=="timeserv");
 	}
-	static action(message, msg, bot, timeNow)
+	static action(message, msg, bot)
 	{
+		var timeNow = Date.now();
 		//message.channel.send(msg);
 		switch(msg[0].toLowerCase())
 		{
@@ -24,18 +25,18 @@ module.exports = class CmdHelp
 					var msgCreated=msg[2].replace("createdAt:","");
 					var msgReceived=msg[3].replace("receivedAt:","");
 					var currentTime=timeNow;
-					var pingBot=((currentTime-msgReceived)/2)
+					var pingBot = (currentTime-msgReceived)/2;
 
 					console.log("ping du bot : " + pingBot);
 					var ping = msgReceived-msgCreated;
-					return "pong, <@!"+msg[1].replace("author:","")+"> ! Réponse en "+ping+"ms"+
-						", ping supposé : " + (ping - pingBot) + "ms"+
-						(ping>1000?" (décalage de l'horloge système important)":"")+
-						", ping du bot : "+pingBot+"ms";
+					return `pong, <@!${msg[1].replace("author:","")}> ! Réponse en ${ping}ms`+
+						`, ping supposé : ${ping - pingBot}ms`+
+						`${ping>1000?" (décalage de l'horloge système important)":""}`+
+						`, ping du bot : ${pingBot}ms`;
 				}
 				else
 				{
-					message.channel.send("<@!494587865775341578> ping author:"+message.author+" createdAt:"+message.createdAt.getTime()+" receivedAt:"+Date.now());
+					message.channel.send(`<@!${bot.user.id}> ping author:${message.author.id} createdAt:${message.createdAt.getTime()} receivedAt:${Date.now()}`);
 					//id du bot
 				}
 				break;
@@ -58,15 +59,15 @@ module.exports = class CmdHelp
 
 					if(repete < max)//quand c'est pas fini
 					{
-						message.channel.send("<@!494587865775341578> pingbot " + repete + " " + max + " " + pingTotal + " " + Date.now());//Date.now() important
+						message.channel.send(`<@!${bot.user.id}> pingbot ${repete} ${max} ${pingTotal} ${Date.now()}`);//Date.now() important
 					}
 					else
 					{
-						console.log("new pings du bot : " + Math.round(pingTotal/max) + " ["+bot.pings+"]");
+						console.log(`new pings du bot : ${Math.round(pingTotal/max)} [${bot.pings}]`);
 						return {embed:{
 							color:3447003,
 							title:"Pingbot",
-							description: "pingbot moyen sur " + max + " envois : " + (pingTotal/max) + "ms",
+							description: `pingbot moyen sur ${max} envois : ${pingTotal/max}ms`,
 							author: 1//bot
 						}};
 					}
@@ -83,7 +84,7 @@ module.exports = class CmdHelp
 							max=1;
 					}
 					bot.pings = new Array(0);//clear la liste des pings
-					message.channel.send("<@!494587865775341578> pingbot 0 " + max + " 0 "+Date.now());//Date.now() important
+					message.channel.send(`<@!${bot.user.id}> pingbot 0 ${max} 0 ${Date.now()}`);//Date.now() important
 				}
 				break;
 
@@ -100,12 +101,12 @@ module.exports = class CmdHelp
 					return {embed:{
 						color:3447003,
 						title:"Timeserv",
-						description: "Le bot est désynchronisé de " + diff1 + "ms par rapport au serveur ("+(diff1<0 ? "retard" : "avance")+" de "+Math.round(Math.abs(diff1)/10)/100+"s)",
+						description: `Le bot est désynchronisé de ${diff1}ms par rapport au serveur (${diff1<0 ? "retard" : "avance"} de ${Math.round(Math.abs(diff1)/10)/100}s)`,
 						author: 1
 					}};
 				}
 				else
-					message.channel.send("<@!494587865775341578> timeServ " + Date.now());//Date.now() important
+					message.channel.send(`<@!${bot.user.id}> timeServ ${Date.now()}`);//Date.now() important
 		}
 		return;
 	}
