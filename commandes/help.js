@@ -4,7 +4,6 @@ module.exports = class CmdHelp
 		return msg.length>0 && /help/i.test(msg[0])
 	}
 	static action (message, msg) {
-		console.log(`help.js 7 ${msg}`);
 		if(msg.length >= 2)
 		{
 			var retour = withArgument(msg[1]);
