@@ -3,7 +3,8 @@ module.exports = class CmdHelp
 	static isAction(msg) {
 		return msg.length>0 && /help/i.test(msg[0])
 	}
-	static action (msg) {
+	static action (message, msg) {
+		console.log(`help.js 7 ${msg}`);
 		if(msg.length >= 2)
 		{
 			var retour = withArgument(msg[1]);
@@ -43,6 +44,7 @@ module.exports = class CmdHelp
 
 function withArgument(argument)
 {
+	const CmdHelp = module.exports;
 	const CmdPing = require("./ping.js");
 	const CmdInfo = require("./info.js");
 	const CmdTest = require("./test.js");
