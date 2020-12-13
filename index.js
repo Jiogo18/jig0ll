@@ -9,7 +9,7 @@ const WIPonly = (process.argv.length >= 3 && process.argv[2] == "WIP");
 
 function isWIP(user) {
 	switch(user.id) {
-		case bot.id:
+		case bot.user.id:
 		case process.env.OWNER_ID:
 			return true;
 	}
@@ -29,10 +29,10 @@ bot.on("ready", () => {
 
 
 bot.on("message", message => {
-	try {
-		if(WIPonly && !isWIP(message.author))
-			return;//en debug je suis le seul à pouvoir l'activer
+	if(WIPonly && !isWIP(message.author))
+		return;//en debug je suis le seul à pouvoir l'activer
 
+	try {
 		var msg = Cmd.isCommand(bot, message);
 		if(!msg) {//if it's not a command
 			var sourceId = 0, sourceName = "Unknow";
@@ -67,7 +67,7 @@ bot.on("message", message => {
 		message.channel.send(`Sorry I've had an error: ${error}`);
 		console.error(error);
 	}
-	
+
 });
 
 bot.login();

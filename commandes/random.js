@@ -13,6 +13,7 @@ module.exports = class CmdRandom
 				return "@someone "+getRandomMeme()+" <@!"+randomUser+">";
 
 			case "anonyme":
+				//error with 2 instances: "(node:13156) UnhandledPromiseRejectionWarning: DiscordAPIError: Unknown Message"
 				message.delete();
 				var message2=message.content.substring(msg[0].length+1);//retire le premier arg
 				return {embed:{
