@@ -59,16 +59,10 @@ module.exports = class Cmd
 	//todo : call CmdLib
 
 	static isCommand(bot, message) {//le message est une commande valide ?
-		const prefixs = ["!", "<@!"+bot.user.id+"> "];
+		const prefix = `<@!${bot.user.id}> `;
 		var found=false;
-		for(let i=0; i<prefixs.length; i++) {
-			if(message.content.startsWith(prefixs[i])) {
-				message.content = message.content.substring(prefixs[i].length);
-				found=true;
-				break;
-			}
-		}
-		if(!found) return null;//not accepted
+		if(!message.content.startsWith(prefix)) { return; }
+		message.content = message.content.substring(prefix.length);
 
 		var msg=splitCommand(message.content);
 
