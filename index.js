@@ -1,36 +1,45 @@
 require('dotenv').config();
+process.env.WIPOnly = process.argv.includes("WIP");
+
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
-
-const WIPonly = (process.argv.length >= 3 && process.argv[2] == "WIP");
-
-
-function isWIP(user) {
-	switch(user.id) {
-		case bot.user.id:
-		case process.env.OWNER_ID:
-			return true;
-	}
-	return false;
-}
+const Interaction = require('./Interaction/main.js');
+const slashCmd = new Interaction(bot);
+const chalk = require('chalk');
 
 
-bot.on("ready", () => {
+
+
+
+bot.on(Discord.Constants.Events.CLIENT_READY, () => {
+	process.env.BOT_ID = bot.user.id
+
 	bot.user.setActivity(`!help || @${bot.user.username} help`, {type: 'WATCHING'})
-			.then(presence => console.log(
-				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`))
+			.then(presence => console.log(chalk.blueBright(
+				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`)))
 			.catch(console.error);
-	if(WIPonly) {
-		console.warn("You are in WIP mode, @Jig0ll will only answer to @Jiogo18");
+
+	if(process.env.WIPOnly) {
+		console.warn(`You are in WIP mode, @${bot.user.username} will only answer on Jiogo18's serv`);
 	}
+
+	slashCmd.loadCommands();
 });
 
 
-bot.on("message", message => {
-	if(WIPonly && !isWIP(message.author))
-		return;//en debug je suis le seul à pouvoir l'activer
+bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
+	
+	if(!slashCmd.config.isAllowed(
+		{
+			user: message.author,
+			guild: message.channel.guild,
+			channel: message.channel
+		},
+		process.env.WIPOnly ? slashCmd.config.securityLevel.wip : false
+		))
+		return;
 
 	try {
 		var msg = Cmd.isCommand(bot, message);

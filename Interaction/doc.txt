@@ -1,0 +1,25 @@
+Interaction de discord.js
+
+
+https://discord.com/developers/docs/interactions/slash-commands
+
+
+type ApplicationCommandOptionType https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoptiontype
+	1: SUB_COMMAND
+	2: SUB_COMMAND_GROUP : groupe de SUB_COMMAND, exemple: l'interaction reçu a un type SUB_COMMAND_GROUP
+	3: STRING
+	4: INTEGER
+	5: BOOLEAN
+	6: USER
+	7: CHANNEL
+	8: ROLE
+	peut se faire en choix multiple (https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application)
+
+type InteractionResponseType https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application
+	1: Pong
+	4: utilisé pour les retour
+
+Application Command: https://discord.com/developers/docs/interactions/slash-commands#create-global-application-command-json-params
+	name: entrée de la commande
+	description: petit texte de description (pas visible si la commande peut pas se faire toute seule)
+	options: [] facultatif, les arguments qui suivent https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoption
