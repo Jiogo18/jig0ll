@@ -12,7 +12,6 @@ const chalk = require('chalk');
 
 
 
-
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 	process.env.BOT_ID = bot.user.id
 
@@ -33,13 +32,11 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
 	
 	if(!slashCmd.config.isAllowed(
 		{
-			user: message.author,
+			user: message.author,//infos du message
 			guild: message.channel.guild,
 			channel: message.channel
-		},
-		process.env.WIPOnly ? slashCmd.config.securityLevel.wip : false
-		))
-		return;
+		}, false))
+		return;//pas autorisé
 
 	try {
 		var msg = Cmd.isCommand(bot, message);
@@ -76,7 +73,6 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
 		message.channel.send(`Sorry I've had an error: ${error}`);
 		console.error(error);
 	}
-
 });
 
 bot.login();

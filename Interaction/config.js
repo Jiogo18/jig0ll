@@ -20,6 +20,9 @@ module.exports = {
 		private: 'private'
 	},
 	isAllowed(context, security) {
+		if(!security && process.env.WIPOnly)
+			security = this.securityLevel.wip;
+
 		switch(security) {//securityLevel
 			case undefined:
 			case 0:
