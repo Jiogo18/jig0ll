@@ -68,11 +68,11 @@ module.exports = class Interaction extends InteractionBase {
 			this.sendAnswer(interaction, retour);
 			console.log(`Interaction done for ${interaction.member.user.username} : "${commandLine}"`);
 			if(!retour) {
-				console.warn(this.chalk.yellow(`Interaction "${commandLine}" has no answer`));
+				console.warn(`Interaction "${commandLine}" has no answer`.yellow);
 			}
 		} catch (error) {
 			this.sendAnswer(interaction, `Sorry I've had an error`);
-			console.error(this.chalk.red(`An error occured will executing "${commandLine}"`));
+			console.error(`An error occured will executing "${commandLine}"`.red);
 		}
 	}
 }

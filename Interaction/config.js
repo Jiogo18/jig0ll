@@ -44,7 +44,7 @@ module.exports = {
 				}
 			
 			default:
-				console.error(require('chalk').red(`No security config set for ${security}`));
+				console.error(`No security config set for ${security}`.red);
 				return false;
 		}
 	}

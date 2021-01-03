@@ -4,7 +4,6 @@ module.exports = class InteractionBase {
 	bot = undefined;
 	config = require('./config.js');
 	static getConfig() { return require('./config.js'); }
-	chalk = require('chalk');
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '
@@ -45,7 +44,7 @@ module.exports = class InteractionBase {
 		const targetPrivate = this.getTarget(this.config.guild_test);
 		const targetGlobal = process.env.WIPOnly ? targetPrivate : this.getTarget();//serv privé (en WIP) ou le global
 
-		console.log(this.chalk.greenBright(`Loading commands...`));
+		console.log(`Loading commands...`.green);
 		var counter = 0, globalCounter = 0;
 
 		for (const file of commandFiles) {
@@ -53,7 +52,7 @@ module.exports = class InteractionBase {
 				const command = require(`../commands/${file}`);
 				if(command.setBot) { command.setBot(this.bot); }
 				if(command.security == this.config.securityLevel.wip) {
-					console.warn(this.chalk.yellow(`Interaction ${command.name} is WIP`));
+					console.warn(`Interaction ${command.name} is WIP`.yellow);
 				}
 
 				const post = { data: {
@@ -67,16 +66,16 @@ module.exports = class InteractionBase {
 					globalCounter++;
 				}
 				await target.post(post).catch(e => {
-					console.error(this.chalk.red(`Error while posting ${command.name}`));
+					console.error(`Error while posting ${command.name}`.red);
 				});
 
 				this.bot.slash_commands.set(command.name, command);
 				counter++;
 			} catch (error) {
-				console.error(this.chalk.red(`Slash command not loaded: ${file}`));
+				console.error(`Slash command not loaded: ${file}`.red);
 			}
 		}
-		console.log(this.chalk.greenBright(`${counter} commands loaded, ${globalCounter} public`));
+		console.log(`${counter} commands loaded, ${globalCounter} public`.green);
 	}
 
 	async removeInteraction(target, interaction_id) {
@@ -100,12 +99,12 @@ module.exports = class InteractionBase {
 		for(const command of commandsAvailable) {
 			await this.removeInteraction(target, command.id);
 			if(!this.bot.slash_commands.delete(command.name)) {
-				console.warn(this.chalk.yellow(`Can not delete ${command.name} from bot.slash_commands`));
+				console.warn(`Can not delete ${command.name} from bot.slash_commands`.yellow);
 			}
 		}
 
 		if(this.bot.slash_commands.length > 0) {
-			console.error(this.chalk.red(`${this.bot.slash_commands.length} Slash Commands remaining with cleanCommands`));
+			console.error(`${this.bot.slash_commands.length} Slash Commands remaining with cleanCommands`.red);
 		}
 		else {
 			console.log(`All Slash Commands of ${target_id ? target_id : 'Global'} have been removed.`);

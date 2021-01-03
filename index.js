@@ -6,31 +6,29 @@ const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
 const Interaction = require('./Interaction/main.js');
-const slashCmd = new Interaction(bot);
-const chalk = require('chalk');
-
-
+const interaction = new Interaction(bot);
+require('colors');//colors for everyone ! (don't remove)
 
 
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 	process.env.BOT_ID = bot.user.id
 
 	bot.user.setActivity(`!help || @${bot.user.username} help`, {type: 'WATCHING'})
-			.then(presence => console.log(chalk.blueBright(
-				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`)))
+			.then(presence => console.log(
+				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`.cyan))
 			.catch(console.error);
 
 	if(process.env.WIPOnly) {
 		console.warn(`You are in WIP mode, @${bot.user.username} will only answer on Jiogo18's serv`);
 	}
 
-	slashCmd.loadCommands();
+	interaction.loadCommands();
 });
 
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
 	
-	if(!slashCmd.config.isAllowed(
+	if(!interaction.config.isAllowed(
 		{
 			user: message.author,//infos du message
 			guild: message.channel.guild,
