@@ -5,8 +5,8 @@ const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
-const Interaction = require('./Interaction/main.js');
-const interaction = new Interaction(bot);
+const interactionMgrManager = require('./interactionMgr/handler.js');
+const interactionMgr = new interactionMgrManager(bot);
 require('colors');//colors for everyone ! (don't remove)
 
 
@@ -22,13 +22,13 @@ bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 		console.warn(`You are in WIP mode, @${bot.user.username} will only answer on Jiogo18's serv`);
 	}
 
-	interaction.loadCommands();
+	interactionMgr.loadCommands();
 });
 
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
 	
-	if(!interaction.config.isAllowed(
+	if(!interactionMgr.config.isAllowed(
 		{
 			user: message.author,//infos du message
 			guild: message.channel.guild,

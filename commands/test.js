@@ -11,13 +11,9 @@ module.exports = {
 		description: "Test un retour vide lors de l'appel de l'intéraction",
 		type: 1,
 
-		execute(interaction) {
-			slashMgr.sendAnswer(interaction, 'Done');
+		execute(interaction, application) {
+			application.interaction.sendAnswer(interaction, 'Done');
 			return;
 		}
-	}],
-
-	setBot(bot) {
-		slashMgr = InteractionBase ? new InteractionBase(bot) : undefined;
-	}
+	}]
 };

@@ -1,24 +1,22 @@
-const InteractionBase = require('./base.js');
+const Interaction = require('./base.js');
 
-module.exports = class Interaction extends InteractionBase {
+module.exports = class InteractionManager extends Interaction {
 	constructor(bot) {
 		super(bot);
-		const Discord = require('discord.js');
-		bot.slash_commands = new Discord.Collection();
-		
+
 		bot.ws.on('INTERACTION_CREATE', inte => { this.interactionHandler(inte); });//to keep the function with the right 'this'
 	}
 
+
 	async interactionHandler(interaction) {
 		const commandName = interaction.data.name.toLowerCase();
-		var command = this.bot.slash_commands.get(commandName);
+		var command = this.commandsMgr.commands.get(commandName);
 		if(!command) {
 			console.error(`Command unknow: ${commandName}`);
-			console.log(this.bot.slash_commands);
 
-			if(process.env.WIPOnly) {
+			if(process.env.WIPOnly)
 				this.sendAnswer(interaction, `Command unknow: ${commandName}`);//peut être fait par un autre Jig0ll
-			}
+			
 			return;
 		}
 
@@ -41,20 +39,15 @@ module.exports = class Interaction extends InteractionBase {
 
 		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
 		//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
-		const args = (interaction.data.options || []).map(option => { return option.name; });
-		const commandLine = `/${[commandName].concat(args).join(' ')}`;
+		const args = (interaction.data.options || []).map(option => option.name);
+		const commandLine = `/${[commandName].concat(args).join(' ')}`;//just for the console
 
-		for(const optionName of args) {
-			var ok = false;
-			for(const option of command.options) {//parcours des sous commandes disponibles pour ce 
-				if(option.name != optionName) { continue; }
-				ok = true;
-				command = option;
-				break;
-			}
-			if(!ok) {
+		for(const optionName of args) {//get the sub command named optionName
+			command = command.options.find(option => option.name == optionName);
+			if(command == undefined) {
 				console.error(`Option unknow: ${commandName} ${optionName}`);
-				this.sendAnswer(interaction, `Option unknow: ${optionName}`);
+				if(process.env.WIPOnly)
+					this.sendAnswer(interaction, `Option unknow: ${optionName}`);
 				return;
 			}
 			if(!this.config.isAllowed(context, command.security)) {
@@ -64,7 +57,7 @@ module.exports = class Interaction extends InteractionBase {
 		}
 
 		try {
-			const retour = await command.execute(interaction);
+			const retour = await command.execute(interaction, {bot: this.bot, interaction: this});
 			this.sendAnswer(interaction, retour);
 			console.log(`Interaction done for ${interaction.member.user.username} : "${commandLine}"`);
 			if(!retour) {
@@ -72,7 +65,7 @@ module.exports = class Interaction extends InteractionBase {
 			}
 		} catch (error) {
 			this.sendAnswer(interaction, `Sorry I've had an error`);
-			console.error(`An error occured will executing "${commandLine}"`.red);
+			console.error(`An error occured will executing "${commandLine}"`.red, error);
 		}
 	}
 }

@@ -1,8 +1,7 @@
-const { DiscordAPIError } = require('discord.js');
-
-module.exports = class InteractionBase {
+module.exports = class Interaction {
 	bot = undefined;
 	config = require('./config.js');
+	commandsMgr = require('./commands');
 	static getConfig() { return require('./config.js'); }
 
 	constructor(bot) {
@@ -35,47 +34,11 @@ module.exports = class InteractionBase {
 		const target = this.getTarget(guild_id)
 		return target ? target.post(interaction) : undefined;
 	}
-	
 
-	async loadCommands() {
-		const fs = require('fs');
-		const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'))
-
+	loadCommands() {
 		const targetPrivate = this.getTarget(this.config.guild_test);
 		const targetGlobal = process.env.WIPOnly ? targetPrivate : this.getTarget();//serv privé (en WIP) ou le global
-
-		console.log(`Loading commands...`.green);
-		var counter = 0, globalCounter = 0;
-
-		for (const file of commandFiles) {
-			try {
-				const command = require(`../commands/${file}`);
-				if(command.setBot) { command.setBot(this.bot); }
-				if(command.security == this.config.securityLevel.wip) {
-					console.warn(`Interaction ${command.name} is WIP`.yellow);
-				}
-
-				const post = { data: {
-					name: command.name,
-					description: command.description,
-					options: command.options
-				}};
-				var target = targetPrivate;//WIP ou Private
-				if(command.security == this.config.securityLevel.public) {
-					target = targetGlobal;
-					globalCounter++;
-				}
-				await target.post(post).catch(e => {
-					console.error(`Error while posting ${command.name}`.red);
-				});
-
-				this.bot.slash_commands.set(command.name, command);
-				counter++;
-			} catch (error) {
-				console.error(`Slash command not loaded: ${file}`.red);
-			}
-		}
-		console.log(`${counter} commands loaded, ${globalCounter} public`.green);
+		this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
 	}
 
 	async removeInteraction(target, interaction_id) {
@@ -89,22 +52,24 @@ module.exports = class InteractionBase {
 		const target = this.getTarget(target_id);
 		if(!ok) return;
 
-		const commandsAvailable = await this.getCmdFrom(target_id)
+		
+		const commandsAvailable = await this.commandsMgr.getExistingCommands(target)//this.getCmdFrom(target_id)
 			.catch(e => {
 			console.error(`Can't get commands for ${target_id ? target_id : 'Global'}`);
+			console.error(e);
 			ok = false;
 		});
 		if(!ok) return;
 
 		for(const command of commandsAvailable) {
-			await this.removeInteraction(target, command.id);
-			if(!this.bot.slash_commands.delete(command.name)) {
-				console.warn(`Can not delete ${command.name} from bot.slash_commands`.yellow);
-			}
+			//await this.removeInteraction(target, command.id);
+			//aze
+			await this.commandsMgr.removeCommand(command.name, target);
+			this.commandsMgr.commands.delete(command.name);
 		}
 
-		if(this.bot.slash_commands.length > 0) {
-			console.error(`${this.bot.slash_commands.length} Slash Commands remaining with cleanCommands`.red);
+		if(this.commandsMgr.commands.length > 0) {
+			console.error(`${this.commandsMgr.commands.length} Slash Commands remaining with cleanCommands`.red);
 		}
 		else {
 			console.log(`All Slash Commands of ${target_id ? target_id : 'Global'} have been removed.`);
