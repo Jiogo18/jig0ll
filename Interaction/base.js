@@ -35,46 +35,35 @@ module.exports = class Interaction {
 		return target ? target.post(interaction) : undefined;
 	}
 
-	loadCommands() {
+	async loadCommands() {
 		const targetPrivate = this.getTarget(this.config.guild_test);
 		const targetGlobal = process.env.WIPOnly ? targetPrivate : this.getTarget();//serv privé (en WIP) ou le global
-		this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
+		return this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
 	}
 
-	async removeInteraction(target, interaction_id) {
-		const retour = target(interaction_id).delete();
-		target('..');//fait remonter au parent parce que le target() modifie target lui même...
-		//ex si il y a pas .. : path: '/applications/494587865775341578/guilds/313048977962565652/commands/792926340126736434/792926340973330462'
-		return retour;
-	}
 	async cleanCommands(target_id = undefined) {
-		var ok = true;
 		const target = this.getTarget(target_id);
-		if(!ok) return;
-
 		
-		const commandsAvailable = await this.commandsMgr.getExistingCommands(target)//this.getCmdFrom(target_id)
-			.catch(e => {
+		const commandsAvailable = await this.commandsMgr.getExistingCommands(target);
+		if(!commandsAvailable) {
 			console.error(`Can't get commands for ${target_id ? target_id : 'Global'}`);
-			console.error(e);
-			ok = false;
-		});
-		if(!ok) return;
-
-		for(const command of commandsAvailable) {
-			//await this.removeInteraction(target, command.id);
-			//aze
-			await this.commandsMgr.removeCommand(command.name, target);
-			this.commandsMgr.commands.delete(command.name);
+			return;
 		}
+		
+		//console.log(`commands before : ${(await this.commandsMgr.getExistingCommands(target)).length}`);
+		var promises = [];
+		for(const command of commandsAvailable) {
+			promises.push(this.commandsMgr.removeCommand(command, target));
+		}
+		await Promise.all(promises);
+		//console.log(`commands remaning : ${(await this.commandsMgr.getExistingCommands(target)).length}`)
 
 		if(this.commandsMgr.commands.length > 0) {
-			console.error(`${this.commandsMgr.commands.length} Slash Commands remaining with cleanCommands`.red);
+			console.error(`${this.commandsMgr.commands.length} Slash Commands remain after cleanCommands`.red);
 		}
 		else {
 			console.log(`All Slash Commands of ${target_id ? target_id : 'Global'} have been removed.`);
 		}
-
 	}
 
 
@@ -86,15 +75,17 @@ module.exports = class Interaction {
 		else if(post.data && post.data.content) {
 			return { data: post };
 		}
+		else if(post.embed || post.type == 'rich') {
+			return { data: {
+				type: 3,
+				data: { content: '', embeds: [ post ] }
+			}};
+		}
 		else {
-			return {
-				data : {
-					type: 4,
-					data: {
-						content: post
-					}
-				}
-			};
+			return { data: {
+				type: 4,
+				data: { content: post }
+			}};
 		}
 	}
 
