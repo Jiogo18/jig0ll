@@ -12,12 +12,21 @@ module.exports = {
 			console.warn(`getExistingCommands called with forceUpdate.`.yellow);
 		}
 		
-		if(!commandsStored || commandsStored.time < Date.now() || forceUpdate) {
+		if(!commandsStored || commandsStored.timeUpdate < Date.now() || forceUpdate) {
 			if(commandsStored)
-				console.warn(`Asking Discord for existing Commands (ping: ${Date.now() - commandsStored.time} ms)`.magenta);
+				console.warn(`Asking Discord for existing Commands (ping: ${Date.now() - commandsStored.lastUpdate} ms)`.magenta);
+
+			var commandsGet = [];
+			try {
+				commandsGet = await target.get();
+			} catch(error) {
+				console.warn(`Can't get commands from ${target}, it's maybe empty`.yellow);
+				commands = [];
+			}
 			commandsStored = {
-				commands: await target.get(),
-				time: Date.now() + 1000
+				commands: commandsGet,
+				lastUpdate: Date.now(),
+				timeUpdate: Date.now() + 1000
 			}
 			existingCommands.set(target, commandsStored);
 		}
@@ -26,7 +35,7 @@ module.exports = {
 
 	resetCacheTimer(target) {
 		commands = existingCommands.get(target);
-		if(commands) commands.time = 0;
+		if(commands) commands.timeUpdate = 0;
 	},
 
 	async getCommand(commandName, target) {
@@ -65,21 +74,25 @@ module.exports = {
 		return ok;
 	},
 
-	async removeCommand(commandName, target) {
-		var ok = true;
-		const command = await this.getCommand(commandName, target);
-		if(!command) return false;
-		command.delete()
+	async removeCommand(command, target) {
+		var ok = new Promise((resolve, reject) => {
+			target(command.id);
+			target.delete()
 			.catch(e => {
-				console.error(`Error while removing command ${commandName}`.red);
+				console.error(`Error while removing command ${command.name}`.red);
 				console.log(e);
-				ok = false;
+				resolve(false);
 			})
-			.then(e => {
-				if(this.commands.has(commandName))
-					this.commands.delete(commandName);
+			.then(buffer => {
+				if(this.commands.has(command.name))
+					this.commands.delete(command.name);
 					this.resetCacheTimer(target);
+				//console.log(`removeCommand is success for ${command.name}`)
+				resolve(true);
 			});
+			target('..');//fait remonter au parent parce que le target() modifie target lui même...
+			//ex s'il n'y a pas .. : path: '/applications/494587865775341578/guilds/313048977962565652/commands/792926340126736434/792926340973330462'
+		});
 		return ok;
 	},
 
