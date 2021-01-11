@@ -43,20 +43,26 @@ module.exports = class InteractionManager extends Interaction {
 		const commandLine = `/${[commandName].concat(args).join(' ')}`;//just for the console
 
 		for(const optionName of args) {//get the sub command named optionName
-			command = command.options.find(option => option.name == optionName);
-			if(command == undefined) {
+			var subCommand = command.options.find(option => option.name == optionName);
+			if(subCommand == undefined) {
 				console.error(`Option unknow: ${commandName} ${optionName}`);
 				if(process.env.WIPOnly)
 					this.sendAnswer(interaction, `Option unknow: ${optionName}`);
 				return;
 			}
-			if(!this.config.isAllowed(context, command.security)) {
+			if(!this.config.isAllowed(context, subCommand.security)) {
 				this.sendAnswer(interaction, `You can't do that`);
 				return;
 			}
+			command = subCommand;
 		}
 
 		try {
+			if(command.execute == undefined) {
+				const lastArg = args.length>0 ? args[args.length-1] : commandName;
+				console.error(`Can't find execute() for ${lastArg}`.red);
+				throw "execute is not defined for this option";
+			}
 			const retour = await command.execute(interaction, {bot: this.bot, interaction: this});
 			this.sendAnswer(interaction, retour);
 			console.log(`Interaction done for ${interaction.member.user.username} : "${commandLine}"`);
