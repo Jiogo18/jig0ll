@@ -3,7 +3,7 @@ const InteractionBase = require('../Interaction/base.js');
 module.exports = {
 	name: 'interaction',
 	description: 'Informations sur les intéractions du bot',
-	security: InteractionBase.getConfig().securityLevel.wip,
+	security: InteractionBase.config.securityLevel.wip,
 
 	options: [{
 		name: "list",
