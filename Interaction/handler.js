@@ -1,14 +1,14 @@
-const Interaction = require('./base.js');
+const InteractionBase = require('./base.js');
 
-module.exports = class InteractionManager extends Interaction {
+module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
 		super(bot);
 
-		bot.ws.on('INTERACTION_CREATE', inte => { this.interactionHandler(inte); });//to keep the function with the right 'this'
+		bot.ws.on('INTERACTION_CREATE', inte => { this.onInteraction(inte); });//to keep the function with the right 'this'
 	}
 
 
-	async interactionHandler(interaction) {
+	async onInteraction(interaction) {
 		const commandName = interaction.data.name.toLowerCase();
 		var command = this.commandsMgr.commands.get(commandName);
 		if(!command) {
@@ -20,17 +20,15 @@ module.exports = class InteractionManager extends Interaction {
 			return;
 		}
 
-		//console.log(interaction);
-		//console.log(interaction.data.options)
-		
 		const context = {
 			name: commandName,
 			user: interaction.member.user,
 			guild: { id: interaction.guild_id },
 			channel: { id: interaction.channel_id },
+			on: 'interaction'
 		}
 
-		if(!this.config.isAllowed(context, command.security)) {
+		if(!InteractionBase.config.isAllowed(context, command.security)) {
 			this.sendAnswer(interaction, `You can't do that`);
 			return;
 		}
@@ -50,7 +48,7 @@ module.exports = class InteractionManager extends Interaction {
 					this.sendAnswer(interaction, `Option unknow: ${optionName}`);
 				return;
 			}
-			if(!this.config.isAllowed(context, subCommand.security)) {
+			if(!InteractionBase.config.isAllowed(context, subCommand.security)) {
 				this.sendAnswer(interaction, `You can't do that`);
 				return;
 			}
@@ -63,7 +61,8 @@ module.exports = class InteractionManager extends Interaction {
 				console.error(`Can't find execute() for ${lastArg}`.red);
 				throw "execute is not defined for this option";
 			}
-			const retour = await command.execute(interaction, {bot: this.bot, interaction: this});
+			const retour = await command.execute(interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
+
 			this.sendAnswer(interaction, retour);
 			console.log(`Interaction done for ${interaction.member.user.username} : "${commandLine}"`);
 			if(!retour) {
@@ -73,6 +72,15 @@ module.exports = class InteractionManager extends Interaction {
 			this.sendAnswer(interaction, `Sorry I've had an error`);
 			console.error(`An error occured will executing "${commandLine}"`.red, error);
 		}
+	}
+
+	onCommand(commandName, options, context) {
+		var command = this.commandsMgr.commands.get(commandName);
+		console.debug(`onCommand ${commandName}`)
+		console.debug(command);
+
+
+		return 'Work in Progress';
 	}
 }
 

@@ -2,6 +2,7 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const defaultCommandsPath = './commands';
 var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24
+const config = require('./config.js');
 
 module.exports = {
 
@@ -118,28 +119,29 @@ module.exports = {
 			public: 0,
 			wip: 0,
 			private: 0,
-			other: 0
 		};
 
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
-			var target = targetPrivate;//WIP ou Private
-			switch(command.security) {
-				case 'wip':
-					console.warn(`Interaction /${command.name} is WIP`.yellow);
-					break;
-				case 'public':
-					target = targetGlobal;
-					break;
+			var target;
+			if(config.isAllowed({on:'interaction_create', guild: {id:'global'} }, command.security)) {
+				target = targetGlobal;
+			} else if(config.isAllowed({on:'interaction_create', guild: {id:config.guild_test} }, command.security)) {
+				target = targetPrivate;//WIP ou Private
+			}
+			if(command.security == 'wip')
+				console.warn(`Interaction /${command.name} is WIP`.yellow);
+			if(!target) {
+				console.error(`Interaction /${command.name} can't be loaded anywere with this security`.red);
+				continue;
 			}
 
 			if(await this.addCommand(command, target)) {
 				c.total++;
-				switch(command.security) {
-					case 'public': c.public++; break;
-					case 'wip': c.wip++; break;
-					case 'private': c.private++; break;
-					default: c.other++;
+				if(command.security == 'wip') c.wip++;
+				switch(target) {
+					case targetPrivate: c.private++; continue;
+					case targetGlobal: c.public++; continue;
 				}
 			}
 		}

@@ -1,8 +1,9 @@
-module.exports = class Interaction {
+const config = require('./config.js');
+
+module.exports = class InteractionBase {
 	bot = undefined;
-	config = require('./config.js');
+	static config = require('./config.js')
 	commandsMgr = require('./commands');
-	static getConfig() { return require('./config.js'); }
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '
@@ -36,7 +37,7 @@ module.exports = class Interaction {
 	}
 
 	async loadCommands() {
-		const targetPrivate = this.getTarget(this.config.guild_test);
+		const targetPrivate = this.getTarget(config.guild_test);
 		const targetGlobal = process.env.WIPOnly ? targetPrivate : this.getTarget();//serv privé (en WIP) ou le global
 		return this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
 	}
@@ -77,7 +78,7 @@ module.exports = class Interaction {
 		}
 		else if(post.embed || post.type == 'rich') {
 			return { data: {
-				type: 3,
+				type: 4,
 				data: { content: '', embeds: [ post ] }
 			}};
 		}
