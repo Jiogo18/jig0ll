@@ -11,7 +11,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 	async onInteraction(interaction) {
 
-		const cmdData = new CommandData(CommandData.source.INTERACTION, interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
+		const cmdData = new CommandData(CommandData.source.INTERACTION, interaction, this);
 
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
@@ -73,7 +73,7 @@ module.exports = class InteractionManager extends InteractionBase {
 				throw "execute is not defined for this option";
 			}
 
-			return await command.execute(cmdData, cmdData.application);
+			return await command.execute(cmdData, { interaction: cmdData.interactionMgr, bot: cmdData.bot, commands: cmdData.commands });
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);

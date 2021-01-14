@@ -39,11 +39,12 @@ module.exports = class CommandData {
 		get isInteraction() { return this.on == CommandData.INTERACTION; }
 		get isMessage() { return this.on == CommandData.MESSAGE || this.on == CommandData.MESSAGE_PRIVATE; }
 	#commandObject; get commandSource() { return this.#commandObject; }
-	#application;
-		get application() { return this.#application; }
-		get bot() { return this.application.bot; }
-		get interactionMgr() { return this.application.interaction; }
-		get commands() { return this.application.commands; }
+	#interaction;
+		get interactionMgr() { return this.#interaction; }
+		get bot() { return this.interactionMgr.bot; }
+		get commands() { return this.interactionMgr.commandsMgr.commands; }
+
+
 
 	#commandName; get commandName() { return this.#commandName; }
 	#options; get options() { return this.#options; }
@@ -60,10 +61,10 @@ module.exports = class CommandData {
 		get author() { return this.#author || {partiel:true}; };
 		get username() { return this.author ? this.author.username : undefined; }
 
-	constructor(source, commandObject, application) {
+	constructor(source, commandObject, interactionMgr) {
 		this.#on = source;
 		this.#commandObject = commandObject;
-		this.#application = application;
+		this.#interaction = interactionMgr;
 		switch(source) {
 			case CommandData.source.MESSAGE:
 			case CommandData.source.MESSAGE_PRIVATE:

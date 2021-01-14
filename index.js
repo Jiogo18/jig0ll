@@ -76,7 +76,7 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 
 	//2 try catch to answer with the error ONLY when it's a command
 	try {
-		var cmdData = new CommandData(CommandData.source.MESSAGE, message, {bot: bot, interaction: interactionMgr, commands: interactionMgr.commandsMgr.commands});
+		var cmdData = new CommandData(CommandData.source.MESSAGE, message, interactionMgr);
 		const retour = await interactionMgr.onCommand(cmdData);
 		
 		if(retour)
