@@ -26,13 +26,13 @@ module.exports = {
 
 	
 	securityLevel: {
-		public: new Security('public', () => { return true }),
+		public: new Security('public', () => true),
 		wip: new Security('wip', context => {
 			return (context.guild && context.guild.id || context.guild_id) == module.exports.guild_test;//uniquement sur un serv privé
 		}),
-		bot: new Security('bot', ({author}) => { author.id == process.env.BOT_ID }),
-		jiogo18: new Security('jiogo18', ({author}) => { author.id == module.exports.jiogo18 }),
-		rubis: new Security('jiogo18', ({author}) => { author.id == module.exports.rubis }),
+		bot: new Security('bot', ({author}) => author.id == process.env.BOT_ID),
+		jiogo18: new Security('jiogo18', ({author}) => author.id == module.exports.jiogo18),
+		rubis: new Security('jiogo18', ({author}) => author.id == module.exports.rubis),
 		private: new Security('private', context => {//moi et le bot uniquement
 			if(context.on == 'interaction_create') return module.exports.securityLevel.wip.isAllowed(context);//interactions sur le serv de test
 			return module.exports.securityLevel.bot.isAllowed(context) || module.exports.securityLevel.jiogo18.isAllowed(context);
@@ -48,8 +48,8 @@ module.exports = {
 		if(security == 0 || security == undefined || security == false)
 			return true;//pas de sérucité
 
-			
-		if(typeof security != 'object')
+
+			if(typeof security != 'object')
 			security = this.securityLevel[security];
 		if(security && security.isAllowed)
 			return security.isAllowed(context);
