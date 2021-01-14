@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const MessageMaker = require('./messageMaker.js');
 
 function splitCommand(content) {
 	//split mais de façon logique pour les ""
@@ -118,31 +119,33 @@ module.exports = class CommandData {
 	}
 
 
-	getAnswer() {
-		return 'work in progress';
-	}
 
 	sendAnswer(message) {
+		if(message == undefined) { return false; }
+		if(!message.getForMessage) {
+			if(message.type == 'rich')
+				message = new MessageMaker.Embed(message.title, message.description, message.cosmetic, message.fields);
+			else
+				message = new MessageMaker.Message(message);
+			console.warn('CommandData::sendAnswer Message not created with MessageMaker'.yellow)
+		}
+
 		switch(this.on) {
 			case CommandData.source.MESSAGE:
-				if(this.channel.send) {
-					this.channel.send(message);
-					return true;
+				if(!this.channel.send) {
+					return false;
 				}
-				return false;
+				this.channel.send(message.getForMessage());
+				return true;
 			case CommandData.source.MESSAGE_PRIVATE:
-				if(this.user.send) {
-					this.user.send();
-					return true;
+				if(!this.author.send) {
+					return false;
 				}
-				return false;
+				this.author.send(message.getForMessage());
+				return true;
 			case CommandData.source.INTERACTION:
-				if(message == undefined) { return false; }
 				return this.bot.api.interactions(this.commandSource.id, this.commandSource.token)
-					.callback.post({ data: {
-						type: 4,
-						data: { content: message }
-					}});//TODO : lib pour créer des messages
+					.callback.post(message.getForInteraction());
 			default:
 				console.warn(`CommandData can't answer ${context.on} ${context.isInteraction}`);
 				return false;

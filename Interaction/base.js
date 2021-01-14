@@ -68,32 +68,9 @@ module.exports = class InteractionBase {
 	}
 
 
-	makeMessage(post) {
-		if(post == undefined) { return; }
-		else if(post.data && post.data.data) {
-			return post;
-		}
-		else if(post.data && post.data.content) {
-			return { data: post };
-		}
-		else if(post.embed || post.type == 'rich') {
-			return { data: {
-				type: 4,
-				data: { content: '', embeds: [ post ] }
-			}};
-		}
-		else {
-			return { data: {
-				type: 4,
-				data: { content: post }
-			}};
-		}
-	}
-
-	sendAnswer(interaction, post) {
-		if(post == undefined) { return; }
-		return this.bot.api.interactions(interaction.id, interaction.token)
-				.callback.post(this.makeMessage(post));
+	sendAnswer(interaction, post, cmdData) {
+		console.trace('sendAnswer is deprecated');
+		cmdData.sendAnswer(post);
 	}
 }
 

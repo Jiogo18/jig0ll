@@ -16,9 +16,7 @@ module.exports = class InteractionManager extends InteractionBase {
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
 
-		if(retour)
-			this.sendAnswer(interaction, retour);
-		else
+		if(!cmdData.sendAnswer(retour))
 			console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
 	}
 
