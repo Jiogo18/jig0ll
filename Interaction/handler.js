@@ -1,4 +1,5 @@
 const InteractionBase = require('./base.js');
+const CommandData = require('./commandData.js');
 
 module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
@@ -9,78 +10,69 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 	async onInteraction(interaction) {
-		const commandName = interaction.data.name.toLowerCase();
-		var command = this.commandsMgr.commands.get(commandName);
+
+		const cmdData = new CommandData('interaction', interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
+
+		const retour = await this.onCommand(cmdData);
+		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
+
+		if(retour)
+			this.sendAnswer(interaction, retour);
+		else
+			console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
+	}
+
+
+	async onCommand(cmdData) {
+		var command = this.commandsMgr.commands.get(cmdData.commandName);
+
 		if(!command) {
-			console.error(`Command unknow: ${commandName}`);
+			console.warn(`Command unknow: ${cmdData.commandName}`);
 
 			if(process.env.WIPOnly)
-				this.sendAnswer(interaction, `Command unknow: ${commandName}`);//peut être fait par un autre Jig0ll
-			
+				return `Command unknow: ${cmdData.commandName}`;
+
 			return;
 		}
 
-		const context = {
-			name: commandName,
-			user: interaction.member.user,
-			guild: { id: interaction.guild_id },
-			channel: { id: interaction.channel_id },
-			on: 'interaction'
-		}
-
-		if(!InteractionBase.config.isAllowed(context, command.security)) {
-			this.sendAnswer(interaction, `You can't do that`);
-			return;
+		
+		if(!InteractionBase.config.isAllowed(cmdData, command.security)) {
+			return `You can't do that`;
 		}
 
 
+		var lastArg = cmdData.commandName;
 
-		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
-		//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
-		const args = (interaction.data.options || []).map(option => option.name);
-		const commandLine = `/${[commandName].concat(args).join(' ')}`;//just for the console
+		for(let i=0; i<cmdData.options.length; i++) {//get the sub command named optionName
+			const optionName = cmdData.getOptionType(i);
 
-		for(const optionName of args) {//get the sub command named optionName
-			var subCommand = command.options.find(option => option.name == optionName);
+			var subCommand = command.options ? command.options.find(option => option.name == optionName || (optionName==true && 3 <= option.type)) : undefined;
 			if(subCommand == undefined) {
-				console.error(`Option unknow: ${commandName} ${optionName}`);
+				console.error(`Option unknow: ${cmdData.commandName} ${optionName}`);
 				if(process.env.WIPOnly)
-					this.sendAnswer(interaction, `Option unknow: ${optionName}`);
+					return `Option unknow: ${optionName}`;
 				return;
 			}
-			if(!InteractionBase.config.isAllowed(context, subCommand.security)) {
-				this.sendAnswer(interaction, `You can't do that`);
-				return;
+			if(!InteractionBase.config.isAllowed(cmdData, subCommand.security)) {
+				return `You can't do that`;
 			}
 			command = subCommand;
+			lastArg = optionName;
 		}
 
+
 		try {
-			if(command.execute == undefined) {
-				const lastArg = args.length>0 ? args[args.length-1] : commandName;
+			if(typeof command.execute != 'function') {
 				console.error(`Can't find execute() for ${lastArg}`.red);
 				throw "execute is not defined for this option";
 			}
-			const retour = await command.execute(interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
 
-			this.sendAnswer(interaction, retour);
-			console.log(`Interaction done for ${interaction.member.user.username} : "${commandLine}"`);
-			if(!retour) {
-				console.warn(`Interaction "${commandLine}" has no answer`.yellow);
-			}
+			return await command.execute(cmdData, cmdData.application);
+
 		} catch (error) {
-			this.sendAnswer(interaction, `Sorry I've had an error`);
-			console.error(`An error occured will executing "${commandLine}"`.red, error);
+			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
+			return `Sorry I've had an error`;
 		}
-	}
-
-	onCommand(commandName, options, context) {
-		var command = this.commandsMgr.commands.get(commandName);
-		console.debug(`onCommand ${commandName}`)
-		console.debug(command);
-
-
-		return 'Work in Progress';
 	}
 }
 

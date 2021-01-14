@@ -26,13 +26,13 @@ module.exports = {
 		type: 3,
 		required: true,
 
-		execute: async function(interaction) {
-			const location = interaction.data.options[0].value;
+		execute: async function(context) {
+			const location = context.getOptionValue(0);
 			
 			switch(location.toLowerCase()) {
 				case "plenitude":
 				case "plénitude":
-					return await (CmdPlenitude.getMeteo(interaction));
+					return await (CmdPlenitude.getMeteo(context));
 				default:
 					return await (module.exports.sendWeatherRequest(location));
 			}

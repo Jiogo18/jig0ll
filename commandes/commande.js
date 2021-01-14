@@ -63,6 +63,7 @@ module.exports = class Cmd
 		var found=false;
 		if(!message.content.startsWith(prefix)) { return; }
 		message.content = message.content.substring(prefix.length);
+		message.prefix = prefix;
 
 		var msg=splitCommand(message.content);
 
@@ -80,7 +81,7 @@ module.exports = class Cmd
 					return null;//nothing else to do
 			}
 		}
-		if(!Cmd.isAction(msg)) return null;//pas reconnu
+		if(!Cmd.isAction(msg) && !process.env.WIPOnly) return null;//pas reconnu (sauf en wip ! changement de version)
 
 		if(!message.channel.topic || !message.channel.topic.includes("@Jig0ll")) {
 			message.channel.send("Disponible uniquement dans les channels avec '@Jig0ll' dans le topic");
@@ -137,26 +138,26 @@ function sendMsg(bot,messageOriginal,messageRetour) {
 }
 
 function splitCommand(content) {
-		var msgSplit=[""];
-		var onStr = false;
-		for(let i=0; i<content.length; i++)
-		{
-			if(content[i] == "\\") {
-				i++;
-				continue;//on saute meme le prochain char
-			}
-			if(content[i] == "\"") {
-				onStr = !onStr;
-				if(onStr && msgSplit[msgSplit.length-1].length > 0)
-					msgSplit[msgSplit.length] = "";//on ajoute une case
-				continue;//on le save pas
-			}
-			if(!onStr && content[i] == " ")
-			{//prochain arg
-				msgSplit[msgSplit.length] = "";//on ajoute une case
-				continue;//si on laisse plusieurs cases vides c'est pas grave (erreur de cmd)
-			}
-			msgSplit[msgSplit.length-1] = msgSplit[msgSplit.length-1] + content[i];//on ajoute le char
+	var msgSplit=[""];
+	var onStr = false;
+	for(let i=0; i<content.length; i++)
+	{
+		if(content[i] == "\\") {
+			i++;
+			continue;//on saute meme le prochain char
 		}
-		return msgSplit;
+		if(content[i] == "\"") {
+			onStr = !onStr;
+			if(onStr && msgSplit[msgSplit.length-1].length > 0)
+				msgSplit[msgSplit.length] = "";//on ajoute une case
+			continue;//on le save pas
+		}
+		if(!onStr && content[i] == " ")
+		{//prochain arg
+			msgSplit[msgSplit.length] = "";//on ajoute une case
+			continue;//si on laisse plusieurs cases vides c'est pas grave (erreur de cmd)
+		}
+		msgSplit[msgSplit.length-1] = msgSplit[msgSplit.length-1] + content[i];//on ajoute le char
 	}
+	return msgSplit;
+}

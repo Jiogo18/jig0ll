@@ -36,10 +36,10 @@ module.exports = {
 
 
 
-async function listInteraction(interaction, application) {
+async function listInteraction(context, application) {
 	var slashCmd = application.interaction; 
 	var globalInte = await slashCmd.getCmdFrom();
-	var localInte = await slashCmd.getCmdFrom(interaction.guild_id);
+	var localInte = await slashCmd.getCmdFrom(context.guild_id);
 	//attendre les 2 intéractions pour envoyer
 
 	const counter = globalInte.length + localInte.length;
@@ -52,18 +52,18 @@ async function listInteraction(interaction, application) {
 }
 
 
-async function cleanInteraction(interaction, application) {
+async function cleanInteraction(context, application) {
 	var slashCmd = application.interaction;
 
 	var globalInte = await slashCmd.getCmdFrom();
-	var localInte = await slashCmd.getCmdFrom(interaction.guild_id);
+	var localInte = await slashCmd.getCmdFrom(context.guild_id);
 	const counterBefore = globalInte.length + localInte.length;
 
 	await slashCmd.cleanCommands().catch(e => { console.error('error: cleanCommands global'); });//global
-	await slashCmd.cleanCommands(interaction.guild_id).catch(e => { console.error('error: cleanCommands guild'); console.log(e) });
+	await slashCmd.cleanCommands(context.guild_id).catch(e => { console.error('error: cleanCommands guild'); console.log(e) });
 	await slashCmd.loadCommands();
 	globalInte = await slashCmd.getCmdFrom().catch(e => { console.error('error: getCmdFrom 1'); });
-	localInte = await slashCmd.getCmdFrom(interaction.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
+	localInte = await slashCmd.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
 	const counterAfter = globalInte.length + localInte.length;
 
 	return `There were ${counterBefore} interactions, there are ${counterAfter}.`;

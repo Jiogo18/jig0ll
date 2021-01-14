@@ -8,6 +8,7 @@ var messageNotCmd = [];
 const InteractionManager = require('./interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
 require('colors');//colors for everyone ! (don't remove)
+const CommandData = require('./Interaction/commandData.js');
 
 
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
@@ -48,7 +49,7 @@ function onMessageNotCommand(message) {
 }
 
 
-bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
+bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
 	if(!InteractionManager.config.isAllowed(
 		{
@@ -75,16 +76,12 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, message => {
 
 	//2 try catch to answer with the error ONLY when it's a command
 	try {
-		var args = [...msg];//copy
-		const commandName = args.shift();
-		const retour = interactionMgr.onCommand(args,
-			{ user: message.author, guild: message.channel.guild, channel: message.channel, on: 'message' });//TODO : fonction
+		var cmdData = new CommandData('message', message, {bot: bot, interaction: interactionMgr, commands: interactionMgr.commandsMgr.commands});
+		const retour = await interactionMgr.onCommand(cmdData);
 		
-		if(retour) {
+		if(retour)
 			message.channel.send(retour);
-			console.log('answer of message sent by interactionMgr'.red);
-		}
-		else
+		else if(msg[0] && Cmd.isAction(msg[0]))
 			Cmd.action(bot, message, msg);
 	} catch (error) {
 		message.channel.send(`Sorry I've had an error: ${error}`);
