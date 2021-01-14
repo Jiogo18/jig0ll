@@ -36,8 +36,8 @@ module.exports = {
 
 
 
-async function listInteraction(context, application) {
-	var slashCmd = application.interaction; 
+async function listInteraction(context) {
+	var slashCmd = context.interactionMgr; 
 	var globalInte = await slashCmd.getCmdFrom();
 	var localInte = await slashCmd.getCmdFrom(context.guild_id);
 	//attendre les 2 intéractions pour envoyer
@@ -52,8 +52,8 @@ async function listInteraction(context, application) {
 }
 
 
-async function cleanInteraction(context, application) {
-	var slashCmd = application.interaction;
+async function cleanInteraction(context) {
+	var slashCmd = context.interactionMgr;
 
 	var globalInte = await slashCmd.getCmdFrom();
 	var localInte = await slashCmd.getCmdFrom(context.guild_id);

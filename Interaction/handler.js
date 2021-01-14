@@ -73,7 +73,7 @@ module.exports = class InteractionManager extends InteractionBase {
 				throw "execute is not defined for this option";
 			}
 
-			return await command.execute(cmdData, { interaction: cmdData.interactionMgr, bot: cmdData.bot, commands: cmdData.commands });
+			return await command.execute(cmdData);
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);

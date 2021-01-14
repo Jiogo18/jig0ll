@@ -11,7 +11,7 @@ module.exports = {
 		description: "Test un retour vide lors de l'appel de l'intéraction",
 		type: 1,
 
-		execute(context, application) {
+		execute(context) {
 			context.sendAnswer('Done');
 			return;
 		}
