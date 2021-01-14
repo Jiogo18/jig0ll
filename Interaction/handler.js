@@ -11,7 +11,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 	async onInteraction(interaction) {
 
-		const cmdData = new CommandData('interaction', interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
+		const cmdData = new CommandData(CommandData.source.INTERACTION, interaction, {bot: this.bot, interaction: this, commands: this.commandsMgr.commands});
 
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
@@ -44,9 +44,17 @@ module.exports = class InteractionManager extends InteractionBase {
 		var lastArg = cmdData.commandName;
 
 		for(let i=0; i<cmdData.options.length; i++) {//get the sub command named optionName
+			//on compare Name et option.name (le nom de l'option)
+			//si c'est un message (text) on a Name==true car:
+			// => si c'est une sous commande : Value est le nom de la sous commande (on compare Value et name)
+			// => sinon type est >=3 (string, number, boolean, ...) donc optionValue peut être n'importe quoi
 			const optionName = cmdData.getOptionType(i);
+			const optionValue = cmdData.getOptionValue(i);
+			const optionNa = optionName!=true ? optionName : optionValue;
 
-			var subCommand = command.options ? command.options.find(option => option.name == optionName || (optionName==true && 3 <= option.type)) : undefined;
+			var subCommand;
+			if(command.options)
+				subCommand = command.options.find(option => option.name == optionNa || (optionName==true && 3 <= option.type));
 			if(subCommand == undefined) {
 				console.error(`Option unknow: ${cmdData.commandName} ${optionName}`);
 				if(process.env.WIPOnly)
@@ -63,7 +71,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 		try {
 			if(typeof command.execute != 'function') {
-				console.error(`Can't find execute() for ${lastArg}`.red);
+				console.warn(`Can't find execute() for ${lastArg}`.yellow);
 				throw "execute is not defined for this option";
 			}
 

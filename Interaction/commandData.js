@@ -31,7 +31,7 @@ function splitCommand(content) {
 
 module.exports = class CommandData {
 	static source = {
-		MESSAGE: 'message', INTERACTION: 'interaction', MESSAGE_PRIVATE: 'message_private'
+		MESSAGE: 'message', MESSAGE_PRIVATE: 'message_private', INTERACTION: 'interaction'
 	};
 	
 	#on; get on() { return this.#on; }//#on can only be read (private)
@@ -70,8 +70,13 @@ module.exports = class CommandData {
 				this.#commandName = this.#options.shift();
 				this.#args = this.#options;
 				this.#commandLine = commandObject.prefix + commandObject.content;
+				if(commandObject.channel) {
 				this.#guild = commandObject.channel.guild;
 				this.#channel = commandObject.channel;
+				}
+				else {//message privé
+					this.#on = CommandData.source.MESSAGE_PRIVATE
+				}
 				this.#author = commandObject.author;
 				break;
 			case CommandData.source.INTERACTION:
@@ -115,5 +120,32 @@ module.exports = class CommandData {
 
 	getAnswer() {
 		return 'work in progress';
+	}
+
+	sendAnswer(message) {
+		switch(this.on) {
+			case CommandData.source.MESSAGE:
+				if(this.channel.send) {
+					this.channel.send(message);
+					return true;
+				}
+				return false;
+			case CommandData.source.MESSAGE_PRIVATE:
+				if(this.user.send) {
+					this.user.send();
+					return true;
+				}
+				return false;
+			case CommandData.source.INTERACTION:
+				if(message == undefined) { return false; }
+				return this.bot.api.interactions(this.commandSource.id, this.commandSource.token)
+					.callback.post({ data: {
+						type: 4,
+						data: { content: message }
+					}});//TODO : lib pour créer des messages
+			default:
+				console.warn(`CommandData can't answer ${context.on} ${context.isInteraction}`);
+				return false;
+		}
 	}
 }
