@@ -50,7 +50,7 @@ module.exports = {
 
 
 
-	commands: new Discord.Collection(),
+	commands: new Discord.Collection(),//les commandes stockées par le bot (avec les execute())
 
 	async addCommand(command, target) {
 
@@ -133,7 +133,8 @@ module.exports = {
 				console.warn(`Interaction /${command.name} is WIP`.yellow);
 			if(!target) {
 				console.error(`Interaction /${command.name} can't be loaded anywere with this security`.red);
-				continue;
+				target = targetPrivate;//TODO: gérer la sécurité autrement (global: true/false)
+				//mais on la stocke quand même
 			}
 
 			if(await this.addCommand(command, target)) {
@@ -149,6 +150,44 @@ module.exports = {
 
 		c.after = this.commands.length;
 		return c;
+	},
+
+	getCommandForData(cmdData) {
+		var command = this.commands.get(cmdData.commandName);
+
+		if(!command) {
+			return [undefined, `Command unknow: ${cmdData.commandName}`];
+		}
+		
+		if(!config.isAllowed(cmdData, command.security)) {
+			return [`You can't do that`];
+		}
+
+		var lastArg = cmdData.commandName;
+
+		for(let i=0; i<cmdData.options.length; i++) {//get the sub command named optionName
+			//on compare Name et option.name (le nom de l'option)
+			//si c'est un message (text) on a Name==true car:
+			// => si c'est une sous commande : Value est le nom de la sous commande (on compare Value et name)
+			// => sinon type est >=3 (string, number, boolean, ...) donc optionValue peut être n'importe quoi
+			const optionName = cmdData.getOptionType(i);
+			const optionValue = cmdData.getOptionValue(i);
+			const optionNa = optionName!=true ? optionName : optionValue;
+
+			var subCommand;
+			if(command.options)
+				subCommand = command.options.find(option => option.name == optionNa || (optionName==true && 3 <= option.type));
+			if(subCommand == undefined) {
+				return [undefined, `Option unknow: ${optionName}`];
+			}
+			if(!config.isAllowed(cmdData, subCommand.security)) {
+				return [`You can't do that`];
+			}
+			command = subCommand;
+			lastArg = optionName;
+		}
+
+		return [command, lastArg];
 	}
 
 }

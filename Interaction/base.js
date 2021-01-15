@@ -66,11 +66,5 @@ module.exports = class InteractionBase {
 			console.log(`All Slash Commands of ${target_id ? target_id : 'Global'} have been removed.`);
 		}
 	}
-
-
-	sendAnswer(interaction, post, cmdData) {
-		console.trace('sendAnswer is deprecated');
-		cmdData.sendAnswer(post);
-	}
 }
 

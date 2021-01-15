@@ -49,7 +49,7 @@ module.exports = {
 			return true;//pas de sérucité
 
 
-			if(typeof security != 'object')
+		if(typeof security != 'object')
 			security = this.securityLevel[security];
 		if(security && security.isAllowed)
 			return security.isAllowed(context);

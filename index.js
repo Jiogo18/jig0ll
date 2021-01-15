@@ -80,7 +80,7 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 		const retour = await interactionMgr.onCommand(cmdData);
 		
 		if(retour)
-			message.channel.send(retour);
+			cmdData.sendAnswer(retour);
 		else if(msg[0] && Cmd.isAction(msg[0]))
 			Cmd.action(bot, message, msg);
 	} catch (error) {

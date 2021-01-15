@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const MessageMaker = require('./messageMaker.js');
+const inspect = Symbol.for('nodejs.util.inspect.custom');
 
 function splitCommand(content) {
 	//split mais de façon logique pour les ""
@@ -30,6 +31,24 @@ function splitCommand(content) {
 
 
 
+function optionToOptionValue(option) {
+	if(!option) return undefined;
+	switch(typeof option) {
+		case 'string': return option;//message
+		case 'object': return option.value;//interaction
+		default: console.warn(`Option unknow with type ${option}`.yellow);
+	}
+}
+function optionToOptionName(option) {
+		if(!option) return undefined;
+		switch(typeof option) {
+			case 'string': return true;//anything (it's a string)
+			case 'object': return option.name;//interaction
+			default: console.warn(`Option unknow with type ${option}`.yellow); return true;
+		}
+}
+
+
 module.exports = class CommandData {
 	static source = {
 		MESSAGE: 'message', MESSAGE_PRIVATE: 'message_private', INTERACTION: 'interaction'
@@ -46,9 +65,21 @@ module.exports = class CommandData {
 
 
 
-	#commandName; get commandName() { return this.#commandName; }
-	#options; get options() { return this.#options; }
-	#args; get args() { return this.#args; }
+	commandName;
+	#options;
+		get options() { return this.#options || []; }
+		set options(o) { this.#options = typeof o != 'object' ? undefined : o; }
+		get optionsValue() {
+			if(this.options.length == 0) return [];
+			if(this.options[0].name == undefined) return this.options;
+			return this.options.map(option => option.value);
+		}
+		get optionsName() {
+			if(this.options.length == 0) return [];
+			if(this.options[0].name == undefined) return this.options;
+			return this.options.map(option => option.value);
+		}
+	#args; get args() { console.warn('deprecated'.yellow); return this.#args || this.options; }
 	#commandLine; get commandLine() { return this.#commandLine; }
 
 	#guild = { partiel: true };
@@ -68,10 +99,9 @@ module.exports = class CommandData {
 		switch(source) {
 			case CommandData.source.MESSAGE:
 			case CommandData.source.MESSAGE_PRIVATE:
-				this.#options = splitCommand(commandObject.content);//on suppose que le préfix est enlevé
-				this.#commandName = this.#options.shift();
-				this.#args = this.#options;
-				this.#commandLine = commandObject.prefix + commandObject.content;
+				this.options = splitCommand(commandObject.content);//on suppose que le préfix est enlevé
+				this.commandName = this.options.shift();
+				this.#commandLine = commandObject.content;
 				if(commandObject.channel) {
 				this.#guild = commandObject.channel.guild;
 				this.#channel = commandObject.channel;
@@ -82,12 +112,11 @@ module.exports = class CommandData {
 				this.#author = commandObject.author;
 				break;
 			case CommandData.source.INTERACTION:
-				this.#commandName = commandObject.data.name;
-				this.#options = commandObject.data.options || [];
+				this.commandName = commandObject.data.name;
+				this.options = commandObject.data.options || [];
 				//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
 				//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
-				this.#args = this.options.map(option => option.name);
-				this.#commandLine = `/${[this.commandName].concat(this.args).join(' ')}`;//just for the console
+				this.#commandLine = `${[this.commandName].concat(this.optionsName).join(' ')}`;//just for the console
 				this.#guild.id = commandObject.guild_id;
 				this.#channel.id = commandObject.channel_id;
 				this.#author = commandObject.member.user;
@@ -96,28 +125,14 @@ module.exports = class CommandData {
 		}
 	}
 
-	getOption(i) {
-		if(!this.options || i < 0 || this.options.length <= i) return undefined;
-		return this.options[i];
+	[inspect]() {
+		return `CommandData ${ { on: this.on, commandName: this.commandName, guild_id: this.guild_id } }`;
 	}
-	getOptionValue(i) {
-		const option = this.getOption(i);
-		if(!option) return undefined;
-		switch(typeof option) {
-			case 'string': return option;//message
-			case 'object': return option.value;//interaction
-			default: console.warn(`Option unknow with type ${option}`.yellow);
-		}
-	}
-	getOptionType(i) {
-		const option = this.getOption(i);
-		if(!option) return undefined;
-		switch(typeof option) {
-			case 'string': return true;//anything (it's a string)
-			case 'object': return option.name;//interaction
-			default: console.warn(`Option unknow with type ${option}`.yellow); return true;
-		}
-	}
+
+	clone() { return new CommandData(this.on, this.commandSource, this.interactionMgr); }
+
+	getOptionValue(i) { return optionToOptionValue(this.options[i]); }
+	getOptionType(i) { return optionToOptionName(this.options[i]); }
 
 
 

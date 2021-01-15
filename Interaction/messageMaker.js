@@ -6,6 +6,13 @@ function makeForInteractionFromData(data, type) {
 		data: data
 	}};
 }
+function getColor(color) {
+	switch(color) {
+		case 'red': return 13369344;
+		case 'blue': return 3447003;
+		default: return 3447003;
+	}
+}
 
 class MessageMaker {
 	content;
@@ -26,7 +33,7 @@ class EmbedMaker extends MessageMaker {
 
 		var embed = new Discord.MessageEmbed()
 			.setTitle(title)
-			.setColor((cosmetic ? cosmetic.color : undefined) || 3447003)
+			.setColor(getColor(cosmetic ? cosmetic.color : undefined))
 			.setDescription(description);
 		if(field) {
 			embed.addFields(field);
