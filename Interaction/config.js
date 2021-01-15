@@ -73,6 +73,8 @@ module.exports = {
 		if(command.wip) { return this.securityLevel.wip.isAllowed(context); }
 		if(command.public) { return this.securityLevel.public.isAllowed(context); }
 		if(command.private) { return this.securityLevel.private.isAllowed(context); }
+		if(command.type > 0) { return true; }//autorisé (pour les sous commandes)
+		//TODO: avoir une sécurité par héritage (créée au démarrage ?)
 		console.warn(`isAllowedToUse unknow for ${command.name}`);
 	},
 	isAllowedToSee(command, context) {
