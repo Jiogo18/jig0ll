@@ -65,6 +65,7 @@ module.exports = {
 	},
 
 	isAllowedInteractionCreate(command) {
+		if(!command.interaction) { return this.allowedPlace.NONE; }
 		if(command.wip) { return this.allowedPlace.PRIVATE; }
 		if(command.public) { return this.allowedPlace.PUBLIC; }
 		return this.allowedPlace.NONE;

@@ -137,8 +137,8 @@ module.exports = {
 				console.warn(`Interaction /${command.name} is WIP`.yellow);
 
 
+			c.total++;
 			if(await this.addCommand(command, target)) {
-				c.total++;
 				if(command.wip) c.wip++;
 				switch(target) {
 					case targetPrivate: c.private++; break;
