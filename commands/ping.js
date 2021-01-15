@@ -1,7 +1,10 @@
 module.exports = {
 	name: 'ping',
 	description: 'Pong!',
-	security: 'wip',
+	interaction: true,
+	public: true,
+	wip: true,
+
 	execute() {
 		// return {
 		// 	data: {

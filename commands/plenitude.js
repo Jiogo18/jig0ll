@@ -33,8 +33,10 @@ const PlenCity = {
 
 module.exports = {
 	name: 'plénitude',
-	security: 'wip',
 	description: "Commandes de Plénitude",
+	interaction: true,
+	public: true,
+	wip: true,
 
 	options: [{
 		name: 'météo',

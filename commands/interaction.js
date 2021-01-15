@@ -1,9 +1,9 @@
-const InteractionBase = require('../Interaction/base.js');
-
 module.exports = {
 	name: 'interaction',
 	description: 'Informations sur les intéractions du bot',
-	security: InteractionBase.config.securityLevel.wip,
+	interaction: true,
+	public: false,
+	wip: true,
 
 	options: [{
 		name: "list",

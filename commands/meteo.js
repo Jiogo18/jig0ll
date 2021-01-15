@@ -18,8 +18,11 @@ const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
 
 module.exports = {
 	name: 'météo',
-	security: 'wip',
 	description: "La météo actuelle de la ville/région (par openweathermap)",
+	interaction: true,
+	public: true,
+	wip: true,
+
 	options: [{
 		name: "location",
 		description: "La météo actuelle de la ville/région (par openweathermap)",

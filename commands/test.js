@@ -4,7 +4,9 @@ var slashMgr = undefined
 module.exports = {
 	name: 'test',
 	description: 'Tests diverses',
-	security: 'private',
+	interaction: true,
+	public: false,
+	wip: true,
 
 	options: [{
 		name: "empty_answer",

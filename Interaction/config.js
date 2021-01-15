@@ -56,5 +56,32 @@ module.exports = {
 
 		console.error(`No security config set for ${security}`.red);
 		return false;
+	},
+
+	allowedPlace: {
+		PUBLIC: 'public',
+		PRIVATE: 'private',
+		NONE: 'none'
+	},
+
+	isAllowedInteractionCreate(command) {
+		if(command.wip) { return this.allowedPlace.PRIVATE; }
+		if(command.public) { return this.allowedPlace.PUBLIC; }
+		return this.allowedPlace.NONE;
+	},
+	isAllowedToUse(command, context) {
+		if(command.wip) { return this.securityLevel.wip.isAllowed(context); }
+		if(command.public) { return this.securityLevel.public.isAllowed(context); }
+		if(command.private) { return this.securityLevel.private.isAllowed(context); }
+		console.warn(`isAllowedToUse unknow for ${command.name}`);
+	},
+	isAllowedToSee(command, context) {
+		if(command.secret) return false;
+		if(command.publicSee) return true;
+		return this.isAllowedToUse(command, context);
+	},
+	isAllowedToGetCommand(command, context, readOnly) {
+		if(readOnly) return this.isAllowedToSee(command, context);
+		return this.isAllowedToUse(command, context);
 	}
 };

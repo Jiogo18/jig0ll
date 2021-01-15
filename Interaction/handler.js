@@ -16,8 +16,15 @@ module.exports = class InteractionManager extends InteractionBase {
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
 
-		if(!cmdData.sendAnswer(retour))
-			console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
+		const answerOk = cmdData.sendAnswer(retour)
+			.then(() => {
+				if(!answerOk)
+					console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
+			})
+			.catch(e => {
+				console.error(`Error while sending an answer`.red);
+				console.error(e);
+			})
 	}
 
 

@@ -62,17 +62,20 @@ module.exports = {
 			options: command.options
 		}};//these are the only JSON Param from Discord API
 		
-		var ok = true;
-		await target.post(post)
+		var posted = false;
+		if(target) {
+			await target.post(post)//TODO : utiliser patch si elle existe car 1) ça supprimerais des mauvais trucs, 2) interaction clean a une erreur (il retrouve pas l'intéraction)
 			.catch(e => {
 				console.error(`Error while posting command ${command.name}`.red);
-				ok = false;
+				posted = false;
 			})
 			.then(e => {
-				this.commands.set(command.name, command);
+				posted = true;
 				this.resetCacheTimer(target);
 			});
-		return ok;
+		}
+		this.commands.set(command.name, command);//registered also if it's not posted
+		return posted;
 	},
 
 	async removeCommand(command, target) {
@@ -119,47 +122,60 @@ module.exports = {
 			public: 0,
 			wip: 0,
 			private: 0,
+			hidden: 0,
 		};
 
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
 			var target;
-			if(config.isAllowed({on:'interaction_create', guild: {id:'global'} }, command.security)) {
-				target = targetGlobal;
-			} else if(config.isAllowed({on:'interaction_create', guild: {id:config.guild_test} }, command.security)) {
-				target = targetPrivate;//WIP ou Private
+			if(command.security) {
+				console.warn(`command ${command.name} has security which is deprecated`);
+				if(config.isAllowed({on:'interaction_create', guild: {id:'global'} }, command.security)) {
+					target = targetGlobal;
+				} else if(config.isAllowed({on:'interaction_create', guild: {id:config.guild_test} }, command.security)) {
+					target = targetPrivate;//WIP ou Private
+				}
 			}
-			if(command.security == 'wip')
+			else {
+				const place = config.isAllowedInteractionCreate(command);
+				switch(place) {
+					case config.allowedPlace.PUBLIC: target = targetGlobal; break;
+					case config.allowedPlace.PRIVATE: target = targetPrivate; break;
+				}
+			}
+			
+			if(command.wip || command.security == 'wip')
 				console.warn(`Interaction /${command.name} is WIP`.yellow);
-			if(!target) {
-				console.error(`Interaction /${command.name} can't be loaded anywere with this security`.red);
-				target = targetPrivate;//TODO: gérer la sécurité autrement (global: true/false)
-				//mais on la stocke quand même
-			}
+
 
 			if(await this.addCommand(command, target)) {
 				c.total++;
-				if(command.security == 'wip') c.wip++;
+				if(command.wip) c.wip++;
 				switch(target) {
-					case targetPrivate: c.private++; continue;
-					case targetGlobal: c.public++; continue;
+					case targetPrivate: c.private++; break;
+					case targetGlobal: c.public++; break;
+					case undefined: c.hidden++; break;
+				}
+				if(target == targetGlobal) {
+					target = targetPrivate;//TODO: sécurité pour pas envoyer en Global pour le moment
+					console.warn('in the future change this target (commands.js loadCommands)'.yellow);
 				}
 			}
 		}
-		console.log(`Loaded ${c.total} commands, ${c.public} public`.green);
+		console.log(`Loaded ${c.total} commands, ${c.public} public, ${c.private} private`.green);
 
 		c.after = this.commands.length;
 		return c;
 	},
 
-	getCommandForData(cmdData) {
+	getCommandForData(cmdData, readOnly) {
 		var command = this.commands.get(cmdData.commandName);
 
 		if(!command) {
 			return [undefined, `Command unknow: ${cmdData.commandName}`];
 		}
 		
-		if(!config.isAllowed(cmdData, command.security)) {
+		if(!config.isAllowedToGetCommand(command, cmdData, readOnly)) {
 			return [`You can't do that`];
 		}
 
@@ -180,7 +196,7 @@ module.exports = {
 			if(subCommand == undefined) {
 				return [undefined, `Option unknow: ${optionName}`];
 			}
-			if(!config.isAllowed(cmdData, subCommand.security)) {
+			if(!config.isAllowedToGetCommand(command, cmdData, readOnly)) {
 				return [`You can't do that`];
 			}
 			command = subCommand;

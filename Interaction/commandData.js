@@ -136,7 +136,7 @@ module.exports = class CommandData {
 
 
 
-	sendAnswer(message) {
+	async sendAnswer(message) {
 		if(message == undefined) { return false; }
 		if(!message.getForMessage) {
 			if(message.type == 'rich')
@@ -151,16 +151,14 @@ module.exports = class CommandData {
 				if(!this.channel.send) {
 					return false;
 				}
-				this.channel.send(message.getForMessage());
-				return true;
+				return await this.channel.send(message.getForMessage());
 			case CommandData.source.MESSAGE_PRIVATE:
 				if(!this.author.send) {
 					return false;
 				}
-				this.author.send(message.getForMessage());
-				return true;
+				return await this.author.send(message.getForMessage());
 			case CommandData.source.INTERACTION:
-				return this.bot.api.interactions(this.commandSource.id, this.commandSource.token)
+				return await this.bot.api.interactions(this.commandSource.id, this.commandSource.token)
 					.callback.post(message.getForInteraction());
 			default:
 				console.warn(`CommandData can't answer ${context.on} ${context.isInteraction}`);

@@ -9,7 +9,9 @@ function makeMessage(description, error) {
 module.exports = {
 	name: 'help',
 	description: 'Affiche les commandes disponibles, ',
-	security: 'secret',//pas dans interaction
+	interaction: false,//pas dans interaction
+	public: true,
+	wip: true,
 
 
 	options: [{
@@ -23,7 +25,7 @@ module.exports = {
 			var context2 = context.clone();
 			context2.commandName = commandToHelp.shift();
 			context2.options = commandToHelp;
-			const [command] = context.interactionMgr.commandsMgr.getCommandForData(context2);
+			const [command] = context.interactionMgr.commandsMgr.getCommandForData(context2, true);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
 			if(!command) { return module.exports.execute(context); }
@@ -61,7 +63,7 @@ function getDescriptionFor(context, commands) {
 
 	var retour = [];
 	commands.forEach((command, key) => {
-		if(!InteractionConfig.isAllowed(context, command.security)) {
+		if(!InteractionConfig.isAllowedToSee(command, context)) {
 			return;
 		}
 		var commandName = command.name;
