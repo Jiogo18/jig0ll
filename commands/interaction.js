@@ -1,3 +1,5 @@
+const MessageMaker = require('../Interaction/messageMaker');
+
 module.exports = {
 	name: 'interaction',
 	description: 'Informations sur les intéractions du bot',
@@ -46,9 +48,10 @@ async function listInteraction(context) {
 	globalInte = globalInte.map(option => { return option.name; });
 	localInte = localInte.map(option => { return option.name; });
 
-	const global = globalInte.length ? `        ${globalInte.join('\n        ')}\n` : '';
-	const local = localInte.length ? `        ${localInte.join('\n        ')}\n` : '';
-	return `${counter} interactions are available in this guild\n    Global:\n${global}    Local:\n${local}`;
+	const retour = new MessageMaker.Embed('Interaction list', `${counter} interactions are available in this guild`);
+	if(globalInte.length > 0) retour.addField('Global', `${globalInte.join('\n',)}`);//TODO: the first space is removed also with \xa0
+	if(localInte.length > 0) retour.addField('Local', `${localInte.join('\n')}`);
+	return retour;
 }
 
 
