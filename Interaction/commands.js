@@ -128,23 +128,12 @@ module.exports = {
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
 			var target;
-			if(command.security) {
-				console.warn(`command ${command.name} has security which is deprecated`);
-				if(config.isAllowed({on:'interaction_create', guild: {id:'global'} }, command.security)) {
-					target = targetGlobal;
-				} else if(config.isAllowed({on:'interaction_create', guild: {id:config.guild_test} }, command.security)) {
-					target = targetPrivate;//WIP ou Private
-				}
-			}
-			else {
-				const place = config.isAllowedInteractionCreate(command);
-				switch(place) {
-					case config.allowedPlace.PUBLIC: target = targetGlobal; break;
-					case config.allowedPlace.PRIVATE: target = targetPrivate; break;
-				}
+			switch(config.isAllowedInteractionCreate(command)) {
+				case config.allowedPlace.PUBLIC: target = targetGlobal; break;
+				case config.allowedPlace.PRIVATE: target = targetPrivate; break;
 			}
 			
-			if(command.wip || command.security == 'wip')
+			if(command.wip)
 				console.warn(`Interaction /${command.name} is WIP`.yellow);
 
 
@@ -155,10 +144,6 @@ module.exports = {
 					case targetPrivate: c.private++; break;
 					case targetGlobal: c.public++; break;
 					case undefined: c.hidden++; break;
-				}
-				if(target == targetGlobal) {
-					target = targetPrivate;//TODO: sécurité pour pas envoyer en Global pour le moment
-					console.warn('in the future change this target (commands.js loadCommands)'.yellow);
 				}
 			}
 		}
