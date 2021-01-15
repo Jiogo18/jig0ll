@@ -1,5 +1,5 @@
 const InteractionBase = require('./base.js');
-const CommandData = require('./commandData.js');
+const { CommandInteraction } = require('./commandData.js');
 
 module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
@@ -10,8 +10,8 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 	async onInteraction(interaction) {
-
-		const cmdData = new CommandData(CommandData.source.INTERACTION, interaction, this);
+		
+		const cmdData = new CommandInteraction(interaction, this);
 
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);

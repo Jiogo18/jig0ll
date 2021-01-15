@@ -29,59 +29,39 @@ function splitCommand(content) {
 	return msgSplit;
 }
 
-
-
-function optionToOptionValue(option) {
-	if(!option) return undefined;
-	switch(typeof option) {
-		case 'string': return option;//message
-		case 'object': return option.value;//interaction
-		default: console.warn(`Option unknow with type ${option}`.yellow);
-	}
-}
-function optionToOptionName(option) {
-		if(!option) return undefined;
-		switch(typeof option) {
-			case 'string': return true;//anything (it's a string)
-			case 'object': return option.name;//interaction
-			default: console.warn(`Option unknow with type ${option}`.yellow); return true;
-		}
-}
-
-
-module.exports = class CommandData {
-	static source = {
-		MESSAGE: 'message', MESSAGE_PRIVATE: 'message_private', INTERACTION: 'interaction'
-	};
-	
-	#on; get on() { return this.#on; }//#on can only be read (private)
-		get isInteraction() { return this.on == CommandData.INTERACTION; }
-		get isMessage() { return this.on == CommandData.MESSAGE || this.on == CommandData.MESSAGE_PRIVATE; }
-	#commandObject; get commandSource() { return this.#commandObject; }
-	#interaction;
-		get interactionMgr() { return this.#interaction; }
-		get bot() { return this.interactionMgr.bot; }
-		get commands() { return this.interactionMgr.commandsMgr.commands; }
-
-
-
-	commandName;
-	#options;
-		get options() { return this.#options || []; }
-		set options(o) { this.#options = typeof o != 'object' ? undefined : o; }
-		get optionsValue() {
-			if(this.options.length == 0) return [];
-			if(this.options[0].name == undefined) return this.options;
-			return this.options.map(option => option.value);
-		}
-		get optionsName() {
-			if(this.options.length == 0) return [];
-			if(this.options[0].name == undefined) return this.options;
-			return this.options.map(option => option.value);
-		}
-	#args; get args() { console.warn('deprecated'.yellow); return this.#args || this.options; }
+class CommandContent {
+	#commandName; get commandName() { return this.#commandName; }
+	#options; get options() { return this.#options; }
+	#optionsName; get optionsName() { return this.#optionsName; }
+	#optionsValue; get optionsValue() { return this.#optionsValue; }
 	#commandLine; get commandLine() { return this.#commandLine; }
 
+	constructor(commandName, options) {
+		this.#commandName = commandName;
+		this.#options = [];//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
+		for(const option of (options || [])) {
+			if(typeof option == 'object')
+				this.#options.push(option);
+			else
+				this.#options.push({ name: true, option: option });
+		}
+		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
+		this.#optionsName = this.options.map(option => option.name);
+		this.#optionsValue = this.options.map(option => option.option);
+		this.#commandLine = this.commandName + ' ' + this.optionsName.join(' ');//just for the console
+	}
+
+	clone() { return new CommandContent(this.#commandName, [...this.#options]); }
+
+	static fromInteraction(interaction) { return new CommandContent(interaction.data.name, interaction.data.options); }
+	static fromMessage(message) {
+		var options = splitCommand(message.content);//on suppose que le préfix est enlevé
+		return new CommandContent(options.shift(), options);
+	}
+}
+
+
+class CommandContext {
 	#guild = { partiel: true };
 		get guild() { return this.#guild || {partiel:true}; }
 		get guild_id() { return typeof this.guild == 'object' ? this.guild.id : undefined  }
@@ -91,78 +71,123 @@ module.exports = class CommandData {
 	#author = { partiel: true };
 		get author() { return this.#author || {partiel:true}; };
 		get username() { return this.author ? this.author.username : undefined; }
+	
+	constructor(guild, channel, author) {
+		this.#guild = guild;
+		this.#channel = channel;
+		this.#author = author;
+	}
 
-	constructor(source, commandObject, interactionMgr) {
-		this.#on = source;
-		this.#commandObject = commandObject;
-		this.#interaction = interactionMgr;
-		switch(source) {
-			case CommandData.source.MESSAGE:
-			case CommandData.source.MESSAGE_PRIVATE:
-				this.options = splitCommand(commandObject.content);//on suppose que le préfix est enlevé
-				this.commandName = this.options.shift();
-				this.#commandLine = commandObject.content;
-				if(commandObject.channel) {
-				this.#guild = commandObject.channel.guild;
-				this.#channel = commandObject.channel;
-				}
-				else {//message privé
-					this.#on = CommandData.source.MESSAGE_PRIVATE
-				}
-				this.#author = commandObject.author;
-				break;
-			case CommandData.source.INTERACTION:
-				this.commandName = commandObject.data.name;
-				this.options = commandObject.data.options || [];
-				//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
-				//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
-				this.#commandLine = `${[this.commandName].concat(this.optionsName).join(' ')}`;//just for the console
-				this.#guild.id = commandObject.guild_id;
-				this.#channel.id = commandObject.channel_id;
-				this.#author = commandObject.member.user;
-				break;
-			default: console.warn(`CommandData source unknow: ${source}`);
-		}
+	static fromInteraction(interaction) {
+		return new CommandContext({ id: interaction.guild_id, partial: true }, { id: interaction.channel_id, partial: true }, interaction.member.user);
+	}
+	static fromMessage(message) {
+		const channel = message.channel;
+		return new CommandContext(channel && channel.guild, channel, message.author);
+	}
+}
+
+
+
+
+function makeSafeMessage(message) {
+	if(message == undefined) { return undefined; }
+	if(!message.getForMessage) {
+		console.warn('CommandData::sendAnswer Message not created with MessageMaker'.yellow)
+		if(message.type == 'rich')
+			return new MessageMaker.Embed(message.title, message.description, message.cosmetic, message.fields);
+		else
+			return new MessageMaker.Message(message);
+	}
+	return message;
+}
+
+class CommandData {
+	#content; get content() { return this.#content; }
+	#context; get context() { return this.#context; }//readonly
+
+	get commandName() { return this.content.commandName; }
+	get options() { return this.content.options; }
+	get guild_id() { return this.context.guild_id; }
+	get author() { return this.context.author; }
+	get source() {
+		if(this.isInteraction) return 'interaction';
+		if(this.isMessagePrivate) return 'message privé';
+		if(this.isMessage) return 'message';
+	}
+
+	#commandSource; get commandSource() { return this.#commandSource; }
+	#interactionMgr;
+		get interactionMgr() { return this.#interactionMgr; }
+		get bot() { return this.interactionMgr.bot; }
+		get commands() { return this.interactionMgr.commandsMgr.commands; }
+
+
+	constructor(content, context, commandSource, interactionMgr) {
+		this.#content = content;
+		this.#context = context;
+		this.#commandSource = commandSource;
+		this.#interactionMgr = interactionMgr;
 	}
 
 	[inspect]() {
 		return `CommandData ${ { on: this.on, commandName: this.commandName, guild_id: this.guild_id } }`;
 	}
 
-	clone() { return new CommandData(this.on, this.commandSource, this.interactionMgr); }
+	clone() { return new CommandData(this.content.clone(), this.context, this.interactionMgr); }
 
-	getOptionValue(i) { return optionToOptionValue(this.options[i]); }
-	getOptionType(i) { return optionToOptionName(this.options[i]); }
+	getOptionValue(i) { console.warn('CommandData::getOptionValue deprecated'); return this.content.optionsValue[i]; }
+
+	async sendAnswer(target, message) {
+		if(!message) { return false; }
+		if(!target) {
+			console.warn(`CommandData can't answer ${this.source}`);
+			return false;
+		}
+		return await target(message);
+	}
+}
 
 
+class CommandInteraction extends CommandData {
+	constructor(interaction, interactionMgr) {
+		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction), interaction, interactionMgr);
+	}
+
+	static isInteraction = true;
+	
+	async sendAnswer(message) {
+		message = makeSafeMessage(message);
+		https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
+		return await super.sendAnswer(this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post, message.getForInteraction());
+	}
+}
+class CommandMessage extends CommandData {
+	#message_private = false;
+
+	constructor(message, interactionMgr) {
+		super(CommandContent.fromMessage(message), CommandContext.fromMessage(message), message, interactionMgr);
+		this.#message_private = message.channel == undefined;
+	}
+
+	clone() { return new CommandMessage(this.commandSource, this.interactionMgr); }
+
+	static isMessage = true;
+	get isMessagePrivate() { return this.#message_private; }
 
 	async sendAnswer(message) {
-		if(message == undefined) { return false; }
-		if(!message.getForMessage) {
-			if(message.type == 'rich')
-				message = new MessageMaker.Embed(message.title, message.description, message.cosmetic, message.fields);
-			else
-				message = new MessageMaker.Message(message);
-			console.warn('CommandData::sendAnswer Message not created with MessageMaker'.yellow)
-		}
-
-		switch(this.on) {
-			case CommandData.source.MESSAGE:
-				if(!this.channel.send) {
-					return false;
-				}
-				return await this.channel.send(message.getForMessage());
-			case CommandData.source.MESSAGE_PRIVATE:
-				if(!this.author.send) {
-					return false;
-				}
-				return await this.author.send(message.getForMessage());
-			case CommandData.source.INTERACTION:
-				return await this.bot.api.interactions(this.commandSource.id, this.commandSource.token)
-					.callback.post(message.getForInteraction());
-			default:
-				console.warn(`CommandData can't answer ${context.on} ${context.isInteraction}`);
-				return false;
-		}
+		message = makeSafeMessage(message);
+		if(!message) { return false; }
+		return await this.commandSource.reply(message.getForMessage());
 	}
+}
+
+
+
+module.exports = {
+	CommandContent: CommandContent,
+	CommandContext: CommandContext,
+	CommandData: CommandData,
+	CommandInteraction: CommandInteraction,
+	CommandMessage: CommandMessage,
 }

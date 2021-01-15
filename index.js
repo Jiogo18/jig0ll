@@ -8,7 +8,7 @@ var messageNotCmd = [];
 const InteractionManager = require('./interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
 require('colors');//colors for everyone ! (don't remove)
-const CommandData = require('./Interaction/commandData.js');
+const { CommandMessage } = require('./Interaction/commandData.js');
 
 
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
@@ -76,12 +76,12 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 
 	//2 try catch to answer with the error ONLY when it's a command
 	try {
-		var cmdData = new CommandData(CommandData.source.MESSAGE, message, interactionMgr);
+		var cmdData = new CommandMessage(message, interactionMgr);
 		const retour = await interactionMgr.onCommand(cmdData);
 		
-		if(retour)
-			cmdData.sendAnswer(retour);
-		else if(msg[0] && Cmd.isAction(msg[0]))
+		const answerSent = await cmdData.sendAnswer(retour);
+
+		if(!answerSent && msg[0] && Cmd.isAction(msg[0]))
 			Cmd.action(bot, message, msg);
 	} catch (error) {
 		message.channel.send(`Sorry I've had an error: ${error}`);

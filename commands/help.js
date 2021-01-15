@@ -1,5 +1,6 @@
 const InteractionConfig = require('../Interaction/config.js');
 const MessageMaker = require('../Interaction/messageMaker.js');
+const { CommandData, CommandContent } = require('../Interaction/commandData.js');
 
 function makeMessage(description, error) {
 	const color = error ? 'red' : undefined;
@@ -8,7 +9,7 @@ function makeMessage(description, error) {
 
 module.exports = {
 	name: 'help',
-	description: 'Affiche les commandes disponibles, ',
+	description: 'Affiche les commandes disponibles',
 	interaction: false,//pas dans interaction
 	public: true,
 	wip: true,
@@ -19,37 +20,36 @@ module.exports = {
 		description: "Détail une commande",
 		type: 3,
 
-		execute(context) {
-			var commandToHelp = [...context.optionsValue];
+		execute(cmdData) {
+			var commandToHelp = [...cmdData.content.optionsValue];
 			const commandLine = commandToHelp.join(' ');
-			var context2 = context.clone();
-			context2.commandName = commandToHelp.shift();
-			context2.options = commandToHelp;
-			const [command] = context.interactionMgr.commandsMgr.getCommandForData(context2, true);
+			const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
+
+			const [command] = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
-			if(!command) { return module.exports.execute(context); }
-			if(!command.description) { return makeMessage(`${command.name} has no description`, true); }
+			if(!command) { return module.exports.execute(cmdData); }
+			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
-			const optionDescTab = getDescriptionFor(context, command.options);
+			const optionsDescTab = getDescriptionFor(cmdData, command.options);
 			var optionsDesc = '';
-			if(optionDescTab && optionDescTab.length > 0) {
-				var optionDescStr = [];
-				for(const line of optionDescTab) {
-					optionDescStr.push(`\xa0 \xa0 /${commandLine} ${line.name} : ${line.description}`);
+			if(optionsDescTab && optionsDescTab.length > 0) {
+				var optionsDescStr = [];
+				for(const line of optionsDescTab) {
+					optionsDescStr.push(`\xa0 \xa0 /${commandLine} ${line.name} : ${line.description}`);
 				}
-				optionDesc = '\n' + optionDescStr.join('\n');
+				optionsDesc = '\n' + optionsDescStr.join('\n');
 				//affiche une liste avec une indentation et un retour à la ligne
 			}
-			return makeMessage(command.description + optionDesc);
+			return makeMessage(command.description + optionsDesc);
 		}
 	}],
 
-	execute(context) {
-		const description = getDescriptionFor(context, context.commands);
+	execute(cmdData) {
+		const description = getDescriptionFor(cmdData, cmdData.commands);
 		var descriptionStr = [];
 		for(const line of description) {
-			descriptionStr.push(`${line.name} : ${line.description}`);
+			descriptionStr.push(`\xa0 \xa0 ${line.name} : ${line.description}`);
 		}
 		return makeMessage(descriptionStr.join('\n'));
 	}
