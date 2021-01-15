@@ -171,8 +171,8 @@ module.exports = {
 			//si c'est un message (text) on a Name==true car:
 			// => si c'est une sous commande : Value est le nom de la sous commande (on compare Value et name)
 			// => sinon type est >=3 (string, number, boolean, ...) donc optionValue peut être n'importe quoi
-			const optionName = cmdData.getOptionType(i);
-			const optionValue = cmdData.getOptionValue(i);
+			const optionName = cmdData.content.optionsName[i];
+			const optionValue = cmdData.content.optionsValue[i];
 			const optionNa = optionName!=true ? optionName : optionValue;
 
 			var subCommand;
