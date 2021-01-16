@@ -49,7 +49,7 @@ module.exports = {
 		const description = getDescriptionFor(cmdData, cmdData.commands);
 		var descriptionStr = [];
 		for(const line of description) {
-			descriptionStr.push(`\xa0 \xa0 ${line.name} : ${line.description}`);
+			descriptionStr.push(`\u200b \u200b \u200b \u200b ${line.name} : ${line.description}`);
 		}
 		return makeMessage(descriptionStr.join('\n'));
 	}
