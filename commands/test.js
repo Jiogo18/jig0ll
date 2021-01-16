@@ -7,7 +7,6 @@ module.exports = {
 	description: 'Tests diverses',
 	interaction: true,
 	public: false,
-	wip: true,
 
 	options: [{
 		name: "empty_answer",

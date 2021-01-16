@@ -12,7 +12,6 @@ module.exports = {
 	description: 'Affiche les commandes disponibles',
 	interaction: false,//pas dans interaction
 	public: true,
-	wip: true,
 
 
 	options: [{
