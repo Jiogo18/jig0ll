@@ -38,7 +38,7 @@ module.exports = class InteractionBase {
 
 	async loadCommands() {
 		const targetPrivate = this.getTarget(config.guild_test);
-		const targetGlobal = process.env.WIPOnly ? targetPrivate : this.getTarget();//serv privé (en WIP) ou le global
+		const targetGlobal = this.getTarget();
 		return this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
 	}
 

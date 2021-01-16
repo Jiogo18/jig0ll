@@ -132,6 +132,7 @@ module.exports = {
 				case config.allowedPlace.PUBLIC: target = targetGlobal; break;
 				case config.allowedPlace.PRIVATE: target = targetPrivate; break;
 			}
+			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 			
 			if(command.wip)
 				console.warn(`Interaction /${command.name} is WIP`.yellow);
