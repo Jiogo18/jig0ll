@@ -5,7 +5,7 @@ const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 const Cmd = require("./commandes/commande.js");
 var messageNotCmd = [];
-const InteractionManager = require('./interaction/handler.js');
+const InteractionManager = require('./Interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
 require('colors');//colors for everyone ! (don't remove)
 const { CommandMessage } = require('./Interaction/commandData.js');

@@ -1,4 +1,4 @@
-const MessageMaker = require('../Interaction/messageMaker');
+const MessageMaker = require('../Interaction/messageMaker.js');
 
 module.exports = {
 	name: 'interaction',

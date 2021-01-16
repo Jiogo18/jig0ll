@@ -3,7 +3,7 @@ const config = require('./config.js');
 module.exports = class InteractionBase {
 	bot = undefined;
 	static config = require('./config.js')
-	commandsMgr = require('./commands');
+	commandsMgr = require('./commands.js');
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '
