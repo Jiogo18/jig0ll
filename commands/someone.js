@@ -10,7 +10,6 @@ module.exports = {
 	interaction: false,
 	hidden: true,
 	public: true,
-	wip: true,
 
 	execute(cmdData) {
 		const id = cmdData.guild_id;
