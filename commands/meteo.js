@@ -118,22 +118,20 @@ function getConditionFr(condition) {
 		case "Fog": return "Brouillard";
 		case "Mist": return "Brume";
 		case "Haze": return "Brume sèche";
+		case "Snow": return "Neige";
 		default: return condition;
 	}
 }
 function getDescription(embed, data) {
 	
-	if(data.main && data.main.temp)
-		embed.addField('Température', `${Math.round((data.main.temp-273.15)*10)/10}°C`, true);
+	if(data.main && data.main.temp) embed.addField('Température', `${Math.round((data.main.temp-273.15)*10)/10} °C`, true);
+	if(data.main && data.main.humidity != undefined) embed.addField(`Humidité de l'air`, `${data.main.humidity} %`, true);
+	if(data.wind) embed.addField('Vitesse du vent', `${data.wind.speed} m/s`, true);
+	
 	if(data.weather && data.weather.length>0) {
 		var conditions = data.weather.map(e => getConditionFr(e.main));
 		embed.addField('Condition', conditions.join(", "), true)
 	}
-	//TODO : changer avec les push
-	if(data.wind)
-		embed.addField('Vitesse du vent', `${data.wind.speed} m/s`, true);
-	if(data.main && data.main.humidity != undefined)
-		embed.addField(`Humidité de l'air`, `${data.main.humidity} %`, true);
 	if(data.sys) {
 		let soleilLeve = getFrenchTime(data.sys.sunrise*1000, false);
 		let soleilCouche = getFrenchTime(data.sys.sunset*1000, true);
