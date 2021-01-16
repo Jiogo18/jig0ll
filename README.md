@@ -18,6 +18,7 @@ Ajouter Jig0ll avec les interactions sur votre serveur : https://discord.com/ap
 ## Liste des Commandes
 ### Préfixes
 * `/[commande]` : préfixe d'interaction, si aucune commande ne s'affiche c'est qu'il y a une faute ou que les interactions ne sont pas autorisées
+* `![commande]` : ancien préfixe (sera remplacé par le préfixe / dans le futur)
 * `@Jig0ll [commande]` (certaines commandes ne sont pas encore disponibles en interaction, utilisez @Jig0ll à la place)
 
 ### Help
