@@ -13,7 +13,7 @@ module.exports = {
 		// 		type: 1
 		// 	}
 		// }
-		return new MessageMaker(`Pong! ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris', timeZoneName: 'short' })}`);
+		return new MessageMaker.Message(`Pong! ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris', timeZoneName: 'short' })}`);
 	},
 
 	/*options: [{
