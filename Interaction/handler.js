@@ -1,5 +1,6 @@
 const InteractionBase = require('./base.js');
 const { CommandInteraction } = require('./commandData.js');
+const MessageMaker = require('./messageMaker.js');
 
 module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
@@ -37,7 +38,7 @@ module.exports = class InteractionManager extends InteractionBase {
 			return;
 		}
 		else if(typeof command == 'string') {
-			return command;
+			return new MessageMaker.Message(command);
 		}
 
 
