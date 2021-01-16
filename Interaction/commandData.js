@@ -43,11 +43,11 @@ class CommandContent {
 			if(typeof option == 'object')
 				this.#options.push(option);
 			else
-				this.#options.push({ name: true, option: option });
+				this.#options.push({ name: true, value: option });
 		}
 		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
 		this.#optionsName = this.options.map(option => option.name);
-		this.#optionsValue = this.options.map(option => option.option);
+		this.#optionsValue = this.options.map(option => option.value);
 		this.#commandLine = this.commandName + ' ' + this.optionsName.join(' ');//just for the console
 	}
 
@@ -108,6 +108,8 @@ class CommandData {
 
 	get commandName() { return this.content.commandName; }
 	get options() { return this.content.options; }
+	get optionsName() { return this.content.optionsName; }
+	get optionsValue() { return this.content.optionsValue; }
 	get guild_id() { return this.context.guild_id; }
 	get author() { return this.context.author; }
 	get source() {
