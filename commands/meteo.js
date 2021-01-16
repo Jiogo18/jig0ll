@@ -2,6 +2,7 @@ const https = require('https');
 const meteoColor = 3447003;
 const CmdPlenitude = require("./plenitude.js");
 const Discord = require('discord.js')
+const MessageMaker = require('../Interaction/messageMaker.js');
 
 const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
 	hour:'2-digit',
@@ -29,13 +30,13 @@ module.exports = {
 		type: 3,
 		required: true,
 
-		execute: async function(context) {
-			const location = context.getOptionValue(0);
+		execute: async function(cmdData) {
+			const location = cmdData.optionsValue[0];
 			
 			switch(location.toLowerCase()) {
 				case "plenitude":
 				case "plénitude":
-					return await (CmdPlenitude.getMeteo(context));
+					return await (CmdPlenitude.getMeteo(cmdData));
 				default:
 					return await (module.exports.sendWeatherRequest(location));
 			}
@@ -78,19 +79,15 @@ async function sendRequest(location, funcOnData) {
 	
 	switch(data.cod) {
 	case 200:
-		return makeEmbed(data.name, ` le `+(data.date || getMeteoDate(data.dt)), getDescription(data));
+		return getDescription(makeMeteoEmbed(data.name, ` le `+(data.date || getMeteoDate(data.dt))), data);
 	default:
-		return makeEmbed(data.name, '', [`Code Error: ${data.cod}`, `Message: ${data.message}`]);
+		return makeMeteoEmbed(data.name, '', [`Code Error: ${data.cod}`, `Message: ${data.message}`]);
 	}
 }
 
 
-function makeEmbed(location, date, desc) {
-	return new Discord.MessageEmbed() // Ver 12.2.0 of Discord.js
-		.setTitle(`Météo de __${location}__ ${date}`)
-		.setColor(meteoColor)
-		.setDescription(desc.join('\n'));
-		//.addField("This is a field", "this is its description")
+function makeMeteoEmbed(location, date, desc) {
+	return new MessageMaker.Embed(`Météo de __${location}__ ${date}`, (desc||[]).join('\n'), {color: meteoColor});
 }
 
 
@@ -124,25 +121,24 @@ function getConditionFr(condition) {
 		default: return condition;
 	}
 }
-function getDescription(data) {
-	var retour=[];
+function getDescription(embed, data) {
+	
 	if(data.main && data.main.temp)
-		retour.push(`Température : ${Math.round((data.main.temp-273.15)*10)/10}°C`);
+		embed.addField('Température', `${Math.round((data.main.temp-273.15)*10)/10}°C`, true);
 	if(data.weather && data.weather.length>0) {
-		var conditions=[];
-		data.weather.forEach(element => conditions.push(getConditionFr(element.main)));
-		retour.push(`Condition : ${conditions.join(", ")}`);
+		var conditions = data.weather.map(e => getConditionFr(e.main));
+		embed.addField('Condition', conditions.join(", "), true)
 	}
 	//TODO : changer avec les push
 	if(data.wind)
-		retour.push(`Vitesse du vent : ${data.wind.speed} m/s`);
+		embed.addField('Vitesse du vent', `${data.wind.speed} m/s`, true);
 	if(data.main && data.main.humidity != undefined)
-		retour.push(`Humidité de l'air : ${data.main.humidity}%`);
+		embed.addField(`Humidité de l'air`, `${data.main.humidity} %`, true);
 	if(data.sys) {
 		let soleilLeve = getFrenchTime(data.sys.sunrise*1000, false);
 		let soleilCouche = getFrenchTime(data.sys.sunset*1000, true);
-		retour.push(`Présence du soleil : de ${soleilLeve} à ${soleilCouche}`);
+		embed.addField('Présence du soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
 	}
 
-	return retour;
+	return embed;
 }
