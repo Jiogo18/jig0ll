@@ -1,4 +1,5 @@
 const MessageMaker = require('../Interaction/messageMaker.js');
+const spaces = '\u200b \u200b \u200b \u200b ';
 
 module.exports = {
 	name: 'interaction',
@@ -35,10 +36,6 @@ module.exports = {
 
 
 
-
-
-
-
 async function listInteraction(context) {
 	var slashCmd = context.interactionMgr; 
 	var globalInte = await slashCmd.getCmdFrom();
@@ -50,8 +47,8 @@ async function listInteraction(context) {
 	localInte = localInte.map(option => { return option.name; });
 
 	const retour = new MessageMaker.Embed('Interaction list', `${counter} interactions are available in this guild`);
-	if(globalInte.length > 0) retour.addField('Global', `${globalInte.join('\n',)}`);//TODO: the first space is removed also with \xa0
-	if(localInte.length > 0) retour.addField('Local', `${localInte.join('\n')}`);
+	if(globalInte.length > 0) retour.addField('Global', `${spaces}${globalInte.join(`\n${spaces}`,)}`);
+	if(localInte.length > 0) retour.addField('Local', `${spaces}${localInte.join(`\n${spaces}`)}`);
 	return retour;
 }
 
