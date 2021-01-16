@@ -179,7 +179,7 @@ module.exports = {
 			if(command.options)
 				subCommand = command.options.find(option => option.name == optionNa || (optionName==true && 3 <= option.type));
 			if(subCommand == undefined) {
-				return [undefined, `Option unknow: ${optionName}`];
+				return [undefined, `Option unknow: ${(optionName === true) ? optionValue : optionName}`];
 			}
 			if(!config.isAllowedToGetCommand(command, cmdData, readOnly)) {
 				return [`You can't do that`];
