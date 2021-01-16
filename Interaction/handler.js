@@ -33,9 +33,7 @@ module.exports = class InteractionManager extends InteractionBase {
 		const [command, lastArg] = this.commandsMgr.getCommandForData(cmdData);
 		if(!command) {
 			console.warn(lastArg);
-			if(process.env.WIPOnly)
-				return lastArg;
-			return;
+			return new MessageMaker.Message(lastArg);
 		}
 		else if(typeof command == 'string') {
 			return new MessageMaker.Message(command);
@@ -47,14 +45,14 @@ module.exports = class InteractionManager extends InteractionBase {
 				if(command.description) return new MessageMaker.Message(command.description);
 				
 				console.warn(`Can't find execute() for ${lastArg}`.yellow);
-				throw "execute is not defined for this option";
+				return new MessageMaker.Message(`execute is not defined for this option`);
 			}
 
 			return await command.execute(cmdData);
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
-			return `Sorry I've had an error`;
+			return new MessageMaker.Message(`Sorry I've had an error`);
 		}
 	}
 }
