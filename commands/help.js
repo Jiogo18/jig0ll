@@ -10,7 +10,7 @@ function makeMessage(description, error) {
 module.exports = {
 	name: 'help',
 	description: 'Affiche les commandes disponibles',
-	interaction: false,//pas dans interaction
+	interaction: true,
 	public: true,
 
 

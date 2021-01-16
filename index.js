@@ -14,7 +14,7 @@ const { CommandMessage } = require('./Interaction/commandData.js');
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 	process.env.BOT_ID = bot.user.id
 
-	bot.user.setActivity(`!help || @${bot.user.username} help`, {type: 'WATCHING'})
+	bot.user.setActivity(`/help || @${bot.user.username} help`, {type: 'WATCHING'})
 			.then(presence => console.log(
 				`Activitée de ${bot.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`.cyan))
 			.catch(console.error);
