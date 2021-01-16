@@ -2,21 +2,27 @@
 
 Un bot à tout faire pour Discord
 
+Utilise les interactions Discord (slash commands)
+
+---
+
+## Ajouter @Jig0ll sur votre serveur
+
 Jig0ll n'est pas un bot public pour l'instant
 
-Disponible uniquement dans les channels avec `@Jig0ll` dans le topic
+Ajouter Jig0ll avec les interactions sur votre serveur : https://discord.com/api/oauth2/authorize?client_id=494587865775341578&permissions=0&scope=bot%20applications.commands
 
 ---
 
 
 ## Liste des Commandes
 ### Préfixes
-* `![command]`
-* `@Jig0ll [command]`
+* `/[commande]` : préfixe d'interaction, si aucune commande ne s'affiche c'est qu'il y a une faute ou que les interactions ne sont pas autorisées
+* `@Jig0ll [commande]` (certaines commandes ne sont pas encore disponibles en interaction, utilisez @Jig0ll à la place)
 
 ### Help
 * `help` : affiche la liste des commandes
-* `help [command]` : détaille une commande
+* `help [commande]` : détaille une commande
 
 ### Ping
 * `ping` : retourne `pong` et le temps de réponse du bot
@@ -24,25 +30,24 @@ Disponible uniquement dans les channels avec `@Jig0ll` dans le topic
 * `timeServ` : retourne la différence d'heure entre le serveur et le bot
 
 ### Info
-* `info <type> (cible)` : Retourne des informations de la cible
-  #### Type
+* `info [type] (cible)` : Retourne des informations de la cible
+  ##### Type
   * `info id (cible)` : L'identifiant
     (Snowflake => https://discord.js.org/#/docs/main/stable/typedef/Snowflake)
   * `info create (cible)` : Date de création
-  #### Cible
+  ##### Cible
   * un Channel ou un Client (`info id @Jig0ll`)
   * Si vide : l'auteur de la commande
 
 ### Météo
-* `meteo <ville/pays>` : La météo actuelle de la ville
-* `weather <ville/pays>` : `meteo`
+* `météo <ville/pays>` : La météo actuelle de la ville
 
 ### Plénitude
-* `plenitude <commande>` : Commandes spécifiques de Plénitude
-  * `plenitude meteo` : La météo à Plénitude
-  * `plenitude info` : Informations sur Plénitude
-  * `plenitude set <nom> <valeur>` : Change les paramètres de Plénitude
-  * `plenitude get <nom>` : Donne les paramètres de Plénitude
+* `plénitude [commande]` : Commandes spécifiques de Plénitude
+  * `plénitude météo` : La météo à Plénitude
+  * `plénitude info` : Informations sur Plénitude
+  * `plénitude_location set [ville]` : Change la position de Plénitude
+  * `plénitude_location get` : Donne la position de Plénitude
 
 
 ### test (Permissions requises)
