@@ -42,7 +42,11 @@ module.exports = {
 		}),
 		secret: new Security('secret', ({on}) => { return on != 'interaction_create'; })
 	},
-	isAllowed(context, security) {
+	isAllowedIfWIPOnly(context) {
+		if(!process.env.WIPOnly) return true;
+		return this.securityLevel.wip.isAllowed(context);
+	},
+	isAllowed(context, security) {//TODO: remove it
 		if(process.env.WIPOnly && !this.securityLevel.wip.isAllowed(context)) return false;//en wip et que ça marche pas pour le wip
 
 		if(security == 0 || security == undefined || security == false)

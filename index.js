@@ -51,14 +51,14 @@ function onMessageNotCommand(message) {
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
-	if(!InteractionManager.config.isAllowed(
+	if(!InteractionManager.config.isAllowedIfWIPOnly(
 		{
 			user: message.author,//infos du message
 			guild: message.channel.guild,
 			channel: message.channel,
 			on: 'message'
-		}, false)
-	) { return; }//pas autorisé
+		})
+	) { return; }//pas autorisé en WIPOnly
 
 
 	try {
