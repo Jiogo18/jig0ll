@@ -68,6 +68,8 @@ module.exports = {
 		if(command.interaction != true) { return this.allowedPlace.NONE; }
 		if(command.wip) { return this.allowedPlace.PRIVATE; }
 		if(command.public) { return this.allowedPlace.PUBLIC; }
+		if(command.private) { return this.allowedPlace.PRIVATE; }
+		console.warn(`${command.name} has no interaction place available`);
 		return this.allowedPlace.NONE;
 	},
 	isAllowedToUse(command, context) {

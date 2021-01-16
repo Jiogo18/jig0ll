@@ -5,6 +5,7 @@ module.exports = {
 	description: 'Informations sur les intéractions du bot',
 	interaction: true,
 	public: false,
+	private: true,
 	wip: true,
 
 	options: [{
