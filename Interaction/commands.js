@@ -155,7 +155,7 @@ module.exports = {
 	},
 
 	getCommandForData(cmdData, readOnly) {
-		var command = this.commands.get(cmdData.commandName);
+		var command = this.commands.find(option => commandNameMatch(option.name, cmdData.commandName));
 
 		if(!command) {
 			return [undefined, `Command unknow: ${cmdData.commandName}`];
@@ -178,7 +178,7 @@ module.exports = {
 
 			var subCommand;
 			if(command.options)
-				subCommand = command.options.find(option => option.name == optionNa || (optionName==true && 3 <= option.type));
+				subCommand = command.options.find(option => commandNameMatch(option.name, optionNa) || (optionName==true && 3 <= option.type));
 			if(subCommand == undefined) {
 				return [undefined, `Option unknow: ${(optionName === true) ? optionValue : optionName}`];
 			}
@@ -192,4 +192,12 @@ module.exports = {
 		return [command, lastArg];
 	}
 
+}
+
+function strToFlatStr(str) {
+	return str.toLowerCase().replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ìîï]/g,'i').replace(/[òôö]/g,'o').replace(/[ùûü]/g,'u').replace('ÿ','y').replace('ñ','n');
+}
+
+function commandNameMatch(name1, name2) {
+	return strToFlatStr(name1) == strToFlatStr(name2);
 }
