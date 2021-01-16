@@ -18,6 +18,7 @@ module.exports = {
 		name: "command",
 		description: "Détail une commande",
 		type: 3,
+		required: false,
 
 		execute(cmdData) {
 			var commandToHelp = [...cmdData.content.optionsValue];
