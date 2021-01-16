@@ -159,7 +159,13 @@ class CommandInteraction extends CommandData {
 	async sendAnswer(message) {
 		message = makeSafeMessage(message);
 		https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
-		return await super.sendAnswer(this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post, message.getForInteraction());
+		return await super.sendAnswer(this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post, message.getForInteraction())
+			.catch(e => {
+				if(e.httpStatus == 404) {
+					const channel = this.bot.channels.cache.get(this.context.channel_id);
+					channel.send(message.getForMessage());
+				}
+			});
 	}
 }
 class CommandMessage extends CommandData {
