@@ -83,10 +83,6 @@ module.exports = class Cmd
 		}
 		if(!Cmd.isAction(msg) && !process.env.WIPOnly) return null;//pas reconnu (sauf en wip ! changement de version)
 
-		if(!message.channel.topic || !message.channel.topic.includes("@Jig0ll")) {
-			message.channel.send("Disponible uniquement dans les channels avec '@Jig0ll' dans le topic");
-			return null;
-		}//c'est dans le channel bot
 		return msg;
 	}
 }
