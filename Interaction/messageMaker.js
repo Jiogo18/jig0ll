@@ -16,6 +16,7 @@ function getColor(color) {
 
 class MessageMaker {
 	content;
+	reply;
 	getContent(cosmetic = {}) {
 		const author = cosmetic.author ? `<@!${cosmetic.author.id}> ` : '';
 		const prefix = cosmetic.prefix || '';
@@ -24,9 +25,10 @@ class MessageMaker {
 	}
 	type; setType(type) { this.type = type; return this; }
 
-	constructor(content, type) {
+	constructor(content, type, reply) {
 		this.content = content;
 		this.type = type;
+		this.reply = reply;
 	}
 
 	getForInteraction(type, cosmetic) { return makeForInteractionFromData({ content: this.getContent(cosmetic) }, this.type || type); }

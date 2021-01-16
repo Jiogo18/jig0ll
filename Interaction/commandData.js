@@ -189,6 +189,9 @@ class CommandMessage extends CommandData {
 	async sendAnswer(message) {
 		message = makeSafeMessage(message);
 		if(!message) { return false; }
+		if(message.reply == false) {
+			return await this.commandSource.channel.send(message.getForMessage());
+		}
 		return await this.commandSource.reply(message.getForMessage());
 	}
 }

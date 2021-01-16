@@ -86,7 +86,7 @@ module.exports = {
 		console.warn(`isAllowedToUse unknow for ${command.name}`);
 	},
 	isAllowedToSee(command, context) {
-		if(command.secret) return false;
+		if(command.secret || command.hidden) return false;
 		if(command.publicSee) return true;
 		return this.isAllowedToUse(command, context);
 	},
