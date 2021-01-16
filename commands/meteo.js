@@ -1,7 +1,6 @@
 const https = require('https');
 const meteoColor = 3447003;
 const CmdPlenitude = require("./plenitude.js");
-const Discord = require('discord.js')
 const MessageMaker = require('../Interaction/messageMaker.js');
 
 const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
@@ -22,7 +21,6 @@ module.exports = {
 	description: "La météo actuelle de la ville/région (par openweathermap)",
 	interaction: true,
 	public: true,
-	wip: true,
 
 	options: [{
 		name: "location",
