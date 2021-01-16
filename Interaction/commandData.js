@@ -111,7 +111,9 @@ class CommandData {
 	get optionsName() { return this.content.optionsName; }
 	get optionsValue() { return this.content.optionsValue; }
 	get guild_id() { return this.context.guild_id; }
-	get author() { return this.context.author; }
+	get guild() { return this.bot.guilds.cache.get(this.context.guild.id) || this.context.guild; }
+	get channel() { return this.bot.channels.cache.get(this.context.channel.id) || this.context.channel; }
+	get author() { return this.bot.users.cache.get(this.context.author.id) || this.context.author; }
 	get source() {
 		if(this.isInteraction) return 'interaction';
 		if(this.isMessagePrivate) return 'message privé';
@@ -160,12 +162,12 @@ class CommandInteraction extends CommandData {
 	
 	async sendAnswer(message) {
 		message = makeSafeMessage(message);
-		https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
+		//https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
 		return await super.sendAnswer(this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post, message.getForInteraction())
 			.catch(e => {
 				if(e.httpStatus == 404) {
 					const channel = this.bot.channels.cache.get(this.context.channel_id);
-					channel.send(message.getForMessage());
+					channel.send(message.getForMessage({author: this.author}));
 				}
 			});
 	}

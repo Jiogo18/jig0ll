@@ -16,6 +16,12 @@ function getColor(color) {
 
 class MessageMaker {
 	content;
+	getContent(cosmetic = {}) {
+		const author = cosmetic.author ? `<@!${cosmetic.author.id}>, ` : '';
+		const prefix = cosmetic.prefix || '';
+		const suffix = cosmetic.suffix || '';
+		return author + prefix + this.content + suffix;
+	}
 	type; setType(type) { this.type = type; return this; }
 
 	constructor(content, type) {
@@ -23,12 +29,18 @@ class MessageMaker {
 		this.type = type;
 	}
 
-	getForInteraction(type) { return makeForInteractionFromData({ content: this.content }, this.type || type); }
-	getForMessage() { return this.content; }
-	
+	getForInteraction(type, cosmetic) { return makeForInteractionFromData({ content: this.getContent(cosmetic) }, this.type || type); }
+	getForMessage(cosmetic) { return this.getContent(cosmetic); }
 }
 class EmbedMaker extends MessageMaker {
-		
+
+	getContent(cosmetic = {}) {
+		if(cosmetic.author) this.content.setAuthor(cosmetic.author.username, cosmetic.author.avatarURL ? cosmetic.author.avatarURL() : undefined);
+		if(cosmetic.prefix) this.content.setDescription(prefix + '\n' + this.content.description);
+		if(cosmetic.suffix) this.addField('', cosmetic.suffix, true);
+		return this.content;
+	}
+	
 	constructor(title, description, cosmetic, field, type) {
 
 		var embed = new Discord.MessageEmbed()
@@ -42,9 +54,10 @@ class EmbedMaker extends MessageMaker {
 	}
 	
 	addField(name, value, inline) { this.content.addField(name, value, inline); return this; }
-	getForInteraction(type) {
-		return makeForInteractionFromData({ content: '', embeds: [ this.content ] }, this.type || type);
+	getForInteraction(type, cosmetic) {
+		return makeForInteractionFromData({ content: '', embeds: [ this.getContent(cosmetic) ] }, this.type || type);
 	}
+	getForMessage(cosmetic) { return this.getContent(cosmetic); }
 }
 
 module.exports = {
