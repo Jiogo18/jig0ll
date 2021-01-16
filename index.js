@@ -1,5 +1,5 @@
 require('dotenv').config();
-process.env.WIPOnly = process.argv.includes("WIP");
+process.env.WIPOnly = process.argv.includes("WIP") ? true : '';
 
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
