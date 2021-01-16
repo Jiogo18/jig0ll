@@ -65,13 +65,14 @@ module.exports = {
 	},
 
 	isAllowedInteractionCreate(command) {
-		if(!command.interaction) { return this.allowedPlace.NONE; }
+		if(command.interaction != true) { return this.allowedPlace.NONE; }
 		if(command.wip) { return this.allowedPlace.PRIVATE; }
 		if(command.public) { return this.allowedPlace.PUBLIC; }
 		return this.allowedPlace.NONE;
 	},
 	isAllowedToUse(command, context) {
 		if(command.wip) { return this.securityLevel.wip.isAllowed(context); }
+		if(typeof command.isAllowedToUse == 'function') { return command.isAllowedToUse(context); }
 		if(command.public) { return this.securityLevel.public.isAllowed(context); }
 		if(command.private) { return this.securityLevel.private.isAllowed(context); }
 		if(command.type > 0) { return true; }//autorisé (pour les sous commandes)
