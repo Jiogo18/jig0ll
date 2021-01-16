@@ -162,6 +162,7 @@ class CommandInteraction extends CommandData {
 	
 	async sendAnswer(message) {
 		message = makeSafeMessage(message);
+		if(!message) { return false; }
 		//https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
 		return await super.sendAnswer(this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post, message.getForInteraction())
 			.catch(e => {

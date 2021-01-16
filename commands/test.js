@@ -1,4 +1,5 @@
 const InteractionBase = require('../Interaction/base.js');
+const MessageMaker = require('../Interaction/messageMaker.js');
 
 var slashMgr = undefined
 module.exports = {
@@ -14,7 +15,7 @@ module.exports = {
 		type: 1,
 
 		execute(context) {
-			context.sendAnswer('Done');
+			context.sendAnswer(new MessageMaker.Message('Done'));
 			return;
 		}
 	}]
