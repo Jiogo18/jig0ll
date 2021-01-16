@@ -16,7 +16,6 @@ function getColor(color) {
 
 class MessageMaker {
 	content;
-	reply;
 	getContent(cosmetic = {}) {
 		const author = cosmetic.author ? `<@!${cosmetic.author.id}> ` : '';
 		const prefix = cosmetic.prefix || '';
@@ -24,11 +23,13 @@ class MessageMaker {
 		return author + prefix + this.content + suffix;
 	}
 	type; setType(type) { this.type = type; return this; }
+	//3: ne pas répondre
+	//4: répondre
+	//(type des interactions mais utile pour message aussi) https://discord.com/developers/docs/interactions/slash-commands#interaction-response-interactionresponsetype
 
-	constructor(content, type, reply) {
+	constructor(content, type) {
 		this.content = content;
 		this.type = type;
-		this.reply = reply;
 	}
 
 	getForInteraction(type, cosmetic) { return makeForInteractionFromData({ content: this.getContent(cosmetic) }, this.type || type); }

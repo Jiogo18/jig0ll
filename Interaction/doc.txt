@@ -15,7 +15,7 @@ type ApplicationCommandOptionType https://discord.com/developers/docs/interactio
 	8: ROLE
 	peut se faire en choix multiple (https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application)
 
-type InteractionResponseType https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application
+type InteractionResponseType https://discord.com/developers/docs/interactions/slash-commands#interaction-response-interactionresponsetype
 	1: Pong
 	4: utilisé pour les retour
 

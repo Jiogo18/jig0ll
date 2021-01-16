@@ -29,7 +29,7 @@ module.exports = {
 		}
 		useInMinute[id]++;
 		
-		return new MessageMaker.Message(`@someone ${getRandomMeme()} ${randomUser}`, undefined, false);
+		return new MessageMaker.Message(`@someone ${getRandomMeme()} ${randomUser}`, 3);//don't reply
 	}
 }
 
