@@ -69,5 +69,5 @@ async function cleanInteraction(context) {
 	localInte = await slashCmd.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
 	const counterAfter = globalInte.length + localInte.length;
 
-	return `There were ${counterBefore} interactions, there are ${counterAfter}.`;
+	return new MessageMaker(`There were ${counterBefore} interactions, there are ${counterAfter}.`);
 }

@@ -2,6 +2,7 @@ const Keyv = require("keyv");//store PlenCity
 var keyv = new Keyv();
 keyv = new Keyv(process.env.DATABASE_URL);//with SQLite (local) or Postgre (Heroku)
 keyv.on('error', err => console.error('Keyv connection error:', err));
+const MessageMaker = require("../Interaction/messageMaker.js");
 
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
@@ -47,7 +48,7 @@ module.exports = {
 		name: 'info',
 		description: 'Informations sur Plénitude',
 		type: 1,
-		execute() { return "Plénitude est un lieu fictif avec un climat tropical"; }
+		execute() { return new MessageMaker.Embed('', "Plénitude est un lieu fictif avec un climat tropical"); }
 	}],
 
 	getMeteo: getMeteo

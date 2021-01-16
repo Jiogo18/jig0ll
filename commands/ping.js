@@ -1,3 +1,5 @@
+const MessageMaker = require('../Interaction/messageMaker');
+
 module.exports = {
 	name: 'ping',
 	description: 'Pong!',
@@ -11,7 +13,7 @@ module.exports = {
 		// 		type: 1
 		// 	}
 		// }
-		return `Pong! ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris', timeZoneName: 'short' })}`;
+		return new MessageMaker(`Pong! ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris', timeZoneName: 'short' })}`);
 	},
 
 	/*options: [{
