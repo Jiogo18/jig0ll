@@ -44,6 +44,8 @@ module.exports = class InteractionManager extends InteractionBase {
 
 		try {
 			if(typeof command.execute != 'function') {
+				if(command.description) return new MessageMaker.Message(command.description);
+				
 				console.warn(`Can't find execute() for ${lastArg}`.yellow);
 				throw "execute is not defined for this option";
 			}

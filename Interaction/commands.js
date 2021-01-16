@@ -64,7 +64,7 @@ module.exports = {
 		
 		var posted = false;
 		if(target) {
-			await target.post(post)//TODO : utiliser patch si elle existe car 1) ça supprimerais des mauvais trucs, 2) interaction clean a une erreur (il retrouve pas l'intéraction)
+			await target.post(post)//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
 			.catch(e => {
 				console.error(`Error while posting command ${command.name}`.red);
 				posted = false;
@@ -127,7 +127,7 @@ module.exports = {
 
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
-			var target;
+			var target = undefined;
 			switch(config.isAllowedInteractionCreate(command)) {
 				case config.allowedPlace.PUBLIC: target = targetGlobal; break;
 				case config.allowedPlace.PRIVATE: target = targetPrivate; break;
