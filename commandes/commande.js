@@ -87,8 +87,7 @@ module.exports = class Cmd
 					return null;//nothing else to do
 			}
 		}
-		if(!Cmd.isAction(msg) && !process.env.WIPOnly) return null;//pas reconnu (sauf en wip ! changement de version)
-
+		
 		return msg;
 	}
 }
