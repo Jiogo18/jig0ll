@@ -48,7 +48,7 @@ class CommandContent {
 		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
 		this.#optionsName = this.options.map(option => option.name);
 		this.#optionsValue = this.options.map(option => option.value);
-		this.#commandLine = this.commandName + ' ' + this.optionsName.join(' ');//just for the console
+		this.#commandLine = [this.commandName].concat(this.optionsValue).join(' ');//just for the console
 	}
 
 	clone() { return new CommandContent(this.#commandName, [...this.#options]); }
