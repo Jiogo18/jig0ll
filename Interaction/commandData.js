@@ -41,7 +41,7 @@ class CommandContent {
 		this.#options = [];//format de interaction.data.options: [{ 'name':'a' },{ 'name':'b' }], ou undefined si vide
 		for(const option of (options || [])) {
 			if(typeof option == 'object')
-				this.#options.push(option);
+				this.#options.push({ name: option.name, value: option.value || option.name });
 			else
 				this.#options.push({ name: true, value: option });
 		}
