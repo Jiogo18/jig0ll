@@ -38,7 +38,6 @@ module.exports = {
 	description: "Commandes de Plénitude",
 	interaction: true,
 	public: true,
-	wip: true,
 
 	options: [{
 		name: 'météo',

@@ -9,7 +9,6 @@ module.exports = {
 	description: 'Commandes avancées pour Plénitude',
 	interaction: false,
 	public: false,
-	wip: true,
 	isAllowedToUse(cmdData) { return [ Config.rubis, Config.jiogo18 ].includes(cmdData.author.id); },
 
 	options: [{
