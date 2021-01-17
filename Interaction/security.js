@@ -4,7 +4,7 @@ const channel_beta_only = [ '541315862016032788' ];
 const users = { jiogo18: '175985476165959681', rubis: '262213332600225792' };
 const user_beta_tester = [ users.jiogo18 ];// wip commands
 const user_high_privilege = [ users.jiogo18 ];// cut command
-const user_plenitude_privilege = [ user.jiogo18, user.rubis ];//plenitude_location
+const user_plenitude_privilege = [ users.jiogo18, users.rubis ];//plenitude_location
 
 module.exports = {
 	get guild_test() { return guild_test; },

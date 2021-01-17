@@ -1,4 +1,4 @@
-const config = require('./config.js');
+const security = require('./security.js');
 
 module.exports = class InteractionBase {
 	bot = undefined;
