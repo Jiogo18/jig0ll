@@ -1,6 +1,6 @@
 ////\u200b pour avoir plusieurs espaces
 
-const CmdLibName = ["./help.js","./ping.js","./info.js","./test.js"];
+const CmdLibName = ["./ping.js","./info.js","./test.js"];
 const CmdLib = [];
 for(const i in CmdLibName) {
 	const libPath = CmdLibName[i];
@@ -31,14 +31,11 @@ module.exports = class Cmd
 	}
 	static action(bot, message, msg)
 	{
-		const CmdHelp = require("./help.js");
 		const CmdPing = require("./ping.js");
 		const CmdInfo = require("./info.js");
 		const CmdTest = require("./test.js");
 
-		if(CmdHelp.isAction(msg))
-			sendMsg(bot,message,CmdHelp.action(message,msg));
-		else if(CmdRandom.isAction(msg))
+		if(CmdRandom.isAction(msg))
 			sendMsg(bot,message,CmdRandom.action(message,msg));
 		else if(CmdPing.isAction(msg))
 			sendMsg(bot,message,CmdPing.action(message,msg,bot));
@@ -46,25 +43,6 @@ module.exports = class Cmd
 			sendMsg(bot,message,CmdInfo.action(message,msg));
 		else if(CmdTest.isAction(msg))
 			sendMsg(bot,message,CmdTest.action(message,msg));
-	}
-	//todo : call CmdLib
-
-	static isCommand(bot, message) {//le message est une commande valide ?
-		const prefixs = ['!', `<@!${bot.user.id}> `];
-		var found = false;
-		for(const prefix of prefixs) {
-			if(!message.content.startsWith(prefix)) continue;
-
-			found = true;
-			message.content = message.content.substring(prefix.length);
-			message.prefix = prefix;
-		}
-		if(!found) { return; }
-		
-
-		var msg=splitCommand(message.content);
-		
-		return msg;
 	}
 }
 
