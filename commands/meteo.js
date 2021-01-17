@@ -2,18 +2,7 @@ const https = require('https');
 const meteoColor = 3447003;
 const CmdPlenitude = require("./plenitude.js");
 const MessageMaker = require('../Interaction/messageMaker.js');
-
-const dateTimeFormat = new Intl.DateTimeFormat('fr-FR', {
-	hour:'2-digit',
-	minute:'2-digit',
-	hc: 'h24', hour12: false,
-	timeZoneName: "short", timeZone: "Europe/Paris"
-});
-
-
-
-
-
+const libDate = require('../lib/date.js');
 
 
 module.exports = {
@@ -41,7 +30,6 @@ module.exports = {
 		}
 	}],
 	sendWeatherRequest: sendRequest,
-	getMeteoDate: getMeteoDate
 };
 
 
@@ -77,7 +65,8 @@ async function sendRequest(location, funcOnData) {
 	
 	switch(data.cod) {
 	case 200:
-		return getDescription(makeMeteoEmbed(data.name, ` le `+(data.date || getMeteoDate(data.dt))), data);
+		const date = data.date || libDate.getMeteoDate(data.dt * 1000);//s to msec
+		return getDescription(makeMeteoEmbed(data.name, date), data);
 	default:
 		return makeMeteoEmbed(data.name, '', [`Code Error: ${data.cod}`, `Message: ${data.message}`]);
 	}
@@ -88,24 +77,6 @@ function makeMeteoEmbed(location, date, desc) {
 	return new MessageMaker.Embed(`Météo de __${location}__ ${date}`, (desc||[]).join('\n'), {color: meteoColor});
 }
 
-
-
-function getWeekday(date, list = ["Lundi","Mardi","Mecredi","Jeudi","Vendredi","Samedi","Dimanche"]) {
-	if(date.getDay()==0) return list[6];
-	return list[date.getDay()-1];//décale cars Sunday==0 et Monday==1
-}
-function getMonth(date, list = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"]) {
-	return list[date.getMonth()]//January==0
-}
-function getFrenchTime(date, timezone) {
-	if(!date) return;
-	const [{ value:hour },,{ value:minute },,{ value:timeZoneName }] = dateTimeFormat.formatToParts(date);
-	return `${hour}h${minute}` + (timezone ? ` (${timeZoneName})` : '');
-}
-function getMeteoDate(datetime, listWeekday, listMonth) {
-	var date = new Date(datetime*1000);//s in msec
-	return `${getWeekday(date, listWeekday)} ${date.getDate()} ${getMonth(date, listMonth)} à ${getFrenchTime(date, true)}`;
-}
 
 function getConditionFr(condition) {
 	switch(condition) {
@@ -131,8 +102,8 @@ function getDescription(embed, data) {
 		embed.addField('Condition', conditions.join(", "), true)
 	}
 	if(data.sys) {
-		let soleilLeve = getFrenchTime(data.sys.sunrise*1000, false);
-		let soleilCouche = getFrenchTime(data.sys.sunset*1000, true);
+		let soleilLeve = libDate.getFrenchTime(data.sys.sunrise*1000, false);
+		let soleilCouche = libDate.getFrenchTime(data.sys.sunset*1000, true);
 		embed.addField('Présence du soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
 	}
 

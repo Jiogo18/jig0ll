@@ -3,7 +3,7 @@ var keyv = new Keyv();
 keyv = new Keyv(process.env.DATABASE_URL);//with SQLite (local) or Postgre (Heroku)
 keyv.on('error', err => console.error('Keyv connection error:', err));
 const MessageMaker = require("../Interaction/messageMaker.js");
-const Config = require('../Interaction/config.js');
+const libDate = require('../lib/date.js');
 
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
@@ -69,7 +69,7 @@ async function getMeteo() {
 function onWeatherPlenitude(data) {
 	console.log(`onWeatherPlenitude : PlenCity is "${data.name}"`);
 	data.name = "Plénitude";
-	data.date = require("./meteo.js").getMeteoDate(data.dt, PlenWeekdays, PlenMonths);
+	data.date = libDate.getFrenchDate(data.dt*1000, PlenWeekdays, PlenMonths);
 }
 
 function getInfo() {
