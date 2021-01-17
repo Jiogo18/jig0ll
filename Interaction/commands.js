@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const defaultCommandsPath = './commands';
 var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24
-const config = require('./config.js');
+const security = require('./security.js');
 
 module.exports = {
 
@@ -128,9 +128,9 @@ module.exports = {
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
 			var target = undefined;
-			switch(config.isAllowedInteractionCreate(command)) {
-				case config.allowedPlace.PUBLIC: target = targetGlobal; break;
-				case config.allowedPlace.PRIVATE: target = targetPrivate; break;
+			switch(security.isAllowedToCreateInteraction(command)) {
+				case security.allowedPlace.PUBLIC: target = targetGlobal; break;
+				case security.allowedPlace.PRIVATE: target = targetPrivate; break;
 			}
 			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 			
@@ -161,7 +161,7 @@ module.exports = {
 			return [undefined, `Command unknow: ${cmdData.commandName}`];
 		}
 		
-		if(!config.isAllowedToGetCommand(command, cmdData, readOnly)) {
+		if(!security.isAllowedToGetCommand(command, cmdData, readOnly)) {
 			return [`You can't do that`];
 		}
 
@@ -182,13 +182,14 @@ module.exports = {
 			if(subCommand == undefined) {
 				return [undefined, `Option unknow: ${(optionName === true) ? optionValue : optionName}`];
 			}
-			if(!config.isAllowedToGetCommand(command, cmdData, readOnly)) {
+			if(!security.isAllowedToGetCommand(command, cmdData, readOnly)) {
 				return [`You can't do that`];
 			}
 			command = subCommand;
 			lastArg = optionName;
 		}
 
+		if(readOnly) command.execute = undefined;//can't execute it
 		return [command, lastArg];
 	}
 

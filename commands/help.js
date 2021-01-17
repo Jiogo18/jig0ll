@@ -1,4 +1,4 @@
-const InteractionConfig = require('../Interaction/config.js');
+const security = require('../Interaction/security.js');
 const MessageMaker = require('../Interaction/messageMaker.js');
 const { CommandData, CommandContent } = require('../Interaction/commandData.js');
 
@@ -63,7 +63,7 @@ function getDescriptionFor(context, commands) {
 
 	var retour = [];
 	commands.forEach((command, key) => {
-		if(!InteractionConfig.isAllowedToSee(command, context)) {
+		if(!security.isAllowedToSeeCommand(command, context)) {
 			return;
 		}
 		var commandName = command.name;
