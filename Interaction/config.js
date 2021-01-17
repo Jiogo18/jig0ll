@@ -42,9 +42,9 @@ module.exports = {
 		}),
 		secret: new Security('secret', ({on}) => { return on != 'interaction_create'; })
 	},
-	isAllowedIfWIPOnly(context) {
-		if(!process.env.WIPOnly) return true;
-		return this.securityLevel.wip.isAllowed(context);
+	isAllowedIfWIPOnly(context) {//en WIPOnly on n'autorise que si c'est sur la guild test
+		if(process.env.WIPOnly) return this.securityLevel.wip.isAllowed(context);
+		return true;
 	},
 	isAllowed(context, security) {//TODO: remove it
 		if(process.env.WIPOnly && !this.securityLevel.wip.isAllowed(context)) return false;//en wip et que ça marche pas pour le wip
