@@ -73,7 +73,7 @@ module.exports = class Cmd
 
 		var msg=splitCommand(message.content);
 
-		if(msg.length > 0) {
+		/*if(msg.length > 0) {
 			//peut importe le channel
 			switch(msg[0].toLowerCase()) {
 				case "cut":
@@ -86,7 +86,7 @@ module.exports = class Cmd
 					}
 					return null;//nothing else to do
 			}
-		}
+		}*/
 		
 		return msg;
 	}
