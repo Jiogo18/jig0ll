@@ -81,7 +81,7 @@ module.exports = class Cmd
 				case "exit":
 					if(message.author.id == process.env.OWNER_ID) {//moi
 						console.error("Stoppé par " + message.author);
-						message.channel.send(`Stoppé par <@!${message.author.id}>`);
+						message.channel.send(`Stoppé par ${message.author}`);
 						bot.destroy();
 					}
 					return null;//nothing else to do

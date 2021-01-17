@@ -17,7 +17,7 @@ function getColor(color) {
 class MessageMaker {
 	content;
 	getContent(cosmetic = {}) {
-		const author = cosmetic.author ? `<@!${cosmetic.author.id}> ` : '';
+		const author = cosmetic.author ? (cosmetic.author + ' ') : '';
 		const prefix = cosmetic.prefix || '';
 		const suffix = cosmetic.suffix || '';
 		return author + prefix + this.content + suffix;

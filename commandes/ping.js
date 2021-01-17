@@ -36,7 +36,7 @@ module.exports = class CmdHelp
 				}
 				else
 				{
-					message.channel.send(`<@!${bot.user.id}> ping author:${message.author.id} createdAt:${message.createdAt.getTime()} receivedAt:${Date.now()}`);
+					message.channel.send(`${bot.user} ping author:${message.author.id} createdAt:${message.createdAt.getTime()} receivedAt:${Date.now()}`);
 					//id du bot
 				}
 				break;
@@ -59,7 +59,7 @@ module.exports = class CmdHelp
 
 					if(repete < max)//quand c'est pas fini
 					{
-						message.channel.send(`<@!${bot.user.id}> pingbot ${repete} ${max} ${pingTotal} ${Date.now()}`);//Date.now() important
+						message.channel.send(`${bot.user} pingbot ${repete} ${max} ${pingTotal} ${Date.now()}`);//Date.now() important
 					}
 					else
 					{
@@ -84,7 +84,7 @@ module.exports = class CmdHelp
 							max=1;
 					}
 					bot.pings = new Array(0);//clear la liste des pings
-					message.channel.send(`<@!${bot.user.id}> pingbot 0 ${max} 0 ${Date.now()}`);//Date.now() important
+					message.channel.send(`${bot.user} pingbot 0 ${max} 0 ${Date.now()}`);//Date.now() important
 				}
 				break;
 
@@ -106,7 +106,7 @@ module.exports = class CmdHelp
 					}};
 				}
 				else
-					message.channel.send(`<@!${bot.user.id}> timeServ ${Date.now()}`);//Date.now() important
+					message.channel.send(`${bot.user} timeServ ${Date.now()}`);//Date.now() important
 		}
 		return;
 	}

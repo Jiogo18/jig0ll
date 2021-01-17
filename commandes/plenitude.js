@@ -129,7 +129,7 @@ function sendMsgHelp(target) {
 }
 function sendMsgPermissionRequired(message) {
 	sendMsg(message.channel,
-		"Désolé <@!" + message.author.id + "> vous n'avez pas la permission de faire cela.",
+		`Désolé ${message.author} vous n'avez pas la permission de faire cela.`,
 		13369344//red
 		);
 }
