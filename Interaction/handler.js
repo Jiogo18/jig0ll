@@ -1,6 +1,7 @@
 const InteractionBase = require('./base.js');
 const { CommandInteraction } = require('./commandData.js');
 const MessageMaker = require('./messageMaker.js');
+const security = require('./security.js');
 
 module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
@@ -13,6 +14,8 @@ module.exports = class InteractionManager extends InteractionBase {
 	async onInteraction(interaction) {
 		
 		const cmdData = new CommandInteraction(interaction, this);
+
+		if(security.botIsAllowedToDo(cmdData) == false) return;
 
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.content.commandLine}"`);
