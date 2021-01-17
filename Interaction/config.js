@@ -1,3 +1,5 @@
+const security = require('./security.js');
+
 class Security {
 	name = 'security';
 	isAllowed = function() { return false; };//est autorisé dans ce context avec cette sécurité ?
@@ -29,24 +31,19 @@ module.exports = {
 	securityLevel: {
 		public: new Security('public', () => true),
 		wip: new Security('wip', context => {
-			return (context.guild && context.guild.id || context.guild_id) == module.exports.guild_test;//uniquement sur un serv privé
+			const guild_id = context.guild && context.guild.id || context.guild_id;
+			return security.isBetaGuild(guild_id);//uniquement sur un serv privé
 		}),
-		bot: new Security('bot', ({author}) => author.id == process.env.BOT_ID),
+		bot: new Security('bot', ({author}) => security.isJig0ll(author.id)),
 		jiogo18: new Security('jiogo18', ({author}) => author.id == module.exports.jiogo18),
 		rubis: new Security('jiogo18', ({author}) => author.id == module.exports.rubis),
 		private: new Security('private', context => {//moi et le bot uniquement
 			if(context.on == 'interaction_create') return module.exports.securityLevel.wip.isAllowed(context);//interactions sur le serv de test
 			return module.exports.securityLevel.bot.isAllowed(context) || module.exports.securityLevel.jiogo18.isAllowed(context);
-		}),
-		plenitude: new Security('plenitude', context => {
-			return module.exports.securityLevel.private.isAllowed(context) || module.exports.securityLevel.rubis.isAllowed(context);
-		}),
-		secret: new Security('secret', ({on}) => { return on != 'interaction_create'; })
+		})
 	},
 	isAllowedIfWIPOnly(context) {//en WIPOnly on n'autorise que si c'est sur la guild test
-		if(process.env.WIPOnly) return this.securityLevel.wip.isAllowed(context);
-		if(context.guild.id == this.guild_test) return context.channel.id != this.channel_test;//en public il n'a pas accès au channel de test
-		return true;
+		return security.botIsAllowedToDo(context);
 	},
 
 	allowedPlace: {

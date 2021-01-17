@@ -10,6 +10,7 @@ const InteractionManager = require('./Interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
 require('colors');//colors for everyone ! (don't remove)
 const { CommandMessage } = require('./Interaction/commandData.js');
+const Security = require('./Interaction/security.js');
 
 bot.localId = Math.floor(Math.random() * 10000);//id à 4 chiffres
 
@@ -53,7 +54,7 @@ function onMessageNotCommand(message) {
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
-	if(!InteractionManager.config.isAllowedIfWIPOnly(
+	if(!Security.botIsAllowedToDo(
 		{
 			user: message.author,//infos du message
 			guild: message.channel.guild,
