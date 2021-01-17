@@ -1,7 +1,6 @@
 const Plenitude = require('./plenitude.js');
-const Config = require('../Interaction/config.js');
+const security = require('../Interaction/security.js');
 const MakeMessage = require('../Interaction/messageMaker.js');
-
 
 
 module.exports = {
@@ -9,10 +8,11 @@ module.exports = {
 	description: 'Commandes avancées pour Plénitude',
 	interaction: false,
 	public: false,
-	isAllowedToUse(cmdData) { return [ Config.rubis, Config.jiogo18 ].includes(cmdData.author.id); },
+	isAllowedToUse(cmdData) { return security.isPlenitudePrivilege(cmdData.author.id); },
 
 	options: [{
 		name: 'get',
+		description: 'Donne la ville actuelle de Plénitude',
 		type: 1,
 		async execute() {
 			const PlenCity = await Plenitude.getLocation();
@@ -20,6 +20,7 @@ module.exports = {
 		}
 	},{
 		name: 'set',
+		description: 'Change la ville actuelle de Plénitude',
 		type: 1,
 		options: [{
 			name: 'location',

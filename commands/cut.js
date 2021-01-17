@@ -1,4 +1,4 @@
-const Config = require('../Interaction/config.js');
+const security = require('../Interaction/security.js');
 const MessageMaker = require('../Interaction/messageMaker.js');
 
 
@@ -6,7 +6,7 @@ module.exports = {
 	name: 'cut',
 	description: 'Arrêter le bot avec une clé de vérification',
 	interaction: false,
-	isAllowedToUse(cmdData) { return [ Config.jiogo18 ].includes(cmdData.author.id); },
+	isAllowedToUse(cmdData) { return security.isHightPrivilegeUser(cmdData.author.id); },
 	private: true,
 
 	options: [{

@@ -2,7 +2,8 @@ const config = require('./config.js');
 
 module.exports = class InteractionBase {
 	bot = undefined;
-	static config = require('./config.js')
+	static config = require('./config.js');
+	static security = require('./security.js');
 	commandsMgr = require('./commands.js');
 
 	constructor(bot) {
@@ -37,7 +38,7 @@ module.exports = class InteractionBase {
 	}
 
 	async loadCommands() {
-		const targetPrivate = this.getTarget(config.guild_test);
+		const targetPrivate = this.getTarget(security.guild_test);
 		const targetGlobal = this.getTarget();
 		return this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
 	}
