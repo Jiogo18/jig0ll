@@ -1,12 +1,6 @@
 const Config = require('../Interaction/config.js');
 const MessageMaker = require('../Interaction/messageMaker.js');
 
-function getRandomId() {
-	return Math.floor(Math.random() * 10000);//id à 4 chiffres
-}
-
-const id = getRandomId();
-
 
 module.exports = {
 	name: 'cut',
@@ -14,7 +8,6 @@ module.exports = {
 	interaction: false,
 	isAllowedToUse(cmdData) { return [ Config.jiogo18 ].includes(cmdData.author.id); },
 	private: true,
-	wip: true,
 
 	options: [{
 		name: 'clé',
@@ -24,15 +17,26 @@ module.exports = {
 
 		execute(cmdData) {
 			const idMsg = cmdData.optionsValue[0];
-			if(id == idMsg) {
-				console.warn(`Demande d'arrêt par ${cmdData.author.username}`);
-			}
-			return new MessageMaker.Embed('', `Work in progress ${idMsg} ${id}`);
+			if(cmdData.bot.localId != idMsg) return;//ne réagit pas
+
+			const date = new Date().toUTCString();
+			console.log(`Stoppé par ${cmdData.author.username} le ${date}`.red);
+			setTimeout(function() {//arrêt dans 200 ms
+				cmdData.bot.destroy();
+			}, 200);
+			return new MessageMaker.Embed('', `Stoppé par ${cmdData.author.username}`);
 		}
 	}],
 
 
-	execute() {
-		return new MessageMaker.Embed('', `Pour éteindre ce bot ecrivez "/cut ${id}"`);
+	execute(cmdData) {
+		var suffix = 'Unkown';
+		if(process.env.HEROKU) {
+			suffix = 'Heroku';
+		}
+		else if(process.env.COMPUTERNAME) {
+			suffix = process.env.COMPUTERNAME;
+		}
+		return new MessageMaker.Embed('', `Pour éteindre ce bot ecrivez "!cut ${cmdData.bot.localId}" (bot sur ${suffix})`);
 	}
 }
