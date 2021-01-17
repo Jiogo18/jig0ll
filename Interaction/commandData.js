@@ -85,6 +85,8 @@ class CommandData {
 	get options() { return this.content.options; }
 	get optionsName() { return this.content.optionsName; }
 	get optionsValue() { return this.content.optionsValue; }
+	get commandLine() { return this.content.commandLine; }
+
 	get guild_id() { return this.context.guild_id; }
 	get guild() { return this.bot.guilds.cache.get(this.context.guild.id) || this.context.guild; }
 	get channel() { return this.bot.channels.cache.get(this.context.channel.id) || this.context.channel; }

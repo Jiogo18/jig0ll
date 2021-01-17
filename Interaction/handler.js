@@ -18,17 +18,15 @@ module.exports = class InteractionManager extends InteractionBase {
 		if(security.botIsAllowedToDo(cmdData) == false) return;
 
 		const retour = await this.onCommand(cmdData);
-		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.content.commandLine}"`);
+		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
 
-		const answerOk = cmdData.sendAnswer(retour)
-			.then(() => {
-				if(!answerOk)
-					console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
-			})
+		const answerOk = await cmdData.sendAnswer(retour)
 			.catch(e => {
 				console.error(`Error while sending an answer`.red);
 				console.error(e);
 			})
+		if(!answerOk)
+			console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
 	}
 
 
@@ -51,7 +49,8 @@ module.exports = class InteractionManager extends InteractionBase {
 				return new MessageMaker.Message(`execute is not defined for this option`);
 			}
 
-			return await command.execute(cmdData);
+			const retour = await command.execute(cmdData);
+			return retour;
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
