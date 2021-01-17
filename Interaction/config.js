@@ -45,7 +45,7 @@ module.exports = {
 	},
 	isAllowedIfWIPOnly(context) {//en WIPOnly on n'autorise que si c'est sur la guild test
 		if(process.env.WIPOnly) return this.securityLevel.wip.isAllowed(context);
-		if(context.guild_id == this.guild_test) return context.channel_id != this.channel_test;//en public il n'a pas accès au channel de test
+		if(context.guild.id == this.guild_test) return context.channel.id != this.channel_test;//en public il n'a pas accès au channel de test
 		return true;
 	},
 
