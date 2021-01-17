@@ -69,7 +69,7 @@ async function getMeteo() {
 function onWeatherPlenitude(data) {
 	console.log(`onWeatherPlenitude : PlenCity is "${data.name}"`);
 	data.name = "Plénitude";
-	data.date = libDate.getFrenchDate(data.dt*1000, PlenWeekdays, PlenMonths);
+	data.date = libDate.getFrenchDate(data.dt*1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
 }
 
 function getInfo() {
