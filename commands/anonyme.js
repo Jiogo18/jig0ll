@@ -9,7 +9,6 @@ module.exports = {
 	interaction: false,
 	hidden: true,
 	public: true,
-	wip: true,
 
 
 
