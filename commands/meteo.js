@@ -65,7 +65,7 @@ async function sendRequest(location, funcOnData) {
 	
 	switch(data.cod) {
 	case 200:
-		const date = data.date || libDate.getMeteoDate(data.dt * 1000);//s to msec
+		const date = data.date || libDate.getFrenchDate(data.dt * 1000);//s to msec
 		return getDescription(makeMeteoEmbed(data.name, date), data);
 	default:
 		return makeMeteoEmbed(data.name, '', [`Code Error: ${data.cod}`, `Message: ${data.message}`]);
