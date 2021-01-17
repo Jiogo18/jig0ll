@@ -12,6 +12,7 @@ module.exports = {
 	rubis: '262213332600225792',
 
 	guild_test: '313048977962565652',
+	channel_test: '541315862016032788',
 
 	isWip(user) {
 		switch(user.id) {
@@ -44,6 +45,7 @@ module.exports = {
 	},
 	isAllowedIfWIPOnly(context) {//en WIPOnly on n'autorise que si c'est sur la guild test
 		if(process.env.WIPOnly) return this.securityLevel.wip.isAllowed(context);
+		if(context.guild_id == this.guild_test) return context.channel_id != this.channel_test;//en public il n'a pas accès au channel de test
 		return true;
 	},
 
