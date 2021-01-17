@@ -56,7 +56,7 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
 	if(!Security.botIsAllowedToDo(
 		{
-			user: message.author,//infos du message
+			author: message.author,//infos du message
 			guild: message.channel.guild,
 			channel: message.channel,
 			on: 'message'
