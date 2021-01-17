@@ -33,6 +33,7 @@ module.exports = class InteractionManager extends InteractionBase {
 	async onCommand(cmdData) {
 		const [command, lastArg] = this.commandsMgr.getCommandForData(cmdData);
 		if(!command) {
+			if(lastArg.startsWith('Command unknow: ')) return;
 			console.warn(lastArg);
 			return new MessageMaker.Message(lastArg);
 		}
