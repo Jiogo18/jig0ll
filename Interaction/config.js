@@ -46,21 +46,6 @@ module.exports = {
 		if(process.env.WIPOnly) return this.securityLevel.wip.isAllowed(context);
 		return true;
 	},
-	isAllowed(context, security) {//TODO: remove it
-		if(process.env.WIPOnly && !this.securityLevel.wip.isAllowed(context)) return false;//en wip et que ça marche pas pour le wip
-
-		if(security == 0 || security == undefined || security == false)
-			return true;//pas de sérucité
-
-
-		if(typeof security != 'object')
-			security = this.securityLevel[security];
-		if(security && security.isAllowed)
-			return security.isAllowed(context);
-
-		console.error(`No security config set for ${security}`.red);
-		return false;
-	},
 
 	allowedPlace: {
 		PUBLIC: 'public',
