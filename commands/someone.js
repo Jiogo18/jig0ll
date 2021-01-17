@@ -1,4 +1,4 @@
-const MessageMaker = require('../Interaction/messageMaker');
+const MessageMaker = require('../lib/messageMaker.js');
 
 var useInMinute = [];
 var lastReset = [];

@@ -1,6 +1,6 @@
 const Plenitude = require('./plenitude.js');
 const security = require('../Interaction/security.js');
-const MakeMessage = require('../Interaction/messageMaker.js');
+const MakeMessage = require('../lib/messageMaker.js');
 
 
 module.exports = {

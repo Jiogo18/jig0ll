@@ -2,7 +2,7 @@ const Keyv = require("keyv");//store PlenCity
 var keyv = new Keyv();
 keyv = new Keyv(process.env.DATABASE_URL);//with SQLite (local) or Postgre (Heroku)
 keyv.on('error', err => console.error('Keyv connection error:', err));
-const MessageMaker = require("../Interaction/messageMaker.js");
+const MessageMaker = require("../lib/messageMaker.js");
 const libDate = require('../lib/date.js');
 
 

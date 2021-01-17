@@ -1,7 +1,7 @@
 const https = require('https');
 const meteoColor = 3447003;
 const CmdPlenitude = require("./plenitude.js");
-const MessageMaker = require('../Interaction/messageMaker.js');
+const MessageMaker = require('../lib/messageMaker.js');
 const libDate = require('../lib/date.js');
 
 

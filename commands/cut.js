@@ -1,5 +1,5 @@
 const security = require('../Interaction/security.js');
-const MessageMaker = require('../Interaction/messageMaker.js');
+const MessageMaker = require('../lib/messageMaker.js');
 
 
 module.exports = {

@@ -1,4 +1,4 @@
-const MessageMaker = require('../Interaction/messageMaker.js');
+const MessageMaker = require('../lib/messageMaker.js');
 const spaces = '\u200b \u200b \u200b \u200b ';
 
 module.exports = {

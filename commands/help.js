@@ -1,6 +1,6 @@
 const security = require('../Interaction/security.js');
-const MessageMaker = require('../Interaction/messageMaker.js');
-const { CommandData, CommandContent } = require('../Interaction/commandData.js');
+const MessageMaker = require('../lib/messageMaker.js');
+const { CommandData, CommandContent } = require('../lib/commandData.js');
 
 function makeMessage(description, error) {
 	const color = error ? 'red' : undefined;

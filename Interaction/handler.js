@@ -1,6 +1,6 @@
 const InteractionBase = require('./base.js');
-const { CommandInteraction } = require('./commandData.js');
-const MessageMaker = require('./messageMaker.js');
+const { CommandInteraction } = require('../lib/commandData.js');
+const MessageMaker = require('../lib/messageMaker.js');
 const security = require('./security.js');
 
 module.exports = class InteractionManager extends InteractionBase {
