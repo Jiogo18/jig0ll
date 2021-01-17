@@ -1,6 +1,6 @@
 ////\u200b pour avoir plusieurs espaces
 
-const CmdLibName = ["./help.js","./ping.js","./info.js","./test.js","./random.js","./meteo.js","./plenitude.js"];
+const CmdLibName = ["./help.js","./ping.js","./info.js","./test.js"];
 const CmdLib = [];
 for(const i in CmdLibName) {
 	const libPath = CmdLibName[i];
@@ -35,9 +35,6 @@ module.exports = class Cmd
 		const CmdPing = require("./ping.js");
 		const CmdInfo = require("./info.js");
 		const CmdTest = require("./test.js");
-		const CmdRandom = require("./random.js");
-		const CmdMeteo = require("./meteo.js");
-		const CmdPlenitude = require("./plenitude.js");
 
 		if(CmdHelp.isAction(msg))
 			sendMsg(bot,message,CmdHelp.action(message,msg));
@@ -49,12 +46,6 @@ module.exports = class Cmd
 			sendMsg(bot,message,CmdInfo.action(message,msg));
 		else if(CmdTest.isAction(msg))
 			sendMsg(bot,message,CmdTest.action(message,msg));
-		else if(CmdRandom.isAction(msg))
-			sendMsg(bot,message,CmdRandom.action(message,msg));
-		else if(CmdMeteo.isAction(msg))
-			CmdMeteo.action(message,msg);
-		else if(CmdPlenitude.isAction(msg))
-			CmdPlenitude.action(message,msg);//plenitude
 	}
 	//todo : call CmdLib
 
