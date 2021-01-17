@@ -4,13 +4,12 @@ process.env.HEROKU = process.execPath.includes('heroku') ? true : '';
 
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
-const Cmd = require("./commandes/commande.js");
-var messageNotCmd = [];
+const libCommand = require("./lib/command.js");
 const InteractionManager = require('./Interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
 require('colors');//colors for everyone ! (don't remove)
 const { CommandMessage } = require('./Interaction/commandData.js');
-const Security = require('./Interaction/security.js');
+const security = require('./Interaction/security.js');
 
 bot.localId = Math.floor(Math.random() * 10000);//id à 4 chiffres
 
@@ -32,31 +31,12 @@ bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 
 
 
-function onMessageNotCommand(message) {
-	var sourceId = 0, sourceName = "Unknow";
-	if(message.guild) {
-		sourceId = message.guild.id;
-		sourceName = message.guild.name+"@"+sourceId+"/"+message.channel.name;
-	}
-	else if(message.author) {
-		sourceId = message.author.id;
-		sourceName = "MP^";
-	}
-
-	if(!messageNotCmd[sourceId])
-		messageNotCmd[sourceId] = 0;
-	if(++messageNotCmd[sourceId] >= 200) {//à 200
-		messageNotCmd[sourceId] = 0;
-		console.warn(`Plus de 200 messages dans ${sourceName}, laissez moi dormir`);
-	}
-}
-
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
-	if(!Security.botIsAllowedToDo(
+	if(!security.botIsAllowedToDo(
 		{
-			author: message.author,//infos du message
+			author: message.author,
 			guild: message.channel.guild,
 			channel: message.channel,
 			on: 'message'
@@ -65,31 +45,35 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 
 
 	try {
-		var msg = Cmd.isCommand(bot, message);
-		if(!msg) {//if it's not a command
-			onMessageNotCommand(message);
-			return;
-		}
-		console.log(`nouvelle commande dans ${message.id} (par ${message.author.username}@${message.author.id}) : ${message.content}`);
+		const [content, prefix] = libCommand.removePrefix(message.content);
+		if(prefix == undefined) return;
+
+		message.content = content;
+		message.prefix = prefix;
+
 	} catch(error) {
 		console.error(`Error with a message: ${error}`);
-
 		return;
 	}
 
-	//2 try catch to answer with the error ONLY when it's a command
-	try {
-		var cmdData = new CommandMessage(message, interactionMgr);
-		const retour = await interactionMgr.onCommand(cmdData);
-		
-		const answerSent = await cmdData.sendAnswer(retour);
+	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
 
-		if(!answerSent && msg[0] && Cmd.isAction(msg[0]))
-			Cmd.action(bot, message, msg);
-	} catch (error) {
-		message.channel.send(`Sorry I've had an error: ${error}`);
-		console.error(error);
-	}
+
+	//on suppose que message.content et message.prefix on été séparés
+	var cmdData = new CommandMessage(message, interactionMgr);
+	const retour = await interactionMgr.onCommand(cmdData)
+		.catch(e => {
+			message.channel.send(`Sorry I've had an error: ${error}`);
+			console.error(error);
+		});
+	
+	if(!retour) return;
+	
+	cmdData.sendAnswer(retour)
+		.catch(e => {
+			message.reply(`Sorry I've had an error while sending the answer: ${error}`);
+			console.error(error);
+		});
 });
 
 bot.login();
