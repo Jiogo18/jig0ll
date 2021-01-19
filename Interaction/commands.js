@@ -66,7 +66,7 @@ module.exports = {
 		if(target) {
 			await target.post(post)//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
 			.catch(e => {
-				console.error(`Error while posting command ${command.name}`.red);
+				console.error(`Error while posting command ${command.name} ${e}`.red);
 				posted = false;
 			})
 			.then(e => {
@@ -172,13 +172,13 @@ module.exports = {
 			//si c'est un message (text) on a Name==true car:
 			// => si c'est une sous commande : Value est le nom de la sous commande (on compare Value et name)
 			// => sinon type est >=3 (string, number, boolean, ...) donc optionValue peut être n'importe quoi
-			const optionName = cmdData.content.optionsName[i];
-			const optionValue = cmdData.content.optionsValue[i];
-			const optionNa = optionName!=true ? optionName : optionValue;
+			const optionName = cmdData.content.options[i].name;
+			const optionValue = cmdData.content.options[i].value;
+			const optionNa = optionName==undefined ? optionValue : optionName;
 
 			var subCommand;
 			if(command.options)
-				subCommand = command.options.find(option => commandNameMatch(option.name, optionNa) || (optionName==true && 3 <= option.type));
+				subCommand = command.options.find(option => commandNameMatch(option.name, optionNa) || (optionName==undefined && 3 <= option.type));
 			if(subCommand == undefined) {
 				return [undefined, `Option unknow: ${(optionName === true) ? optionValue : optionName}`];
 			}
