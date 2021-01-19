@@ -4,7 +4,7 @@ module.exports = class InteractionBase {
 	bot = undefined;
 	static config = require('./config.js');
 	static security = require('./security.js');
-	commandsMgr = require('./commands.js');
+	commandsMgr = require('./commandsManager.js');
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '
