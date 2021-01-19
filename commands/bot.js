@@ -59,7 +59,7 @@ function idVerificator(name, description, funcExec) {
 				return funcExec(cmdData);
 			}
 		}],
-		execute() { return new MessageMaker.Embed('', `${description}\nid de ce bot : ${getLocalId()}`); }
+		execute() { return new MessageMaker.Embed('', `${description}\nid de ce bot : ${getLocalId()} (bot sur ${getBotLocation()})`); }
 	}
 }
 
