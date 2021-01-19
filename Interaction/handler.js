@@ -13,6 +13,8 @@ module.exports = class InteractionManager extends InteractionBase {
 
 	async onInteraction(interaction) {
 		
+		if(process.stopped == true) return;
+		
 		const cmdData = new CommandInteraction(interaction, this);
 
 		if(security.botIsAllowedToDo(cmdData) == false) return;

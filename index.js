@@ -4,6 +4,8 @@ process.env.HEROKU = process.execPath.includes('heroku') ? true : '';
 
 const Discord = require('discord.js');
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
+bot.startedTime = Date.now();
+
 const libCommand = require("./lib/command.js");
 const InteractionManager = require('./Interaction/handler.js');
 const interactionMgr = new InteractionManager(bot);
@@ -11,7 +13,6 @@ require('colors');//colors for everyone ! (don't remove)
 const { CommandMessage } = require('./lib/commandData.js');
 const security = require('./Interaction/security.js');
 
-bot.localId = Math.floor(Math.random() * 10000);//id à 4 chiffres
 
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 	process.env.BOT_ID = bot.user.id
@@ -33,6 +34,8 @@ bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 
 
 bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
+	
+	if(process.stopped == true) return;
 	
 	if(!security.botIsAllowedToDo(
 		{
