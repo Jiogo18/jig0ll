@@ -70,7 +70,6 @@ module.exports = {
 	description: "Commandes pour gérer le bot",
 	interaction: true,
 	private: true,
-	wip: true,
 
 	options: [{
 		name: 'info',
