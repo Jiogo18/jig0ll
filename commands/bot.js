@@ -2,11 +2,8 @@ const MessageMaker = require('../lib/messageMaker.js');
 const libDate = require('../lib/date.js');
 
 function resetLocalId() {
-	do {
-		const nb = Math.floor(Math.random() * 1000);//id à 3 chiffres
-		process.localId = nb==0 ? 1 : nb;
-	} while(process.localId == 0);
-	console.log(`L'ID Local est ${process.localId}`);
+	const nb = Math.floor(Math.random() * 1000);//id à 3 chiffres
+	process.localId = nb==0 ? 1 : nb;
 }
 resetLocalId();
 function getLocalId() { return process.localId; }
@@ -92,7 +89,7 @@ module.exports = {
 
 	stop(bot, source) {
 		process.stopped = true;
-		console.log(`Stoppé par ${source} le ${new Date().toUTCString()}`.red);
+		console.warn(`Stoppé par ${source} le ${new Date().toUTCString()}`.red);
 		setTimeout(function() {
 			bot.destroy();
 		}, 200);//arrêt dans 200 ms par sécurité
