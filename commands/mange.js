@@ -28,7 +28,7 @@ module.exports = {
 			execute(cmdData) {
 				const guildId = cmdData.guild.id;
 				//le channel dans la liste logChannels ou le channel d'où le message est envoyé
-				const channelLog = logChannels[guildId] ? cmdData.bot.channels.cache.get(logChannels[guildId]) : cmdData.channel;
+				const channelLog = logChannels[guildId] ? cmdData.bot.channels.cache.get(logChannels[guildId]) : undefined;
 
 
 				const sujet = cmdData.optionsValue[0];
@@ -40,9 +40,9 @@ module.exports = {
 					channelLog.send(retour.getForMessage());
 				}
 				else {
-					return cmdData.commandSource.reply(retour);
+					return retour;//répond au message
 				}
-				return;
+				return new MessageMaker.Embed('', "Commande effectuée, bon appétit");
 			}
 		}],
 
