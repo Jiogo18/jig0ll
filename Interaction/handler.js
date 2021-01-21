@@ -52,6 +52,12 @@ module.exports = class InteractionManager extends InteractionBase {
 				return new MessageMaker.Message(`execute is not defined for this option`);
 			}
 
+
+			if(cmdData.isInteraction) {
+				cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accept l'intéraction
+			}
+
+
 			const retour = await command.execute(cmdData);
 			return retour;
 
