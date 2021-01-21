@@ -9,7 +9,7 @@ module.exports = {
 
 
 	name: 'mange',
-	description: 'Donner un compte rendu de son repas inrp\nFormat: `!mange "lucie dupont" "un sandwich"`',
+	description: 'Donner un compte rendu de son repas inrp\nFormat: `!mange "Elizia" "des chocolats" `',
 	interaction: false,//FUTUR discord accepte pas encore de mettre 2 type 3 à la suite (ref?)
 	public: true,
 
