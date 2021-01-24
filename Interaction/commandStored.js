@@ -47,8 +47,9 @@ class CommandBase {
 	}
 
 	get commandLine() {
-		if(this.parent && this.parent.commandLine) {
-			return this.parent.commandLine + this.name;
+		const parentLine = this.parent ? this.parent.commandLine : undefined;
+		if(parentLine) {
+			return parentLine + ' ' + this.name;
 		}
 		return this.name;
 	};
