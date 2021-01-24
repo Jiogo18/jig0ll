@@ -41,6 +41,7 @@ module.exports = class InteractionManager extends InteractionBase {
 			console.warn(error.yellow);
 			return new MessageMaker.Message(error);
 		}
+		if(!command) return;
 		if(typeof command == 'string') {
 			return new MessageMaker.Message(command);
 		}

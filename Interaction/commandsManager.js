@@ -153,13 +153,12 @@ module.exports = {
 	getCommandForData(cmdData, readOnly) {
 		var command = this.getCommand(cmdData.commandName);
 
-		if(!command) {
-			return `Command unknow: ${cmdData.commandName}`;
-		}
+		if(!command) return;
+		
 
 		if(cmdData.options && cmdData.options.length > 0)
 			command = command.getSubCommand(cmdData.options);
-		if(!command) { return `Command not found`; }
+		if(!command) { throw `Command not found`; }
 
 
 		if(readOnly) {
