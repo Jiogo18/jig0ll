@@ -31,33 +31,37 @@ module.exports = {
 			if(!command) { return module.exports.execute(cmdData); }
 			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
-			const optionsDescTab = getDescriptionFor(cmdData, command.options);
-			var optionsDesc = '';
-			if(optionsDescTab && optionsDescTab.length > 0) {
-				var optionsDescStr = [];
-				for(const line of optionsDescTab) {
-					optionsDescStr.push(`\xa0 \xa0 /${commandLine} ${line.name} : ${line.description}`);
-				}
-				optionsDesc = '\n' + optionsDescStr.join('\n');
-				//affiche une liste avec une indentation et un retour à la ligne
-			}
-			return makeMessage(command.description + optionsDesc);
+			return makeMessage(getFullDescriptionFor(cmdData, command, commandLine));
+			
 		}
 	}],
 
 	execute(cmdData) {
-		const description = getDescriptionFor(cmdData, cmdData.commands);
-		var descriptionStr = [];
-		for(const line of description) {
-			descriptionStr.push(`\u200b \u200b \u200b \u200b ${line.name} : ${line.description}`);
-		}
-		return makeMessage(descriptionStr.join('\n'));
-	}
+		return makeMessage(getBetterDescriptionFor('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands, ''));
+	},
+
+	getDescriptionFor: getDescriptionFor,
+	getFullDescriptionFor: getFullDescriptionFor,
 };
 
+//get a complete description of the command
+function getFullDescriptionFor(context, command, commandLine) {
+	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, commandLine);
+}
 
+//get a readable description of options
+function getBetterDescriptionFor(spaces, context, options, commandLine) {
+	const description = getDescriptionFor(context, options);
+	var descriptionStr = [];
+	if(commandLine != '') commandLine += ' ';
+	for(const line of description || []) {
+		descriptionStr.push(spaces + `/${commandLine}${line.name} : ${line.description}`);
+	}
+	//affiche une liste avec une indentation et un retour à la ligne
+	return descriptionStr.join('\n');
+}
 
-
+//get the description with objects
 function getDescriptionFor(context, commands) {
 	if(!commands) return [];
 
