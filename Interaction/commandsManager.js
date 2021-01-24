@@ -157,17 +157,9 @@ module.exports = {
 			return `Command unknow: ${cmdData.commandName}`;
 		}
 
-		var lastArg = cmdData.commandName;
-
-		try {
-			if(cmdData.options && cmdData.options.length > 0)
-				command = command.getSubCommand(cmdData.options);
-			if(!command) { return `Command not found`; }
-		}
-		catch(error) {
-			console.warn(error.yellow);
-			throw error;
-		}
+		if(cmdData.options && cmdData.options.length > 0)
+			command = command.getSubCommand(cmdData.options);
+		if(!command) { return `Command not found`; }
 
 
 		if(readOnly) {

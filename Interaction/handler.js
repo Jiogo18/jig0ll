@@ -38,7 +38,7 @@ module.exports = class InteractionManager extends InteractionBase {
 			command = this.commandsMgr.getCommandForData(cmdData);
 		}
 		catch(error) {
-			console.warn(error);
+			console.warn(error.yellow);
 			return new MessageMaker.Message(error);
 		}
 		if(typeof command == 'string') {

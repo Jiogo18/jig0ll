@@ -90,7 +90,7 @@ class CommandBase {
 				return subCommand;
 			}
 		}
-		throw `Option {${subOption.name}, ${subOption.value}} not found in ${this.commandLine}`;
+		throw `Option ${subOption.name || subOption.value} not found in ${this.commandLine}`;
 	}
 }
 
