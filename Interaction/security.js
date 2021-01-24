@@ -73,15 +73,7 @@ class SecurityCommand {
 		this.#wip = security.wip;
 
 		this.#securityPlace = security.place;
-		if(!this.#securityPlace) {
-			//TODO: remove for transition to SecurityCommand
-			this.#securityPlace = (security.private && SecurityPlace.PRIVATE) || (security.public && SecurityPlace.PUBLIC)  || (security.public==false && SecurityPlace.NONE) || undefined;
-			console.debug(`security.place not defined : ${this.#securityPlace} ${this.place}`);
-		}
-		else {
-			console.debug(`security.place defined : ${security.place}`);
-		}
-		
+
 		if(security.inheritance) this.#inheritance = security.inheritance;
 		if(security.isAllowedToSee) this.isAllowedToSee = security.isAllowedToSee;
 		if(security.isAllowedToUse) this.#isAllowedToUse2 = security.isAllowedToUse;
