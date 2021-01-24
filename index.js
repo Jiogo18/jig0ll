@@ -46,7 +46,7 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 		})
 	) { return; }//pas autorisé en WIPOnly
 
-
+	//préparer le message pour les commandes
 	try {
 		const [content, prefix] = libCommand.removePrefix(message.content);
 		if(prefix == undefined) return;
@@ -59,10 +59,8 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 		return;
 	}
 
-	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
 
-
-	//on suppose que message.content et message.prefix on été séparés
+	//on suppose que message.content et message.prefix ont été séparés
 	var cmdData = new CommandMessage(message, interactionMgr);
 	const retour = await interactionMgr.onCommand(cmdData)
 		.catch(error => {
@@ -72,8 +70,10 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	
 	if(!retour) return;
 	
+	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
+	
 	cmdData.sendAnswer(retour)
-		.catch(e => {
+		.catch(error => {
 			message.reply(`Sorry I've had an error while sending the answer: ${error}`);
 			console.error(error);
 		});
