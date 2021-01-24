@@ -18,7 +18,7 @@ module.exports = {
 
 	options: [{
 		name: "command",
-		description: "Détail une commande",
+		description: 'Détaille une commande (/help "bot info")',
 		type: 3,
 		required: false,
 
@@ -30,7 +30,7 @@ module.exports = {
 			const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
-			if(!command) { return module.exports.execute(cmdData); }
+			if(!command) { console.debug("todo: '/help bot info'"); return module.exports.execute(cmdData); }
 			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
 			return makeMessage(getFullDescriptionFor(cmdData, command, commandLine));
