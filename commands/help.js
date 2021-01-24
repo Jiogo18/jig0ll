@@ -27,7 +27,7 @@ module.exports = {
 			const commandLine = commandToHelp.join(' ');
 			const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
 
-			const [command] = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
+			const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
 			if(!command) { return module.exports.execute(cmdData); }
@@ -69,7 +69,7 @@ function getDescriptionFor(context, commands) {
 
 	var retour = [];
 	commands.forEach((command, key) => {
-		if(!security.isAllowedToSeeCommand(command, context)) {
+		if(!command.security.isAllowedToSee(context)) {
 			return;
 		}
 		var commandName = command.name;

@@ -100,9 +100,10 @@ class SecurityCommand {
 			case SecurityPlace.PRIVATE: return is.hightPrivilegeUser(context.author.id);
 			case SecurityPlace.PUBLIC: return true;
 			case SecurityPlace.NONE: return false;
+			case undefined: return false;
 			default:
 				//TODO: avoir une sécurité par héritage (créée au démarrage ?)
-				console.warn(`isAllowedToUse unknow for ${this.name}`);
+				console.warn(`isAllowedToUse place unknow for ${this.name} : ${this.place}`);
 				return false;
 		}
 	}

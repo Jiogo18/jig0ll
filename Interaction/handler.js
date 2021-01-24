@@ -39,6 +39,8 @@ module.exports = class InteractionManager extends InteractionBase {
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
 
+		if(!retour) return;
+
 		const answerOk = await cmdData.sendAnswer(retour)
 			.catch(e => {
 				console.error(`Error while sending an answer`.red);
@@ -76,6 +78,9 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 			const retour = await command.execute(cmdData);
+			if(!retour) {
+				console.warn(`Command "${cmdData.commandLine}" has no answer`.yellow);
+			}
 			return retour;
 
 		} catch (error) {

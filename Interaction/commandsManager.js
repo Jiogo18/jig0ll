@@ -162,7 +162,7 @@ module.exports = {
 
 
 		if(readOnly) {
-			if(!command.security.isAllowedToGet(cmdData.context))
+			if(!command.security.isAllowedToSee(cmdData.context))
 				return `You can't do that`;
 			command.execute = undefined;//can't execute it
 		}
