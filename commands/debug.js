@@ -1,5 +1,6 @@
 const MessageMaker = require('../lib/messageMaker.js');
 
+const done = new MessageMaker.Message('Done');
 
 function sleep(milliseconds) {
 	const start = Date.now();
@@ -8,7 +9,7 @@ function sleep(milliseconds) {
 
 
 module.exports = {
-	name: 'test',
+	name: 'debug',
 	description: 'Tests diverses',
 	interaction: true,
 
@@ -22,7 +23,7 @@ module.exports = {
 		type: 1,
 
 		execute(context) {
-			context.sendAnswer(new MessageMaker.Message('Done'));
+			context.sendAnswer(done);
 			return;
 		}
 	},{
@@ -34,11 +35,19 @@ module.exports = {
 		}
 	},{
 		name: 'sleep',
-		description: "Prend 5 secondes à répondre",
+		description: "Prend 5 secondes pour répondre",
 		type: 1,
 		execute() {
 			sleep(5000);
-			return new MessageMaker.Message('Done');
+			return done;
+		}
+	},{
+		name: 'await',
+		description: "Prend 5 secondes pour répondre",
+		type: 1,
+		async execute() {
+			await new Promise(r => setTimeout(r, 5000));
+			return done;
 		}
 	}]
 };
