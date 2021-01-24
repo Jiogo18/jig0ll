@@ -48,37 +48,43 @@ class SecurityCommand {
 	get securityCommand() { return true; }
 	#securityPlace;
 		get place() {
-			if(this.wip) return SecurityPlace.NONE;
-			return this.#securityPlace;
+			if(this.wip && this.#securityPlace == SecurityPlace.PUBLIC) return SecurityPlace.PRIVATE;
+			return this.#securityPlace || (this.parent && this.parent.place) || SecurityPlace.NONE;
 		};
-	#interfaceSlashCmd;
-		get interaction() { return this.#interfaceSlashCmd; };
-		enableInteraction(enabled = true) { this.#interfaceSlashCmd = enabled; return this; };
 	
 	#wip;
-		get wip() { return this.#wip || process.env.WIPOnly; };
+		get wip() { return this.#wip || (this.parent && this.parent.wip); };
 		get wipSet() { return this.#wip; };
 		setWip(wip = true) { this.#wip = wip; return this; };
 	
 	#parent;
 		get parent() { return this.#parent; };
-		set parent(parent) { this.#parent = parent != this ? parent : undefined; }
+		set parent(parent) { this.#parent = (parent != this) ? parent : undefined; }
 		setParent(parent) { this.parent = parent; return this; }
 	
 	#inheritance = true;
 		get inheritance() { return this.#inheritance; }
 	
 	constructor(security, parent) {
+		this.parent = parent;
 		if(!security) {
 			return;//default
 		}
-		this.securityPlace = security.place;
-		this.interfaceSlashCmd = security.interaction;//enable interactions
-		this.wip = security.wip;
-		this.#parent = parent;
-		this.#inheritance = security.inheritance || this.#inheritance;
-		this.isAllowedToSee = security.isAllowedToSee || this.isAllowedToSee;
-		this.#isAllowedToUse2 = security.isAllowedToUse || this.#isAllowedToUse2;
+		this.#wip = security.wip;
+
+		this.#securityPlace = security.place;
+		if(!this.#securityPlace) {
+			//TODO: remove for transition to SecurityCommand
+			this.#securityPlace = (security.private && SecurityPlace.PRIVATE) || (security.public && SecurityPlace.PUBLIC)  || (security.public==false && SecurityPlace.NONE) || undefined;
+			console.debug(`security.place not defined : ${this.#securityPlace} ${this.place}`);
+		}
+		else {
+			console.debug(`security.place defined : ${security.place}`);
+		}
+		
+		if(security.inheritance) this.#inheritance = security.inheritance;
+		if(security.isAllowedToSee) this.isAllowedToSee = security.isAllowedToSee;
+		if(security.isAllowedToUse) this.#isAllowedToUse2 = security.isAllowedToUse;
 	}
 
 	isAllowedToSee = function(context) {
@@ -88,7 +94,7 @@ class SecurityCommand {
 
 
 	isAllowedToUse(context) {
-		if((this.wip || process.env.WIPOnly) && is.betaAllowed(context) == false) return false;
+		if((this.wip) && is.betaAllowed(context) == false) return false;
 
 		if(this.inheritance && this.parent && this.parent.isAllowedToUse) {
 			if(this.parent.isAllowedToUse(context) == false)
@@ -109,11 +115,6 @@ class SecurityCommand {
 		}
 	}
 	setIsAllowedToUse(func) { this.#isAllowedToUse2 = getStricFunction(func); return this; }
-
-	allowedPlacesToCreateInteraction() {
-		if(this.interaction != true) { return SecurityPlace.NONE; }
-		return this.securityPlace;
-	}
 }
 
 
@@ -161,6 +162,7 @@ module.exports = {
 
 
 	allowedPlace: SecurityPlace,
+	SecurityPlace: SecurityPlace,
 
 	isAllowedToCreateInteraction(command) {
 		if(command.interaction != true) { return this.allowedPlace.NONE; }

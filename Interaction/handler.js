@@ -33,13 +33,15 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 	async onCommand(cmdData) {
-		const [command, lastArg] = this.commandsMgr.getCommandForData(cmdData);
-		if(!command) {
-			if(lastArg.startsWith('Command unknow: ')) return;
-			console.warn(lastArg);
-			return new MessageMaker.Message(lastArg);
+		var command;
+		try {
+			command = this.commandsMgr.getCommandForData(cmdData);
 		}
-		else if(typeof command == 'string') {
+		catch(error) {
+			console.warn(error);
+			return new MessageMaker.Message(error);
+		}
+		if(typeof command == 'string') {
 			return new MessageMaker.Message(command);
 		}
 
@@ -48,7 +50,7 @@ module.exports = class InteractionManager extends InteractionBase {
 			if(typeof command.execute != 'function') {
 				if(command.description) return new MessageMaker.Message(command.description);
 				
-				console.warn(`Can't find execute() for ${lastArg}`.yellow);
+				console.warn(`Can't find execute() for ${command.name}`.yellow);
 				return new MessageMaker.Message(`execute is not defined for this option`);
 			}
 

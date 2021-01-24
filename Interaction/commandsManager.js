@@ -2,7 +2,8 @@ const Discord = require('discord.js');
 const fs = require('fs');
 const defaultCommandsPath = './commands';
 var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24
-const security = require('./security.js');
+const Security = require('./security.js');
+const CommandStored = require('./commandStored.js');
 
 module.exports = {
 
@@ -55,16 +56,10 @@ module.exports = {
 	async addCommand(command, target) {
 
 		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
-
-		const post = { data: {
-			name: command.name,
-			description: command.description,
-			options: command.options
-		}};//these are the only JSON Param from Discord API
 		
 		var posted = false;
 		if(target) {
-			await target.post(post)//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
+			await target.post(command.JSON)//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
 			.catch(e => {
 				console.error(`Error while posting command ${command.name} ${e}`.red);
 				posted = false;
@@ -108,7 +103,7 @@ module.exports = {
 		commandFiles.forEach(file => {
 			const command = require(`../${defaultCommandsPath}/${file}`);
 			if(command) {
-				cmdsLoaded.push(command);
+				cmdsLoaded.push(new CommandStored(command));
 			}
 			else {
 				console.error(`Command not loaded : ${file}`.red);
@@ -128,15 +123,12 @@ module.exports = {
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
 		for (const command of cmdsLoaded) {
 			var target = undefined;
-			switch(security.isAllowedToCreateInteraction(command)) {
-				case security.allowedPlace.PUBLIC: target = targetGlobal; break;
-				case security.allowedPlace.PRIVATE: target = targetPrivate; break;
+			switch(command.allowedPlacesToCreateInteraction) {
+				case Security.SecurityPlace.PUBLIC: target = targetGlobal; break;
+				case Security.SecurityPlace.PRIVATE: target = targetPrivate; break;
 			}
-			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 			
-			if(command.wip)
-				console.warn(`Interaction /${command.name} is WIP`.yellow);
-
+			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 
 			c.total++;
 			if(await this.addCommand(command, target)) {
@@ -148,49 +140,46 @@ module.exports = {
 				}
 			}
 		}
+		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
 		console.log(`Loaded ${c.total} commands, ${c.public} public, ${c.private} private`.green);
 
 		c.after = this.commands.length;
 		return c;
 	},
 
+	getCommand(commandName) {
+		return this.commands.find(command => command.isCommand(commandName));
+	},
 	getCommandForData(cmdData, readOnly) {
-		var command = this.commands.find(option => commandNameMatch(option.name, cmdData.commandName));
+		var command = this.getCommand(cmdData.commandName);
 
 		if(!command) {
-			return [undefined, `Command unknow: ${cmdData.commandName}`];
-		}
-		
-		if(!security.isAllowedToGetCommand(command, cmdData, readOnly)) {
-			return [`You can't do that`];
+			return `Command unknow: ${cmdData.commandName}`;
 		}
 
 		var lastArg = cmdData.commandName;
 
-		for(let i=0; i<cmdData.options.length; i++) {//get the sub command named optionName
-			//on compare Name et option.name (le nom de l'option)
-			//si c'est un message (text) on a Name==true car:
-			// => si c'est une sous commande : Value est le nom de la sous commande (on compare Value et name)
-			// => sinon type est >=3 (string, number, boolean, ...) donc optionValue peut être n'importe quoi
-			const optionName = cmdData.content.options[i].name;
-			const optionValue = cmdData.content.options[i].value;
-			const optionNa = optionName==undefined ? optionValue : optionName;
-
-			var subCommand;
-			if(command.options)
-				subCommand = command.options.find(option => commandNameMatch(option.name, optionNa) || (optionName==undefined && 3 <= option.type));
-			if(subCommand == undefined) {
-				return [undefined, `Option unknow: ${(optionName === true) ? optionValue : optionName}`];
-			}
-			if(!security.isAllowedToGetCommand(command, cmdData, readOnly)) {
-				return [`You can't do that`];
-			}
-			command = subCommand;
-			lastArg = optionName;
+		try {
+			if(cmdData.options && cmdData.options.length > 0)
+				command = command.getSubCommand(cmdData.options);
+			if(!command) { return `Command not found`; }
+		}
+		catch(error) {
+			console.warn(error.yellow);
+			throw error;
 		}
 
-		if(readOnly) command.execute = undefined;//can't execute it
-		return [command, lastArg];
+
+		if(readOnly) {
+			if(!command.security.isAllowedToGet(cmdData.context))
+				return `You can't do that`;
+			command.execute = undefined;//can't execute it
+		}
+		else {
+			if(!command.security.isAllowedToUse(cmdData.context))
+				return `You can't do that`;
+		}
+		return command;
 	}
 
 }
