@@ -65,7 +65,7 @@ bot.on(Discord.Constants.Events.MESSAGE_CREATE, async message => {
 	//on suppose que message.content et message.prefix on été séparés
 	var cmdData = new CommandMessage(message, interactionMgr);
 	const retour = await interactionMgr.onCommand(cmdData)
-		.catch(e => {
+		.catch(error => {
 			message.channel.send(`Sorry I've had an error: ${error}`);
 			console.error(error);
 		});
