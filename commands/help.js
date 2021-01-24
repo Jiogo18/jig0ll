@@ -11,8 +11,10 @@ module.exports = {
 	name: 'help',
 	description: 'Affiche les commandes disponibles',
 	interaction: true,
-	public: true,
 
+	security: {
+		place: 'public',
+	},
 
 	options: [{
 		name: "command",

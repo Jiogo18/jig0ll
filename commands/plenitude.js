@@ -37,7 +37,10 @@ module.exports = {
 	name: 'plénitude',
 	description: "Commandes de Plénitude",
 	interaction: true,
-	public: true,
+
+	security: {
+		place: 'public',
+	},
 
 	options: [{
 		name: 'météo',

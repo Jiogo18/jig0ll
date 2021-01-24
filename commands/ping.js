@@ -4,8 +4,11 @@ module.exports = {
 	name: 'ping',
 	description: 'Pong!',
 	interaction: true,
-	public: true,
-	wip: true,
+
+	security: {
+		place: 'public',
+		wip: true,
+	},
 
 	execute() {
 		// return {

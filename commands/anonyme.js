@@ -5,10 +5,13 @@ module.exports = {
 
 	name: 'anonyme',
 	description: 'Faire une annonce anonymement',
-
+	
 	interaction: false,
-	hidden: true,
-	public: true,
+	security: {
+		hidden: true,
+		place: 'public',
+	},
+	
 
 
 

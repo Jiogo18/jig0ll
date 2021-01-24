@@ -9,7 +9,10 @@ module.exports = {
 	name: 'météo',
 	description: "La météo actuelle de la ville/région (par openweathermap)",
 	interaction: true,
-	public: true,
+	
+	security: {
+		place: 'public',
+	},
 
 	options: [{
 		name: "location",

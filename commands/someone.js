@@ -8,8 +8,11 @@ module.exports = {
 	name: 'someone',
 	description: "Appel aléatoirement un membre du channel avec les memes du @someone d'avril 2018",
 	interaction: false,
-	hidden: true,
-	public: true,
+
+	security: {
+		place: 'public',
+		hidden: true,
+	},
 
 	execute(cmdData) {
 		const id = cmdData.guild_id;

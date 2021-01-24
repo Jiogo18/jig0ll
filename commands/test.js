@@ -5,7 +5,10 @@ module.exports = {
 	name: 'test',
 	description: 'Tests diverses',
 	interaction: true,
-	private: true,
+
+	security: {
+		place: 'private',
+	},
 
 	options: [{
 		name: "empty_answer",

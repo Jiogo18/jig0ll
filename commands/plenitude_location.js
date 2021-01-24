@@ -7,8 +7,11 @@ module.exports = {
 	name: 'plenitude_location',
 	description: 'Commandes avancées pour Plénitude',
 	interaction: false,
-	public: false,
-	isAllowedToUse(cmdData) { return security.isPlenitudePrivilege(cmdData.author.id); },
+	
+	security: {
+		place: 'private',
+		isAllowedToUse(cmdData) { return security.isPlenitudePrivilege(cmdData.author.id); },
+	},
 
 	options: [{
 		name: 'get',
