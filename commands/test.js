@@ -1,6 +1,12 @@
 const MessageMaker = require('../lib/messageMaker.js');
 
 
+function sleep(milliseconds) {
+	const start = Date.now();
+	while (Date.now() - start < milliseconds);
+}
+
+
 module.exports = {
 	name: 'test',
 	description: 'Tests diverses',
@@ -25,6 +31,14 @@ module.exports = {
 		type: 1,
 		execute() {
 			throw `Erreur demandée par "/test error"`;
+		}
+	},{
+		name: 'sleep',
+		description: "Prend 5 secondes à répondre",
+		type: 1,
+		execute() {
+			sleep(5000);
+			return new MessageMaker.Message('Done');
 		}
 	}]
 };
