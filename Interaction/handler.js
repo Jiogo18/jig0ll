@@ -2,6 +2,19 @@ const InteractionBase = require('./base.js');
 const { CommandInteraction } = require('../lib/commandData.js');
 const MessageMaker = require('../lib/messageMaker.js');
 const security = require('./security.js');
+const Snowflake = require('../lib/snowflake.js');
+
+
+async function safeInteractionAnswer(cmdData) {
+	const timestampId = Snowflake.getDateSinceEpoch(cmdData.commandSource.id);
+	//ne fonctionne que si la commande fonctionne au await (pas au sleep des dates)
+	const timeRemaining = 3000 + timestampId - Date.now();
+	const t = setTimeout(async function() {
+		if(cmdData.answered) return;
+		console.log(`Interaction is too long, an aknowledgment will be sent`);
+		cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accepte l'intéraction (et attent le retour)
+	}, timeRemaining - 500);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
+}
 
 module.exports = class InteractionManager extends InteractionBase {
 	constructor(bot) {
@@ -18,6 +31,10 @@ module.exports = class InteractionManager extends InteractionBase {
 		const cmdData = new CommandInteraction(interaction, this);
 
 		if(security.botIsAllowedToDo(cmdData) == false) return;
+
+
+		safeInteractionAnswer(cmdData);
+
 
 		const retour = await this.onCommand(cmdData);
 		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
@@ -56,9 +73,6 @@ module.exports = class InteractionManager extends InteractionBase {
 			}
 
 
-			if(cmdData.isInteraction) {
-				cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accept l'intéraction
-			}
 
 
 			const retour = await command.execute(cmdData);
