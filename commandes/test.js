@@ -23,31 +23,6 @@ module.exports = class CmdTest
 			}};
 		switch (msg[1].toLowerCase())
 		{
-			case "idtime":
-				if(msg.length < 3)//manque la case 2
-					msg.push(1);
-				if(msg[2] < 1)
-					msg[2] = 1;
-				if(msg[2] > 10)
-					msg[2] = 10;
-				console.log("Creation de "+ msg[2] +" channels");
-				var channels = new Array();
-				for(let i=0; i<msg[2]; i++)
-					channels.push(message.guild.createChannel("temp"+i+1, "text", [], "commande @Jig0ll")
-							.then(function(value)
-							{
-								value.delete();
-								message.channel.send("\n	Channel "+(i+1)+" :"+
-													 "\n		ID="+value.id+
-													 "\n		Timestamp="+value.createdTimestamp+
-													 "\n		Créé le "+value.createdAt);
-							})
-							.catch(console.error));
-
-				message.channel.send("__"+channels.length+" channel"+
-					(channels.length==1 ? " créé" : "s créés")+"__ :");
-
-				break;
 
 			case "timestamp":
 				if(msg.length == 2)
@@ -145,7 +120,6 @@ module.exports = class CmdTest
 	static getHelp(complet) {
 		if(complet)
 			return "test <test>:"+
-				"\nidtime (nb): renvoie les id de nouveaux channels"+
 				"\ntimestamp (channel): renvoie la date de creation du channel"+
 				"\nsnowflake (snowflake): renvoie les informations du snowflake";
 		else
