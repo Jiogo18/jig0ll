@@ -49,5 +49,17 @@ module.exports = {
 			await new Promise(r => setTimeout(r, 5000));
 			return done;
 		}
+	},{
+		name: 'commandline',
+		description: 'Command line',
+		type: 2,
+		options: [{
+			name: 'long', description: 'A long command line', type: 1,
+			execute() { return done; },
+			options: [{
+				name: 'very_long', description: 'A very long command line', type: 3,
+				execute() { return done; }
+			}]
+		}]
 	}]
 };
