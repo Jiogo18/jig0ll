@@ -7,6 +7,25 @@ function makeMessage(description, error) {
 	return new MessageMaker.Embed('Help', description, {color: color});
 }
 
+function getCommandToHelp(cmdData) {
+	var commandToHelp = [...cmdData.content.optionsValue];
+	if(commandToHelp[0] && commandToHelp[0].includes('')) {
+		const first = commandToHelp.shift();
+		for(const word of first.split(' ').reverse()) {
+			commandToHelp.unshift(word);
+		}
+		console.debug(commandToHelp);
+	}
+
+	const commandLine = commandToHelp.join(' ');
+	const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
+
+	const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
+	return [command, commandLine];
+}
+
+
+
 module.exports = {
 	name: 'help',
 	description: 'Affiche les commandes disponibles',
@@ -23,11 +42,8 @@ module.exports = {
 		required: false,
 
 		execute(cmdData) {
-			var commandToHelp = [...cmdData.content.optionsValue];
-			const commandLine = commandToHelp.join(' ');
-			const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
 
-			const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
+			const [command, commandLine] = getCommandToHelp(cmdData);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
 			if(!command) { console.debug("todo: '/help bot info'"); return module.exports.execute(cmdData); }

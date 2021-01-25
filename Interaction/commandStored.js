@@ -91,7 +91,10 @@ class CommandBase {
 				return subCommand;
 			}
 		}
-		throw `Option '${subOption.name || subOption.value}' not found in '/${this.commandLine}'`;
+		if(process.env.WIPOnly) {
+			console.warn(`Option '${subOption.name || subOption.value}' not found in '/${this.commandLine}'`);
+		}
+		return this;
 	}
 }
 
