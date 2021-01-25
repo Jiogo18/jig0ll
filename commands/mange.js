@@ -30,7 +30,7 @@ module.exports = {
 			execute(cmdData) {
 				const guildId = cmdData.guild.id;
 				//le channel dans la liste logChannels ou le channel d'où le message est envoyé
-				const channelLog = logChannels[guildId] ? cmdData.bot.channels.cache.get(logChannels[guildId]) : undefined;
+				const channelLog = logChannels[guildId] ? cmdData.bot.channels.fetch(logChannels[guildId]) : undefined;
 
 
 				const sujet = cmdData.optionsValue[0];
