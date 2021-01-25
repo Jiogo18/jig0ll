@@ -14,7 +14,6 @@ function getCommandToHelp(cmdData) {
 		for(const word of first.split(' ').reverse()) {
 			commandToHelp.unshift(word);
 		}
-		console.debug(commandToHelp);
 	}
 
 	const commandLine = commandToHelp.join(' ');
@@ -46,7 +45,7 @@ module.exports = {
 			const [command, commandLine] = getCommandToHelp(cmdData);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
-			if(!command) { console.debug("todo: '/help bot info'"); return module.exports.execute(cmdData); }
+			if(!command) { return module.exports.execute(cmdData); }
 			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
 			return makeMessage(getFullDescriptionFor(cmdData, command, commandLine));
