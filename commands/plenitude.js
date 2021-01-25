@@ -1,7 +1,4 @@
-const Keyv = require("keyv");//store PlenCity
-var keyv = new Keyv();
-keyv = new Keyv(process.env.DATABASE_URL);//with SQLite (local) or Postgre (Heroku)
-keyv.on('error', err => console.error('Keyv connection error:', err));
+const DataBase = require('../lib/database.js');
 const MessageMaker = require("../lib/messageMaker.js");
 const libDate = require('../lib/date.js');
 
@@ -11,22 +8,14 @@ const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messi
 
 
 const PlenCity = {
-	lastLocation: 'Plénitude',
-	lastUpdate: 0,
+	database: new DataBase('PlenCity', 'Bayonne', 10000),
 
 	get: async function () {
-		if(PlenCity.lastUpdate + 1000 <= Date.now()) {
-			const name = await keyv.get('PlenCity');
-			PlenCity.lastLocation = ((name && name != '') ? name : undefined) || 'Bayonne';
-			PlenCity.lastUpdate = Date.now();
-		}
-		return PlenCity.lastLocation;
+		return await PlenCity.database.get();
 		//you need to set async and await everywhere this function is called
 	},
 	set: async function (location) {
-		await keyv.set('PlenCity', location || 'Bayonne');
-		
-		answer = await PlenCity.get();
+		const answer = await PlenCity.database.set(location);
 		console.log(`La ville de Plénitude est maintenant ${answer}`);
 		return answer;
 	}
