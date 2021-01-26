@@ -6,7 +6,7 @@ https://discord.com/developers/docs/interactions/slash-commands
 
 type ApplicationCommandOptionType https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoptiontype
 	1: SUB_COMMAND
-	2: SUB_COMMAND_GROUP : groupe de SUB_COMMAND, exemple: l'interaction reçu a un type SUB_COMMAND_GROUP
+	2: SUB_COMMAND_GROUP : groupe de SUB_COMMAND, exemple : l'interaction reçue a un type SUB_COMMAND_GROUP
 	3: STRING
 	4: INTEGER
 	5: BOOLEAN
@@ -14,10 +14,39 @@ type ApplicationCommandOptionType https://discord.com/developers/docs/interactio
 	7: CHANNEL
 	8: ROLE
 	peut se faire en choix multiple (https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application)
+ID			Nom					Enfants		Peut Executer
+			Interaction			1, 2		oui
+2			SUB_COMMAND_GROUP	1			non
+1			SUB_COMMAND			3 à 8		oui
+3 à 8		*					non			oui
+
+exemple :
+[{
+  options: [{
+    options: [
+      { value: 'aze', name: 'very_long' },
+      { value: 123, name: 'number' },
+      { value: 'a', name: 'string' },
+      { value: '494587865775341578', name: 'user' },
+      { value: true, name: 'bool' },
+      { value: '320936324636868608', name: 'role' }
+    ],
+    name: 'long'
+  }],
+  name: 'commandline'
+}]
+=> executer l'interaction :
+- Si pas d'arg on execute la commande
+- On execute le dernier arg SUB_COMMAND
+	(et on lui passe les arguments en paramètre)
+
+
+
 
 type InteractionResponseType https://discord.com/developers/docs/interactions/slash-commands#interaction-response-interactionresponsetype
 	1: Pong
-	4: utilisé pour les retour
+	4: utilisé pour les retours
+	5: acknowledgement (on renvoie rien mais on affiche l'interaction)
 
 Application Command: https://discord.com/developers/docs/interactions/slash-commands#create-global-application-command-json-params
 	name: entrée de la commande
