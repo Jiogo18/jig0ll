@@ -78,6 +78,9 @@ class CommandBase {
 		}
 		return new MessageMaker.Embed('', this.getHelpDescription(cmdData.context));
 	}
+	executeDefined() {
+		return typeof this.#execute == 'function';
+	}
 
 	getSubCommand(options) {
 		const subOptions = [...options];
@@ -85,6 +88,10 @@ class CommandBase {
 		if(!subOption) return;
 		for(const subCommand of (this.options || [])) {
 			if(subCommand.isCommand(subOption)) {
+				if(subCommand.type >= 3 && !subCommand.executeDefined()) {
+					return this;//fix TODO: c'est les type = 0 et 1 qui doivent s'executer (uniquement !)
+					//donc pour une suboption de type >=3 alors this est forcément le type = 0 ou 1
+				}
 				if(subOptions.length) {//subcommand
 					return subCommand.getSubCommand(subOptions);
 				}
