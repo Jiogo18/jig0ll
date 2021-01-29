@@ -76,18 +76,17 @@ module.exports = {
 		type: 1,
 
 		execute(cmdData) { return getInfo(cmdData.bot); }
-	},
-		idVerificator('cut', 'Arrête le bot', cmdData => {
-			
+	},{
+		...idVerificator('cut', 'Arrête le bot', cmdData => {
 			module.exports.stop(cmdData.bot, cmdData.author.username);
 			return new MessageMaker.Embed('', `Stoppé par ${cmdData.author.username}`);
 		}),
-	
-		idVerificator('reset_id', "Change l'id du bot (id global: 0)", () => {
+	},{
+		...idVerificator('reset_id', "Change l'id du bot (id global: 0)", () => {
 			resetLocalId();
 			return new MessageMaker.Embed('', `La nouvelle id du bot sur ${getBotLocation()} est ${getLocalId()}`);
 		}),
-	],
+	}],
 
 	stop(bot, source) {
 		process.stopped = true;
