@@ -48,6 +48,7 @@ module.exports = class InteractionManager extends InteractionBase {
 			})
 		if(!answerOk)
 			console.warn(`Interaction "${cmdData.commandLine}" has no answer`.yellow);
+			cmdData.answered = true;
 	}
 
 
