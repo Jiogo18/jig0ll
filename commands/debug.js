@@ -83,5 +83,8 @@ module.exports = {
 			execute() { return 'func test ok'; }
 		}],
 		execute() { return 'ok test'; }
+	},{
+		name: 'surprivate', description: 'command impossible à executer', type: 1,
+		security: { place: 'none', }
 	}]
 };
