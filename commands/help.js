@@ -15,12 +15,12 @@ function getCommandToHelp(cmdData) {
 			commandToHelp.unshift(word);
 		}
 	}
+	
 
-	const commandLine = commandToHelp.join(' ');
 	const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
 
 	const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
-	return [command, commandLine];
+	return command;
 }
 
 
@@ -42,13 +42,13 @@ module.exports = {
 
 		execute(cmdData) {
 
-			const [command, commandLine] = getCommandToHelp(cmdData);
+			const command = getCommandToHelp(cmdData);
 
 			if(typeof command == 'string') { return makeMessage(command, true); }
 			if(!command) { return module.exports.execute(cmdData); }
 			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
-			return makeMessage(getFullDescriptionFor(cmdData, command, commandLine));
+			return makeMessage(getFullDescriptionFor(cmdData, command));
 			
 		}
 	}],
@@ -62,8 +62,8 @@ module.exports = {
 };
 
 //get a complete description of the command
-function getFullDescriptionFor(context, command, commandLine) {
-	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, commandLine);
+function getFullDescriptionFor(context, command) {
+	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, command.commandLine);
 }
 
 //get a readable description of options
