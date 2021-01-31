@@ -164,7 +164,8 @@ module.exports = {
 		if(readOnly) {
 			if(!command.security.isAllowedToSee(cmdData.context))
 				return `You can't do that`;
-			command.execute = undefined;//can't execute it
+			//command.execute = undefined;//can't execute it
+			//fix for the new CommandStored : it can't be removed like this, use security insted
 		}
 		else {
 			if(!command.security.isAllowedToUse(cmdData.context))
