@@ -71,6 +71,17 @@ module.exports = {
 		}],
 		execute: executeInfoChannel,
 	},{
+		name: 'role',
+		description: "Date de création d'un role",
+		type: 1,
+		options: [{
+			name: 'role',
+			description: "Date de création d'un role",
+			type: 8,
+			required: true,//il n'y a pas de role 'actuel'
+		}],
+		execute: executeInfoChannel,
+	},{
 		name: 'guild',
 		description: 'Date de création du serveur',
 		type: 1,
