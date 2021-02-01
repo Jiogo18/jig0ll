@@ -53,7 +53,6 @@ class CommandBase {
 		this.required = commandConfig.required;
 
 		this.security = commandConfig.security;
-		if(typeof commandConfig.execute == 'function') { this.execute = commandConfig.execute; }
 	}
 
 
@@ -140,7 +139,7 @@ class CommandExtendable extends CommandBase {
 		if(!this.security || this.security.isAllowedToUse(cmdData.context) == false) { return new MessageMaker.Embed('', "Sorry you can't do that", { color: 'red' }); }
 
 		if(typeof this.#execute == 'function') {
-			return this.#execute(cmdData);
+			return this.#execute(cmdData, levelOptions);
 		}
 		return new MessageMaker.Embed('', this.getHelpDescription(cmdData.context));
 	}
