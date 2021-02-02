@@ -55,7 +55,7 @@ module.exports = class InteractionManager extends InteractionBase {
 	async onCommand(cmdData) {
 		var command;
 		try {
-			command = this.commandsMgr.getCommandForData(cmdData);
+			command = this.commandsMgr.getCommand(cmdData.commandName);
 		}
 		catch(error) {
 			console.warn(error.yellow);

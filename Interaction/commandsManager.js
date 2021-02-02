@@ -150,7 +150,7 @@ module.exports = {
 	getCommand(commandName) {
 		return this.commands.find(command => command.isCommand(commandName));
 	},
-	getCommandForData(cmdData, readOnly) {
+	getCommandForData(cmdData, readOnly) {//TODO: remove it
 		var command = this.getCommand(cmdData.commandName);
 
 		if(!command) return;
