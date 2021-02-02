@@ -19,17 +19,16 @@ module.exports = {
 		name: 'message',
 		type: 3,
 		required: true,
+	}],
 
-		execute(cmdData) {
-			var options = cmdData.optionsValue;
+	executeAttribute(cmdData, levelOptions) {
+		var options = levelOptions.map(e => e.value);
 
-			const message = options.join(' ');
-			
-			if(cmdData.commandSource) {
-				if(cmdData.commandSource.delete) cmdData.commandSource.delete();
-			}
-			return new MessageMaker.Embed('Anonyme', message, 3);
+		const message = options.join(' ');
+		
+		if(cmdData.commandSource) {
+			if(cmdData.commandSource.delete) cmdData.commandSource.delete();
 		}
-	}]
-
+		return new MessageMaker.Embed('Anonyme', message, 3);
+	},
 }
