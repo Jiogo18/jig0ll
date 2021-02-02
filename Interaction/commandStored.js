@@ -34,7 +34,7 @@ class CommandBase {
 	isAllowedOptionType() { return false; }
 	description;
 		getHelpDescription(context) {
-			return help.getFullDescriptionFor(context, this.name, this.parent ? this.parent.commandLine : undefined);
+			return help.getFullDescriptionFor(context, this);
 		}
 	default;
 	required;
@@ -69,7 +69,7 @@ class CommandBase {
 	get JSON() {
 		return {
 			name: this.name,
-			description: this.description,
+			description: this.description || this.name,
 
 			//pour CommandStored c'est pas utile mais ça l'est pour toutes les options
 			type: this.type,
@@ -82,11 +82,13 @@ class CommandBase {
 
 class CommandExtendable extends CommandBase {
 	#execute;
+	#executeAttribute;
 	options = [];
 
 	constructor(commandConfig, parent) {
 		super(commandConfig, parent);
 		this.#execute = commandConfig.execute;
+		this.#executeAttribute = commandConfig.executeAttribute;
 
 		for(const subCommandConfig of commandConfig.options || []) {
 			const subType = subCommandConfig.type;
@@ -132,12 +134,18 @@ class CommandExtendable extends CommandBase {
 	execute(cmdData, levelOptions) {
 		if(levelOptions && levelOptions.length) {//find the suboption
 			const subCommand = this.getSubCommand(levelOptions);
-			return subCommand.execute(cmdData);
+			if(subCommand != this) return subCommand.execute(cmdData);
 		}
-
+		
 		//terminus => #execute
 		if(!this.security || this.security.isAllowedToUse(cmdData.context) == false) { return new MessageMaker.Embed('', "Sorry you can't do that", { color: 'red' }); }
-
+		
+		if(typeof levelOptions == 'object' && levelOptions.length) {
+			if(typeof this.#executeAttribute == 'function') {
+				return this.#executeAttribute(cmdData, levelOptions);//on est sur d'avoir des arguments
+			}
+		}
+		
 		if(typeof this.#execute == 'function') {
 			return this.#execute(cmdData, levelOptions);
 		}

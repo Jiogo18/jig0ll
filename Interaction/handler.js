@@ -78,7 +78,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 
-			const retour = await command.execute(cmdData);
+			const retour = await command.execute(cmdData, cmdData.options);
 			if(!retour) {
 				console.warn(`Command "${cmdData.commandLine}" has no answer`.yellow);
 			}
