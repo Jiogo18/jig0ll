@@ -40,22 +40,22 @@ module.exports = {
 		type: 3,
 		required: false,
 
-		execute(cmdData) {
-
-			const command = getCommandToHelp(cmdData);
-
-			if(typeof command == 'string') { return makeMessage(command, true); }
-			if(!command) { return module.exports.execute(cmdData); }
-			if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
-
-			return makeMessage(getFullDescriptionFor(cmdData, command));
-			
-		}
 	}],
+
+	executeAttribute(cmdData, levelOptions) {
+		const command = getCommandToHelp(cmdData);
+
+		if(typeof command == 'string') { return makeMessage(command, true); }
+		if(!command) { return module.exports.execute(cmdData); }
+		if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
+
+		return makeMessage(getFullDescriptionFor(cmdData, command));
+	},
 
 	execute(cmdData) {
 		return makeMessage(getBetterDescriptionFor('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands, ''));
 	},
+
 
 	getDescriptionFor: getDescriptionFor,
 	getFullDescriptionFor: getFullDescriptionFor,

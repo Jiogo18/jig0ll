@@ -49,13 +49,11 @@ function idVerificator(name, description, funcExec) {
 			description: description,
 			required: true,
 			type: 4,
-			execute(cmdData) {
-				const length = cmdData.optionsValue.length;
-				if(!isLocalId(cmdData.options[length-1].value)) return;//ne réagit pas
-
-				return funcExec(cmdData);
-			}
 		}],
+		executeAttribute(cmdData, levelOptions) {
+			if(!isLocalId(levelOptions[levelOptions.length-1].value)) return;//ne réagit pas
+			return funcExec(cmdData);
+		},
 		execute() { return new MessageMaker.Embed('', `${description}\nid de ce bot : ${getLocalId()} (bot sur ${getBotLocation()})`); }
 	}
 }

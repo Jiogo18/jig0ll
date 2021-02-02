@@ -19,19 +19,20 @@ module.exports = {
 		description: "La météo actuelle de la ville/région (par openweathermap)",
 		type: 3,
 		required: true,
-
-		execute: async function(cmdData) {
-			const location = cmdData.optionsValue[0];
-			
-			switch(location.toLowerCase()) {
-				case "plenitude":
-				case "plénitude":
-					return await (CmdPlenitude.getMeteo(cmdData));
-				default:
-					return await (module.exports.sendWeatherRequest(location));
-			}
-		}
 	}],
+	
+	async executeAttribute(cmdData, levelOptions) {
+		const location = levelOptions[0].value;
+		
+		switch(location.toLowerCase()) {
+			case "plenitude":
+			case "plénitude":
+				return await (CmdPlenitude.getMeteo(cmdData));
+			default:
+				return await (module.exports.sendWeatherRequest(location));
+		}
+	},
+
 	sendWeatherRequest: sendRequest,
 };
 
