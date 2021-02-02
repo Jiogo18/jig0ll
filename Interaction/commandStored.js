@@ -133,8 +133,8 @@ class CommandExtendable extends CommandBase {
 
 	execute(cmdData, levelOptions) {
 		if(levelOptions && levelOptions.length) {//find the suboption
-			const subCommand = this.getSubCommand(levelOptions);
-			if(subCommand != this) return subCommand.execute(cmdData);
+			const [subCommand, subOptionsLevel] = this.getSubCommand(levelOptions);
+			if(subCommand != this) return subCommand.execute(cmdData, subOptionsLevel);
 		}
 		
 		//terminus => #execute
@@ -156,16 +156,16 @@ class CommandExtendable extends CommandBase {
 		//TODO: if(this.constructor == CommandSub) return this;//un SUB_COMMAND n'a que des CommandAttribute qui peuvent pas s'executer
 		const subOptions = [...levelOptions];
 		const subOption = subOptions.shift();
-		if(!subOption) return this;
+		if(!subOption) return [this, levelOptions];
 		for(const subCommand of (this.options || [])) {
 			if(subCommand.isCommand(subOption)) {
 				if(CommandAttribute.Types.includes(subCommand.type)) {
 					if(typeof subCommand.execute == 'function') {
 						//fix TODO: c'est les type = 0 et 1 qui doivent s'executer (uniquement !)
 						console.warn(`CommandAttribute.execute is deprecated`.yellow);
-						return subCommand;
+						return [subCommand, subOption];
 					}
-					return this;
+					return [this, levelOptions];
 					//donc pour une suboption de type >=3 alors this est forcément le type = 0 ou 1
 				}
 				return subCommand.getSubCommand(subOptions);
@@ -174,7 +174,7 @@ class CommandExtendable extends CommandBase {
 		if(process.env.WIPOnly) {
 			console.warn(`Option '${subOption.name || subOption.value}' not found in '/${this.commandLine}'`);
 		}
-		return this;
+		return [this, levelOptions];
 	}
 }
 
