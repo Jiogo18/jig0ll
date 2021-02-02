@@ -41,7 +41,7 @@ module.exports = {
 	},
 
 	async getCommand(commandName, target) {
-		const command = (await this.getExistingCommands(target))
+		return command = (await this.getExistingCommands(target))
 			.find(command => command.name == commandName);
 	},
 	async getCommandId(commandName, target) {

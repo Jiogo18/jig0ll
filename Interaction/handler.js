@@ -27,10 +27,10 @@ module.exports = class InteractionManager extends InteractionBase {
 	async onInteraction(interaction) {
 		
 		if(process.stopped == true) return;
-		
+
 		const cmdData = new CommandInteraction(interaction, this);
 
-		if(security.botIsAllowedToDo(cmdData) == false) return;
+		if(security.botIsAllowedToDo(cmdData.context) == false) return;
 
 
 		safeInteractionAnswer(cmdData);
@@ -68,16 +68,6 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 		try {
-			if(typeof command.execute != 'function') {
-				if(command.description) return new MessageMaker.Message(command.description);
-				
-				console.warn(`Can't find execute() for ${command.name}`.yellow);
-				return new MessageMaker.Message(`execute is not defined for this option`);
-			}
-
-
-
-
 			const retour = await command.execute(cmdData, cmdData.options);
 			if(!retour) {
 				console.warn(`Command "${cmdData.commandLine}" has no answer`.yellow);
