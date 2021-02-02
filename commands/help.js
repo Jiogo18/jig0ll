@@ -73,7 +73,9 @@ function getBetterDescriptionFor(spaces, context, options, commandLine) {
 	var descriptionStr = [];
 	if(commandLine != '') commandLine += ' ';
 	for(const line of description || []) {
-		descriptionStr.push(spaces + `/${commandLine}${line.name} : ${line.description || 'Aucune description'}`);
+		const currentCommandLine = commandLine + line.name;
+		const desc = line.description ?  ` : ${line.description}` : '';
+		descriptionStr.push(spaces + '/' + currentCommandLine + desc);
 	}
 	//affiche une liste avec une indentation et un retour à la ligne
 	return descriptionStr.join('\n');
