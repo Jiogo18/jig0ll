@@ -9,7 +9,7 @@ function makeMessage(description, error) {
 
 function getCommandToHelp(cmdData) {
 	var commandToHelp = [...cmdData.content.optionsValue];
-	if(commandToHelp[0] && commandToHelp[0].includes('')) {
+	if(typeof commandToHelp[0] == 'string') {
 		const first = commandToHelp.shift();
 		for(const word of first.split(' ').reverse()) {
 			commandToHelp.unshift(word);
@@ -61,6 +61,7 @@ module.exports = {
 	getFullDescriptionFor: getFullDescriptionFor,
 };
 
+
 //get a complete description of the command
 function getFullDescriptionFor(context, command) {
 	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, command.commandLine);
@@ -72,7 +73,7 @@ function getBetterDescriptionFor(spaces, context, options, commandLine) {
 	var descriptionStr = [];
 	if(commandLine != '') commandLine += ' ';
 	for(const line of description || []) {
-		descriptionStr.push(spaces + `/${commandLine}${line.name} : ${line.description}`);
+		descriptionStr.push(spaces + `/${commandLine}${line.name} : ${line.description || 'Aucune description'}`);
 	}
 	//affiche une liste avec une indentation et un retour à la ligne
 	return descriptionStr.join('\n');
