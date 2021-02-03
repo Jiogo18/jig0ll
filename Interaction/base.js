@@ -33,6 +33,7 @@ module.exports = class InteractionBase {
 	}
 
 	async createInteraction(interaction, guild_id = undefined) {
+		console.warn('createInteraction is deprecated'.yellow);//TODO: encore utilisé ?
 		const target = this.getTarget(guild_id)
 		return target ? target.post(interaction) : undefined;
 	}
