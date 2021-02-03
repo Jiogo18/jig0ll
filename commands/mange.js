@@ -19,7 +19,7 @@ module.exports = {
 
 	options: [{
 		name: 'personne',
-		type: 6,//user
+		type: 3,
 		description: 'Qui mange ?',
 		required: true,
 	},{
