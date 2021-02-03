@@ -236,6 +236,7 @@ class CommandAttribute extends CommandBase {
 		ApplicationCommandOptionType.CHANNEL,
 		ApplicationCommandOptionType.ROLE,
 	];
+	choices;//only for String and Integer
 
 	execute;//TODO: remove it
 	constructor(commandConfig, parent) {
@@ -246,12 +247,20 @@ class CommandAttribute extends CommandBase {
 			this.execute = commandConfig.execute;
 		}
 		if(commandConfig.options) console.warn(`CommandAttribute shouldn't have options (in '${this.commandLine}')`.yellow);
+
+		this.choices = commandConfig.choices;
 	}
 	get commandLine() {
 		const parentLine = this.parent ? this.parent.commandLine : undefined;
 		return (parentLine ? parentLine+' ':'') + `[${this.name}]`;
 	};
 
+	get JSON() {
+		return { 
+			...super.JSON,
+			choices: this.choices,
+		};
+	}
 
 	isCommand(option) {
 		//TODO: deprecated, CommandAttribute ne devrait pas pouvoir être executé
