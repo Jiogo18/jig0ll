@@ -1,14 +1,15 @@
 const Discord = require('discord.js');
 const fs = require('fs');
 const defaultCommandsPath = './commands';
-var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24
+var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24//TODO: liste avec database.js car c'est une même fonction pour tous
 const Security = require('./security.js');
 const CommandStored = require('./commandStored.js');
+const AppManager = require('./AppManager.js');
 
 module.exports = {
 
 	async getExistingCommands(target, forceUpdate) {
-		var commandsStored = existingCommands.get(target);
+		var commandsStored = existingCommands.get(target.path);
 
 		if(forceUpdate) {
 			console.warn(`getExistingCommands called with forceUpdate.`.yellow);
@@ -20,9 +21,9 @@ module.exports = {
 
 			var commandsGet = [];
 			try {
-				commandsGet = await target.get();
+				commandsGet = await target.r.get();
 			} catch(error) {
-				console.warn(`Can't get commands from ${target}, it's maybe empty`.yellow);
+				console.warn(`Can't get commands from ${target.r}, it's maybe empty`.yellow);
 				commands = [];
 			}
 			commandsStored = {
@@ -30,13 +31,13 @@ module.exports = {
 				lastUpdate: Date.now(),
 				timeUpdate: Date.now() + 1000
 			}
-			existingCommands.set(target, commandsStored);
+			existingCommands.set(target.path, commandsStored);
 		}
 		return commandsStored.commands;
 	},
 
 	resetCacheTimer(target) {
-		commands = existingCommands.get(target);
+		commands = existingCommands.get(target.path);
 		if(commands) commands.timeUpdate = 0;
 	},
 
@@ -53,46 +54,39 @@ module.exports = {
 
 	commands: new Discord.Collection(),//les commandes stockées par le bot (avec les execute())
 
-	async addCommand(command, target) {
+	addCommand(command, target) {
 
 		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
 		
-		var posted = false;
-		if(target) {
-			await target.post(command.JSON)//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
-			.catch(e => {
-				console.error(`Error while posting command ${command.name} ${e}`.red);
-				posted = false;
-			})
-			.then(e => {
-				posted = true;
-				this.resetCacheTimer(target);
-			});
-		}
+		var posted = new Promise((resolve, reject) => {
+			AppManager.post(command, target)
+				.then(() => {
+					this.resetCacheTimer(target);
+					resolve(true);
+				})
+				.catch(() => resolve(false) );
+		});
 		this.commands.set(command.name, command);//registered also if it's not posted
 		return posted;
 	},
 
-	async removeCommand(command, target) {
-		var ok = new Promise((resolve, reject) => {
-			target(command.id);
-			target.delete()
+	removeCommand(command, target) {
+		target = target.clone();//don't change ths path for others
+
+		return new Promise((resolve, reject) => {
+			target.go(command.id);
+			target.r.delete()
 			.catch(e => {
 				console.error(`Error while removing command ${command.name}`.red);
 				console.log(e);
 				resolve(false);
 			})
-			.then(buffer => {
-				if(this.commands.has(command.name))
-					this.commands.delete(command.name);
-					this.resetCacheTimer(target);
-				//console.log(`removeCommand is success for ${command.name}`)
+			.then(() => {
+				if(this.commands.has(command.name)) this.commands.delete(command.name);
+				this.resetCacheTimer(target);
 				resolve(true);
 			});
-			target('..');//fait remonter au parent parce que le target() modifie target lui même...
-			//ex s'il n'y a pas .. : path: '/applications/494587865775341578/guilds/313048977962565652/commands/792926340126736434/792926340973330462'
 		});
-		return ok;
 	},
 
 	async loadCommands(targetGlobal, targetPrivate) {
@@ -118,6 +112,7 @@ module.exports = {
 			wip: 0,
 			private: 0,
 			hidden: 0,
+			interaction: 0,
 		};
 
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
@@ -129,19 +124,21 @@ module.exports = {
 			}
 			
 			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
-
+			
+			
 			c.total++;
 			if(await this.addCommand(command, target)) {
-				if(command.wip) c.wip++;
-				switch(target) {
-					case targetPrivate: c.private++; break;
-					case targetGlobal: c.public++; break;
-					case undefined: c.hidden++; break;
-				}
+				c.interaction++;
+			}
+			if(command.wip) c.wip++;
+			switch(target) {
+				case targetPrivate: c.private++; break;
+				case targetGlobal: c.public++; break;
+				case undefined: c.hidden++; break;
 			}
 		}
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
-		console.log(`Loaded ${c.total} commands, ${c.public} public, ${c.private} private`.green);
+		console.log(`Loaded ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.hidden} hidden`.green);
 
 		c.after = this.commands.length;
 		return c;
@@ -174,12 +171,4 @@ module.exports = {
 		return command;
 	}
 
-}
-
-function strToFlatStr(str) {
-	return str.toLowerCase().replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ìîï]/g,'i').replace(/[òôö]/g,'o').replace(/[ùûü]/g,'u').replace('ÿ','y').replace('ñ','n');
-}
-
-function commandNameMatch(name1, name2) {
-	return strToFlatStr(name1) == strToFlatStr(name2);
 }

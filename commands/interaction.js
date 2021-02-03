@@ -1,3 +1,4 @@
+const AppManager = require('../Interaction/AppManager.js');
 const MessageMaker = require('../lib/messageMaker.js');
 const spaces = '\u200b \u200b \u200b \u200b ';
 
@@ -39,9 +40,9 @@ module.exports = {
 
 
 async function listInteraction(context) {
-	var slashCmd = context.interactionMgr; 
-	var globalInte = await slashCmd.getCmdFrom();
-	var localInte = await slashCmd.getCmdFrom(context.guild_id);
+	AppManager.setBot(context.bot);
+	var globalInte = await AppManager.getCmdFrom()
+	var localInte = await AppManager.getCmdFrom(context.guild_id)
 	//attendre les 2 intéractions pour envoyer
 
 	const counter = globalInte.length + localInte.length;
