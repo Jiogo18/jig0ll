@@ -27,7 +27,7 @@ module.exports = {
 		const message = options.join(' ');
 		
 		if(cmdData.commandSource) {
-			if(cmdData.commandSource.delete) cmdData.commandSource.delete();
+			if(cmdData.commandSource.delete) cmdData.commandSource.delete().catch(()=>{});
 		}
 		return new MessageMaker.Embed('Anonyme', message, 3);
 	},
