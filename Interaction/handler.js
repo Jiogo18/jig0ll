@@ -11,7 +11,7 @@ async function safeInteractionAnswer(cmdData) {
 	const timeRemaining = 3000 + timestampId - Date.now();
 	const t = setTimeout(async function() {
 		if(cmdData.answered) return;
-		console.log(`Interaction is too long, an aknowledgment will be sent`);
+		console.log(`Interaction is too long, an acknowledgement will be sent (for ${cmdData && cmdData.commandName})`);
 		cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accepte l'intéraction (et attent le retour)
 	}, timeRemaining - 500);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
