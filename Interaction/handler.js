@@ -69,7 +69,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 		try {
 			const retour = await new Promise((resolve, reject) => {
-				command.execute(cmdData, cmdData.options).then(resolve).catch(reject);
+				resolve(command.execute(cmdData, cmdData.options));//try to solve with it
 				setTimeout(() => reject('timeout'), 60000);//more than 60s
 			});
 			if(!retour) {
