@@ -1,3 +1,4 @@
+const { Guild } = require('discord.js');
 const MessageMaker = require('../lib/messageMaker.js');
 
 module.exports = {
@@ -18,21 +19,22 @@ module.exports = {
 			name: 'number',
 			description: 'Renvoie les id de nouveaux channels ("/test idtime (nb)")',
 			type: 4,
-			async execute(cmdData) {
-				return await embedIdTime(cmdData.guild, cmdData.options[1].value);
-			}
+			
 		}],
+		async executeAttribute(cmdData, levelOptions) {
+			return await embedIdTime(cmdData.guild, levelOptions[0].value);
+		},
 		async execute(cmdData) {
 			return await embedIdTime(cmdData.guild, 1);
 		}
-	},{
-
 	}]
-
 }
 
 
-
+/**
+ * @param {Guild} guild - Guilde cible
+ * @param {number} nb - Nombre de channels à créer
+ */
 async function embedIdTime(guild, nb) {
 	const data = await idTime(guild, nb);
 
@@ -47,10 +49,13 @@ async function embedIdTime(guild, nb) {
 	}
 	return retour;
 }
+/**
+ * @param {Guild} guild - Guilde cible
+ * @param {number} nb - Nombre de channels à créer
+ * @returns {Object[]} - Informations sur de nouveaux channels
+ */
 async function idTime(guild, nb) {
-	console.debug(typeof nb);
-	console.debug(nb);
-	if(typeof nb == 'string') nb = parseInt(nb);
+	if(typeof nb != 'number') nb = parseInt(nb);
 	if(nb < 1) nb = 1;
 	if(nb > 10) nb = 10;
 	console.log(`Création de ${nb} channels`);

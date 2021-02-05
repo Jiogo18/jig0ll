@@ -10,7 +10,6 @@ module.exports = {
 	interaction: true,
 	security: {
 		place: 'private',
-		wip: true,
 	},
 
 	options: [{
