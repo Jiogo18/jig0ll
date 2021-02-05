@@ -1,11 +1,26 @@
+const { RichPresenceAssets } = require('discord.js');
 const MessageMaker = require('../lib/messageMaker.js');
 
 const done = new MessageMaker.Message('Done');
 
-function sleep(milliseconds) {
-	const start = Date.now();
-	while (Date.now() - start < milliseconds);
-}
+
+const options = [{
+	name: 'empty_answer',
+	description: "Test un retour vide lors de l'appel de l'interaction",
+	execute: (cmdData) => { cmdData.sendAnswer(done) }
+},{
+	name: 'error',
+	description: "Fait une erreur lors de l'exécution",
+	execute: () => { throw `Erreur demandée par '/test error'` }
+},{
+	name: 'sleep',
+	description: "Prend 5 secondes pour répondre",
+	execute: () => { sleep(5000); return done; }
+},{
+	name: 'await',
+	description: "Prend 5 secondes pour répondre",
+	execute: async () => { await sleepAwait(5000); return done; }
+}];
 
 
 module.exports = {
@@ -18,73 +33,47 @@ module.exports = {
 	},
 
 	options: [{
-		name: "empty_answer",
-		description: "Test un retour vide lors de l'appel de l'interaction",
+		name: 'choice',
+		description: 'Choix du test',
 		type: 1,
+		default: true,
 
-		execute(context) {
-			context.sendAnswer(done);
-			return;
-		}
-	},{
-		name: 'error',
-		description: "Fait une erreur lors de l'exécution",
-		type: 1,
-		execute() {
-			throw `Erreur demandée par "/test error"`;
-		}
-	},{
-		name: 'sleep',
-		description: "Prend 5 secondes pour répondre",
-		type: 1,
-		execute() {
-			sleep(5000);
-			return done;
-		}
-	},{
-		name: 'await',
-		description: "Prend 5 secondes pour répondre",
-		type: 1,
-		async execute() {
-			await new Promise(r => setTimeout(r, 5000));
-			return done;
-		}
-	},{
-		name: 'commandline',
-		description: 'Command line',
-		type: 2,
 		options: [{
-			name: 'long', description: 'A long command line', type: 1,
-			execute() { return done; },
-			options: [{
-				name: 'very_long', description: 'A very long command line', type: 3,
-				execute(cmdData) { console.debug(cmdData.options); return done; }
-			},{
-				name: 'number', description: 'A command line with a number', type: 4,
-				execute(cmdData) { console.debug(cmdData.options); }
-			},{
-				name: 'string', description: 'A string', type: 3,
-				execute(cmdData) { console.debug(cmdData.options); }
-			},{
-				name: 'user', description: 'A user', type: 6,
-				execute(cmdData) { console.debug(cmdData.options); }
-			},{
-				name: 'bool', description: 'A boolean', type: 5,
-				execute(cmdData) { console.debug(cmdData.options); }
-			},{
-				name: 'role', description: 'A role', type: 8,
-				execute(cmdData) { console.debug(cmdData.options); }
-			}]
-		}]
-	},{
-		name: 'grouptest', description: 'group de test', type: 2,
-		options: [{
-			name: 'test', description: 'func test', type: 1,
-			execute() { return 'func test ok'; }
+			name: 'fonction',
+			description: 'Choix du test',
+			type: 3,
+			required: true,
+
+			choices: options.filter(o => o.name).map(o => { return { name: o.name, value: o.value || o.name } }),
 		}],
-		execute() { return 'ok test'; }
+		executeAttribute(cmdData, levelOptions) {
+			const optionName = levelOptions[0].value;
+			const option = options.find(o => (o.value||o.name) == optionName );
+			if(!option) return new MessageMaker.Message(`There is no option for ${optionName}`);
+			if(typeof option.execute != 'function') return new MessageMaker.Message(`Option ${optionName} is incomplete`);
+	
+			return option.execute(cmdData, levelOptions);
+		}
 	},{
-		name: 'surprivate', description: 'command impossible à executer', type: 1,
+		name: 'surprivate', description: 'Commande impossible à executer', type: 1,
 		security: { place: 'none', }
-	}]
+	}],
 };
+
+
+
+
+
+/**
+ * @param {number} milliseconds - time to sleep in milliseconds
+ */
+function sleep(milliseconds) {
+	const start = Date.now();
+	while (Date.now() - start < milliseconds);
+}
+/**
+ * @param {number} time - time to sleep in milliseconds
+ */
+async function sleepAwait(time) {
+	await new Promise(r => setTimeout(r, time));
+}
