@@ -68,7 +68,10 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 		try {
-			const retour = await command.execute(cmdData, cmdData.options);
+			const retour = await new Promise((resolve, reject) => {
+				command.execute(cmdData, cmdData.options).then(resolve).catch(reject);
+				setTimeout(() => reject('timeout'), 60000);//more than 60s
+			});
 			if(!retour) {
 				console.warn(`Command "${cmdData.commandLine}" has no answer`.yellow);
 			}
@@ -76,7 +79,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
-			return new MessageMaker.Message(`Sorry I've had an error`);
+			return new MessageMaker.Message(`Sorry I've had an error (${error})`);
 		}
 	}
 }
