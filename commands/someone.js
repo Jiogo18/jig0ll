@@ -17,10 +17,8 @@ module.exports = {
 	execute(cmdData) {
 		const id = cmdData.guild_id;
 		
-		const members = cmdData.channel.members.array();//uniquement les membres actifs (qui ont postés un message)
-		//TODO: https://discord.com/developers/docs/resources/guild#list-guild-members
-		const randomNb = getRandomInt(members.length);
-		var randomUser = members[randomNb];
+		const members = cmdData.channel.members;//uniquement les membres actifs (qui ont postés un message)
+		var randomUser = members.random();
 
 		if(lastReset[id]==undefined || useInMinute[id]==undefined) { lastReset[id] = 0; }
 		if(lastReset[id] + 60000 < Date.now()) {
