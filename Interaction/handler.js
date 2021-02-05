@@ -11,9 +11,9 @@ async function safeInteractionAnswer(cmdData) {
 	const timeRemaining = 3000 + timestampId - Date.now();
 	const t = setTimeout(async function() {
 		if(cmdData.answered) return;
-		console.log(`Interaction is too long, an acknowledgement will be sent (for ${cmdData && cmdData.commandName})`);
+		console.log(`Interaction is too long, an acknowledgement will be sent (for '/${cmdData.commandLine}')`);
 		cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accepte l'intéraction (et attent le retour)
-	}, timeRemaining - 500);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
+	}, timeRemaining - 1000);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
 
 module.exports = class InteractionManager extends InteractionBase {
@@ -37,7 +37,7 @@ module.exports = class InteractionManager extends InteractionBase {
 
 
 		const retour = await this.onCommand(cmdData);
-		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}"`);
+		console.log(`Interaction done for ${cmdData.author.username} : "${cmdData.commandLine}" in ${Date.now() - cmdData.receivedAt} msec`);
 
 		if(!retour) return;
 

@@ -13,11 +13,11 @@ module.exports = {
 	},
 
 	execute(cmdData) {
-		const time = Date.now(); // aze
+		const time = Date.now();
 
 		// Await ping messages from bot
 		const filter = (m) =>  {
-			if(m.author.id != cmdData.bot.user.id || typeof m.embeds != 'object' || !m.embeds[0]) return false;
+			if(m.author.id != process.env.BOT_ID || typeof m.embeds != 'object' || !m.embeds.length) return false;
 			return matchPrePingMessage(m.embeds[0], time);
 		};
 		
@@ -29,7 +29,7 @@ module.exports = {
 				else console.error(`Error with /ping : `.red, e);
 			});
 
-
+		//Temps perdu : Date.now() - cmdData.receivedAt = 0 msec
 		return makePrePingMessage(time, cmdData.author.id)
 	},
 };
@@ -44,7 +44,6 @@ function makePrePingMessage(time, author_id) {
 }
 
 /**
- * 
  * @param {Object} embed
  * @param {number} time - Time of the ping
  * @returns {boolean}
@@ -99,4 +98,5 @@ function catchPrePingMessage(cmdData, timePrePingSentLocal, message) {
 		Décalage avec le serveur : ${Math.round(decalage)} msec`).content);
 
 	console.log(`Ping du bot : ${pingBot} msec`);
+	//Durée du calcul : Date.now() - local.prePingCatched ~= 1 msec
 }
