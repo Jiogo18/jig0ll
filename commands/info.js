@@ -76,9 +76,8 @@ function getTargetName(target) {
 	return target;//sinon target.name éventuellement
 }
 
-function getInfo(targetTitle, target) {
+function getBasicInfo(targetTitle, target) {
 	const snowflake = new SnowflakeLib.Snowflake(target.id);
-	const time = snowflake.msecSinceDiscord;
 	const date = DateLib.getFrenchDate(snowflake.msecSinceEpoch);
 	//si target est pas chargé ça affiche [object Object]
 	
@@ -89,6 +88,19 @@ function getInfo(targetTitle, target) {
 		créé ${date}`);
 }
 
+function getInfo(targetTitle, target) {
+	const snowflake = new SnowflakeLib.Snowflake(target.id);
+	const time = snowflake.msecSinceDiscord;
+
+	var info = getBasicInfo(targetTitle, target);
+	info.addField('Snowflake',
+		`time : ${time} (${time.toString(2)})
+		worker : ${snowflake.worker}
+		pid : ${snowflake.pid}
+		increment : ${snowflake.increment}
+		(https://discord.js.org/#/docs/main/stable/typedef/Snowflake)`);
+	return info;
+}
 
 
 async function executeInfoUser(cmdData, levelOptions) {
@@ -99,7 +111,7 @@ async function executeInfoUser(cmdData, levelOptions) {
 		return makeMessage(`L'utilisateur ${userId} est introuvable`);
 	}
 
-	return getInfo("de l'utilisateur", user);
+	return getBasicInfo("de l'utilisateur", user);
 }
 async function executeInfoChannel(cmdData, levelOptions) {
 	const channelId = levelOptions ? levelOptions.channel || (levelOptions[0] && levelOptions[0].value) : undefined;
@@ -109,7 +121,7 @@ async function executeInfoChannel(cmdData, levelOptions) {
 		return makeMessage(`Le channel ${channelId} est introuvable`);
 	}
 
-	return getInfo("du channel", channel).addField('',
+	return getBasicInfo("du channel", channel).addField('',
 		`Membres (minimum) : ${channel.members.array().length}`);
 }
 async function executeInfoRole(cmdData, levelOptions) {
@@ -120,12 +132,12 @@ async function executeInfoRole(cmdData, levelOptions) {
 		return makeMessage(`Le role ${roleId} est introuvable`);
 	}
 
-	return getInfo("du role", role).addField('',
+	return getBasicInfo("du role", role).addField('',
 		`Membres (minimum) : ${role.members.array().length}`);
 }
 function executeInfoGuild(cmdData) {
 	const guild = cmdData.guild;
-	return getInfo("du serveur", guild).addField('',
+	return getBasicInfo("du serveur", guild).addField('',
 		`Membres : ${guild.memberCount}`);
 }
 
