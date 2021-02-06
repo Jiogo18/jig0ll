@@ -1,17 +1,17 @@
-require('dotenv').config();
+import {config as dotenvConfig} from 'dotenv'; dotenvConfig();
 process.env.WIPOnly = process.argv.includes("WIP") ? true : '';
 process.env.HEROKU = process.execPath.includes('heroku') ? true : '';
 
-const Discord = require('discord.js');
+import Discord from 'discord.js';
 const bot = new Discord.Client();//id du bot:<@!494587865775341578>
 bot.startedTime = Date.now();
 
-const libCommand = require("./lib/command.js");
-const InteractionManager = require('./Interaction/handler.js');
+import libCommand from './lib/command.js';
+import InteractionManager from './Interaction/handler.js';
 const interactionMgr = new InteractionManager(bot);
-require('colors');//colors for everyone ! (don't remove)
-const { CommandMessage } = require('./lib/commandData.js');
-const security = require('./Interaction/security.js');
+import 'colors';//colors for everyone ! (don't remove)
+import { CommandMessage } from './lib/commandData.js';
+import security from './Interaction/security.js';
 
 
 bot.on(Discord.Constants.Events.CLIENT_READY, () => {

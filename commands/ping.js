@@ -1,9 +1,9 @@
-const { Message } = require('discord.js');
-const MessageMaker = require('../lib/messageMaker.js');
-const { Snowflake } = require('../lib/snowflake.js');
+import { Message } from 'discord.js';
+import MessageMaker from '../lib/messageMaker.js';
+import { Snowflake } from '../lib/snowflake.js';
 
 
-module.exports = {
+export default {
 	name: 'ping',
 	description: 'Pong!',
 	interaction: true,

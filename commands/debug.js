@@ -1,5 +1,5 @@
-const { RichPresenceAssets } = require('discord.js');
-const MessageMaker = require('../lib/messageMaker.js');
+import { RichPresenceAssets } from 'discord.js';
+import MessageMaker from '../lib/messageMaker.js';
 
 const done = new MessageMaker.Message('Done');
 
@@ -23,7 +23,7 @@ const options = [{
 }];
 
 
-module.exports = {
+export default {
 	name: 'debug',
 	description: 'Tests diverses',
 	interaction: true,

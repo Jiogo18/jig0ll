@@ -1,6 +1,7 @@
-const DataBase = require('../lib/database.js');
-const MessageMaker = require("../lib/messageMaker.js");
-const libDate = require('../lib/date.js');
+import DataBase from '../lib/database.js';
+import MessageMaker from '../lib/messageMaker.js';
+import libDate from '../lib/date.js';
+import { sendRequest as sendWeatherRequest } from './meteo.js';
 
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
@@ -22,7 +23,7 @@ const PlenCity = {
 }
 
 
-module.exports = {
+export default {
 	name: 'plénitude',
 	description: "Commandes de Plénitude",
 	interaction: true,
@@ -53,7 +54,7 @@ module.exports = {
 
 
 async function getMeteo() {
-	return await require("./meteo.js").sendWeatherRequest(
+	return sendWeatherRequest(
 		await PlenCity.get(), onWeatherPlenitude
 		);
 }

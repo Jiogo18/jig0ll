@@ -1,8 +1,8 @@
-const InteractionBase = require('./base.js');
-const { CommandInteraction } = require('../lib/commandData.js');
-const MessageMaker = require('../lib/messageMaker.js');
-const security = require('./security.js');
-const Snowflake = require('../lib/snowflake.js');
+import InteractionBase from './base.js';
+import { CommandInteraction } from '../lib/commandData.js';
+import MessageMaker from '../lib/messageMaker.js';
+import security from './security.js';
+import Snowflake from '../lib/snowflake.js';
 
 
 async function safeInteractionAnswer(cmdData) {
@@ -16,7 +16,7 @@ async function safeInteractionAnswer(cmdData) {
 	}, timeRemaining - 1000);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
 
-module.exports = class InteractionManager extends InteractionBase {
+export default class InteractionManager extends InteractionBase {
 	constructor(bot) {
 		super(bot);
 

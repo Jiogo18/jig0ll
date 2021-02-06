@@ -1,12 +1,12 @@
-const Discord = require('discord.js');
-const fs = require('fs');
+import Discord from 'discord.js';
+import fs from 'fs';
 const defaultCommandsPath = './commands';
 var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24//TODO: liste avec database.js car c'est une même fonction pour tous
-const Security = require('./security.js');
-const CommandStored = require('./commandStored.js');
-const AppManager = require('./AppManager.js');
+import Security from './security.js';
+import CommandStored from './commandStored.js';
+import AppManager from './AppManager.js';
 
-module.exports = {
+export default {
 
 	async getExistingCommands(target, forceUpdate) {
 		var commandsStored = existingCommands.get(target.path);
@@ -93,16 +93,15 @@ module.exports = {
 		console.log(`Loading commands...`.green);
 
 		const commandFiles = fs.readdirSync(defaultCommandsPath).filter(file => file.endsWith('.js'))
-		var cmdsLoaded = [];
-		commandFiles.forEach(file => {
-			const command = require(`../${defaultCommandsPath}/${file}`);
+		const cmdsLoaded = await Promise.all(commandFiles.map(async file => {
+			const command = (await import(`../${defaultCommandsPath}/${file}`)).default;
 			if(command) {
-				cmdsLoaded.push(new CommandStored(command));
+				return new CommandStored(command);
 			}
 			else {
 				console.error(`Command not loaded : ${file}`.red);
 			}
-		});
+		}).filter(c => c != undefined));
 
 		var c = {
 			before: this.commands.length,
@@ -116,7 +115,8 @@ module.exports = {
 		};
 
 		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
-		for (const command of cmdsLoaded) {
+
+		const commandSent = cmdsLoaded.map(async command => {
 			var target = undefined;
 			switch(command.allowedPlacesToCreateInteraction) {
 				case Security.SecurityPlace.PUBLIC: target = targetGlobal; break;
@@ -136,7 +136,8 @@ module.exports = {
 				case targetGlobal: c.public++; break;
 				case undefined: c.hidden++; break;
 			}
-		}
+		});
+		await Promise.all(commandSent);
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
 		console.log(`Loaded ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.hidden} hidden`.green);
 

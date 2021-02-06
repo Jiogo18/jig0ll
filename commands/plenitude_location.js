@@ -1,6 +1,6 @@
-const Plenitude = require('./plenitude.js');
-const security = require('../Interaction/security.js');
-const MessageMaker = require('../lib/messageMaker.js');
+import Plenitude from './plenitude.js';
+import security from '../Interaction/security.js';
+import MessageMaker from '../lib/messageMaker.js';
 
 
 const vars = [{
@@ -26,7 +26,7 @@ const optionVariable = {
 
 
 
-module.exports = {
+export default {
 	name: 'plenitude_location',//TODO: renomme en PlenConfig
 	description: 'Commandes avancées pour Plénitude',
 	interaction: true,//private donc sera ok juste sur mon serv

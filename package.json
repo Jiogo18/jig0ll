@@ -18,5 +18,6 @@
     "dotenv": "^8.2.0",
     "keyv": "^4.0.3"
   },
-  "homepage": "https://github.com/Jiogo18/jig0ll"
+  "homepage": "https://github.com/Jiogo18/jig0ll",
+  "type": "module"
 }

@@ -42,7 +42,7 @@ class DiscordRequest {
 
 
 
-module.exports = {
+export default {
 	setBot(b) { bot = b; },
 
 	DiscordRequest,

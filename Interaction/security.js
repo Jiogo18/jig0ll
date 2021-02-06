@@ -1,4 +1,4 @@
-const config = require('./config.js');
+import config from './config.js';
 
 
 const guild_beta_tester = [ config.guild_test ];
@@ -114,7 +114,7 @@ class SecurityCommand {
 
 
 
-module.exports = {
+export default {
 	get guild_test() { return config.guild_test; },
 	get jiogo18() { return config.jiogo18; },
 	get rubis() { return config.rubis; },

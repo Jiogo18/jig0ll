@@ -1,5 +1,5 @@
-const MessageMaker = require('../lib/messageMaker.js');
-const libDate = require('../lib/date.js');
+import MessageMaker from '../lib/messageMaker.js';
+import libDate from '../lib/date.js';
 
 function resetLocalId() {
 	const nb = Math.floor(Math.random() * 1000);//id à 3 chiffres
@@ -59,7 +59,7 @@ function idVerificator(name, description, funcExec) {
 }
 
 
-module.exports = {
+export default {
 
 	name: 'bot',
 	description: "Commandes pour gérer le bot",

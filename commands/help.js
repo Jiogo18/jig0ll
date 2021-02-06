@@ -1,6 +1,6 @@
-const security = require('../Interaction/security.js');
-const MessageMaker = require('../lib/messageMaker.js');
-const { CommandData, CommandContent } = require('../lib/commandData.js');
+import security from '../Interaction/security.js';
+import MessageMaker from '../lib/messageMaker.js';
+import { CommandData, CommandContent } from '../lib/commandData.js';
 
 function makeMessage(description, error) {
 	const color = error ? 'red' : undefined;
@@ -25,7 +25,7 @@ function getCommandToHelp(cmdData) {
 
 
 
-module.exports = {
+export default {
 	name: 'help',
 	description: 'Affiche les commandes disponibles',
 	interaction: true,

@@ -1,9 +1,9 @@
-const MessageMaker = require('../lib/messageMaker.js');
+import MessageMaker from '../lib/messageMaker.js';
 
 var useInMinute = [];
 var lastReset = [];
 
-module.exports = {
+export default {
 
 	name: 'someone',
 	description: "Appel aléatoirement un membre du channel avec les memes du @someone d'avril 2018",

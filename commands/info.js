@@ -1,8 +1,8 @@
-const MessageMaker = require('../lib/messageMaker');
-const SnowflakeLib = require('../lib/snowflake');
-const DateLib = require('../lib/date');
+import MessageMaker from '../lib/messageMaker.js';
+import SnowflakeLib from '../lib/snowflake.js';
+import DateLib from '../lib/date.js';
 
-module.exports = {
+export default {
 
 	name: 'info',
 	description: 'Informations sur le snowflake de la cible',

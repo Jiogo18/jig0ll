@@ -1,7 +1,7 @@
-const { Guild } = require('discord.js');
-const MessageMaker = require('../lib/messageMaker.js');
+import { Guild } from 'discord.js';
+import MessageMaker from '../lib/messageMaker.js';
 
-module.exports = {
+export default {
 	name: 'test',
 	description: 'Commandes de test (limitées)',
 

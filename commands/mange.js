@@ -1,12 +1,12 @@
-const MessageMaker = require('../lib/messageMaker.js');
-const Snowflake = require('../lib/snowflake.js');
+import MessageMaker from '../lib/messageMaker.js';
+import Snowflake from '../lib/snowflake.js';
 
 const logChannels = {
 	'313048977962565652': '801844472836784167',//serveur Jiogo #log-manger
 	'626121178163183628': '672382487888003092'
 };
 
-module.exports = {
+export default {
 
 
 	name: 'mange',

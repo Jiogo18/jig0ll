@@ -1,11 +1,12 @@
-const security = require('./security.js');
-const AppManager = require('./AppManager.js');
+import security from './security.js';
+import AppManager from './AppManager.js';
+import commandsMgr from './commandsManager.js';
 
-module.exports = class InteractionBase {
+export default class InteractionBase {
 	bot = undefined;
-	static config = require('./config.js');
-	static security = require('./security.js');
-	commandsMgr = require('./commandsManager.js');
+	static config = import('./config.js');
+	static security = import('./security.js');
+	commandsMgr = import('./commandsManager.js').then(module => this.commandsMgr = module.default);
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '

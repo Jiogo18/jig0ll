@@ -1,7 +1,7 @@
-const MessageMaker = require('../lib/messageMaker.js');
+import MessageMaker from '../lib/messageMaker.js';
 
 
-module.exports = {
+export default {
 
 	name: 'anonyme',
 	description: 'Faire une annonce anonymement',

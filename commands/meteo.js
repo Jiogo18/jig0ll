@@ -1,11 +1,11 @@
-const https = require('https');
+import https from 'https';
 const meteoColor = 3447003;
-const CmdPlenitude = require("./plenitude.js");
-const MessageMaker = require('../lib/messageMaker.js');
-const libDate = require('../lib/date.js');
+import CmdPlenitude from './plenitude.js';
+import MessageMaker from '../lib/messageMaker.js';
+import libDate from '../lib/date.js';
 
 
-module.exports = {
+export default {
 	name: 'météo',
 	description: "La météo actuelle de la ville/région (par openweathermap)",
 	interaction: true,
@@ -63,7 +63,7 @@ async function getData(location) {
 }
 
 
-async function sendRequest(location, funcOnData) {
+export async function sendRequest(location, funcOnData) {
 	var data = JSON.parse(await getData(location));
 	if(typeof funcOnData == 'function') funcOnData(data);
 	

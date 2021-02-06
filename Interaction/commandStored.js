@@ -1,6 +1,6 @@
-const Security = require('./security');
-const MessageMaker = require('../lib/messageMaker');
-const help = require('../commands/help');
+import Security from './security.js';
+import MessageMaker from '../lib/messageMaker.js';
+import help from '../commands/help.js';
 
 
 const ApplicationCommandOptionType = {
@@ -309,4 +309,4 @@ function possibleTypesOfValue(value) {
 }
 
 
-module.exports = CommandStored;
+export default CommandStored;

@@ -1,8 +1,8 @@
-const AppManager = require('../Interaction/AppManager.js');
-const MessageMaker = require('../lib/messageMaker.js');
+import AppManager from '../Interaction/AppManager.js';
+import MessageMaker from '../lib/messageMaker.js';
 const spaces = '\u200b \u200b \u200b \u200b ';
 
-module.exports = {
+export default {
 	name: 'interaction',
 	description: 'Informations sur les intéractions du bot',
 	interaction: true,
