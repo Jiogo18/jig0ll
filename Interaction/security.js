@@ -119,10 +119,10 @@ export function botIsAllowedToDo(context) {
 	}
 	else {
 		//en normal on autorise tout SAUF les channels de Beta Only
-		if(is.betaGuild(guild_id) == false) {
+		if(isBetaGuild(guild_id) == false) {
 			return true;//autorise si c'est pas une guild de beta test
 		}
-		if(is.betaOnlyChannel(channel_id)) {
+		if(isBetaOnlyChannel(channel_id)) {
 			return false;//si c'est un channel de beta only
 		}
 		return true;//sinon c'est autorisé
