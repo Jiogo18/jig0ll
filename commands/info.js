@@ -1,6 +1,6 @@
-import MessageMaker from '../lib/messageMaker.js';
-import SnowflakeLib from '../lib/snowflake.js';
-import DateLib from '../lib/date.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
+import { Snowflake } from '../lib/snowflake.js';
+import { getFrenchDate } from '../lib/date.js';
 
 export default {
 
@@ -65,7 +65,7 @@ export default {
 
 
 function makeMessage(description) {
-	return new MessageMaker.Embed('Info', description);
+	return new EmbedMaker('Info', description);
 }
 
 function getTargetName(target) {
@@ -76,19 +76,19 @@ function getTargetName(target) {
 }
 
 function getBasicInfo(targetTitle, target) {
-	const snowflake = new SnowflakeLib.Snowflake(target.id);
-	const date = DateLib.getFrenchDate(snowflake.msecSinceEpoch);
+	const snowflake = new Snowflake(target.id);
+	const date = getFrenchDate(snowflake.msecSinceEpoch);
 	//si target est pas chargé ça affiche [object Object]
 	
 	const targetName = getTargetName(target);
 	return makeMessage(
 		`${target.name || target.username ? `Informations ${targetTitle} ${targetName}` : ''}
 		Snowflake : ${target.id}
-		créé ${date}`);
+		Créé ${date}`);
 }
 
 function getInfo(targetTitle, target) {
-	const snowflake = new SnowflakeLib.Snowflake(target.id);
+	const snowflake = new Snowflake(target.id);
 	const time = snowflake.msecSinceDiscord;
 
 	var info = getBasicInfo(targetTitle, target);
@@ -146,7 +146,7 @@ function executeSnowflake(cmdData) {
 	const option = cmdData.options ? cmdData.options[1] : undefined;//TODO: change this
 	const snowflake = option ? option.value : undefined;
 	if(snowflake == undefined) {
-		return new MessageMaker.Embed('Snowflake', `Aucun snowflake
+		return new EmbedMaker('Snowflake', `Aucun snowflake
 		(https://discord.js.org/#/docs/main/stable/typedef/Snowflake)`);
 	}
 

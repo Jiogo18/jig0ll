@@ -1,7 +1,7 @@
 import DataBase from '../lib/database.js';
-import MessageMaker from '../lib/messageMaker.js';
-import libDate from '../lib/date.js';
-import { sendRequest as sendWeatherRequest } from './meteo.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
+import { getFrenchDate } from '../lib/date.js';
+import { sendWeatherRequest } from './meteo.js';
 
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
@@ -22,6 +22,8 @@ const PlenCity = {
 	}
 }
 
+export function getLocation() { return PlenCity.get(); }
+export function setLocation(l) { PlenCity.set(l); }
 
 export default {
 	name: 'plénitude',
@@ -46,25 +48,23 @@ export default {
 
 	execute: getInfo,
 
-	getMeteo: getMeteo,
-	getLocation: PlenCity.get,
-	setLocation: PlenCity.set,
+	getMeteo,
+	getLocation,
+	setLocation,
 }
 
 
 
-async function getMeteo() {
-	return sendWeatherRequest(
-		await PlenCity.get(), onWeatherPlenitude
-		);
+export async function getMeteo() {
+	return sendWeatherRequest(await PlenCity.get(), onWeatherPlenitude);
 }
 
 function onWeatherPlenitude(data) {
 	console.log(`onWeatherPlenitude : PlenCity is "${data.name}"`);
 	data.name = "Plénitude";
-	data.date = libDate.getFrenchDate(data.dt*1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
+	data.date = getFrenchDate(data.dt*1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
 }
 
 function getInfo() {
-	return new MessageMaker.Embed('Plénitude', "Plénitude est un lieu fictif avec un climat tropical");
+	return new EmbedMaker('Plénitude', "Plénitude est un lieu fictif avec un climat tropical");
 }

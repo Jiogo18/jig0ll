@@ -1,5 +1,5 @@
-import MessageMaker from '../lib/messageMaker.js';
-import Snowflake from '../lib/snowflake.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
+import { isSnowflake } from '../lib/snowflake.js';
 
 const logChannels = {
 	'313048977962565652': '801844472836784167',//serveur Jiogo #log-manger
@@ -30,7 +30,7 @@ export default {
 	}],
 
 	async executeAttribute(cmdData, levelOptions) {
-		if(levelOptions.length < 2) return new MessageMaker.Embed('Mange', module.exports.description);//n'a pas respecté les options
+		if(levelOptions.length < 2) return new EmbedMaker('Mange', module.exports.description);//n'a pas respecté les options
 
 
 		const guildId = cmdData.guild.id;
@@ -41,14 +41,14 @@ export default {
 		const aliment = levelOptions.quoi || levelOptions[1] && levelOptions[1].value;
 		const channelSource = cmdData.channel;
 		const strDansChannel = (channelSource && channelSource.name) ? ` dans ${channelSource}` : ''
-		const retour = new MessageMaker.Embed('', `Aujourd'hui ${sujet} a mangé ${aliment}${strDansChannel}`);
+		const retour = new EmbedMaker('', `Aujourd'hui ${sujet} a mangé ${aliment}${strDansChannel}`);
 		if(channelLog) {
 			channelLog.send(retour.getForMessage());
 		}
 		else {
 			return retour;//répond au message
 		}
-		return new MessageMaker.Embed('', "Commande effectuée, bon appétit");
+		return new EmbedMaker('', "Commande effectuée, bon appétit");
 	}
 }
 
@@ -56,7 +56,7 @@ export default {
 
 async function getTarget(bot, str)
 {
-	if(!Snowflake.isSnowflake(str)) return str;
+	if(!isSnowflake(str)) return str;
 
 	const user = await bot.users.fetch(str);
 	if(user) {

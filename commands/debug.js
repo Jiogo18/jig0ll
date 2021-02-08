@@ -1,7 +1,6 @@
-import { RichPresenceAssets } from 'discord.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { MessageMaker } from '../lib/messageMaker.js';
 
-const done = new MessageMaker.Message('Done');
+const done = new MessageMaker('Done');
 
 
 const options = [{
@@ -49,8 +48,8 @@ export default {
 		executeAttribute(cmdData, levelOptions) {
 			const optionName = levelOptions[0].value;
 			const option = options.find(o => (o.value||o.name) == optionName );
-			if(!option) return new MessageMaker.Message(`There is no option for ${optionName}`);
-			if(typeof option.execute != 'function') return new MessageMaker.Message(`Option ${optionName} is incomplete`);
+			if(!option) return new MessageMaker(`There is no option for ${optionName}`);
+			if(typeof option.execute != 'function') return new MessageMaker(`Option ${optionName} is incomplete`);
 	
 			return option.execute(cmdData, levelOptions);
 		}

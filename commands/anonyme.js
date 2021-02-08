@@ -1,4 +1,4 @@
-import MessageMaker from '../lib/messageMaker.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
 
 
 export default {
@@ -29,6 +29,6 @@ export default {
 		if(cmdData.commandSource) {
 			if(cmdData.commandSource.delete) cmdData.commandSource.delete().catch(()=>{});
 		}
-		return new MessageMaker.Embed('Anonyme', message, 3);
+		return new EmbedMaker('Anonyme', message, 3);
 	},
 }

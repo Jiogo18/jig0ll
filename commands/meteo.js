@@ -1,8 +1,8 @@
 import https from 'https';
 const meteoColor = 3447003;
-import CmdPlenitude from './plenitude.js';
-import MessageMaker from '../lib/messageMaker.js';
-import libDate from '../lib/date.js';
+import { getMeteo as getMeteoPlenitude } from './plenitude.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
+import { getFrenchDate, getFrenchTime } from '../lib/date.js';
 
 
 export default {
@@ -27,13 +27,11 @@ export default {
 		switch(location.toLowerCase()) {
 			case "plenitude":
 			case "plénitude":
-				return await (CmdPlenitude.getMeteo(cmdData));
+				return await (getMeteoPlenitude(cmdData));
 			default:
-				return await (module.exports.sendWeatherRequest(location));
+				return await (sendWeatherRequest(location));
 		}
 	},
-
-	sendWeatherRequest: sendRequest,
 };
 
 
@@ -63,13 +61,13 @@ async function getData(location) {
 }
 
 
-export async function sendRequest(location, funcOnData) {
+export async function sendWeatherRequest(location, funcOnData) {
 	var data = JSON.parse(await getData(location));
 	if(typeof funcOnData == 'function') funcOnData(data);
 	
 	switch(data.cod) {
 	case 200:
-		const date = data.date || libDate.getFrenchDate(data.dt * 1000);//s to msec
+		const date = data.date || getFrenchDate(data.dt * 1000);//s to msec
 		return getDescription(makeMeteoEmbed(data.name, date), data);
 	default:
 		return makeMeteoEmbed(data.name, '', [`Code Error: ${data.cod}`, `Message: ${data.message}`]);
@@ -78,7 +76,7 @@ export async function sendRequest(location, funcOnData) {
 
 
 function makeMeteoEmbed(location, date, desc) {
-	return new MessageMaker.Embed(`Météo de __${location}__ ${date}`, (desc||[]).join('\n'), {color: meteoColor});
+	return new EmbedMaker(`Météo de __${location}__ ${date}`, (desc||[]).join('\n'), {color: meteoColor});
 }
 
 
@@ -106,8 +104,8 @@ function getDescription(embed, data) {
 		embed.addField('Condition', conditions.join(", "), true)
 	}
 	if(data.sys) {
-		let soleilLeve = libDate.getFrenchTime(data.sys.sunrise*1000, false);
-		let soleilCouche = libDate.getFrenchTime(data.sys.sunset*1000, true);
+		let soleilLeve = getFrenchTime(data.sys.sunrise*1000, false);
+		let soleilCouche = getFrenchTime(data.sys.sunset*1000, true);
 		embed.addField('Présence du soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
 	}
 

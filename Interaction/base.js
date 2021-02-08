@@ -1,12 +1,11 @@
 import security from './security.js';
 import AppManager from './AppManager.js';
 import commandsMgr from './commandsManager.js';
+import config from './config.js';
 
 export default class InteractionBase {
 	bot = undefined;
-	static config = import('./config.js');
-	static security = import('./security.js');
-	commandsMgr = import('./commandsManager.js').then(module => this.commandsMgr = module.default);
+	commandsMgr = commandsMgr;
 
 	constructor(bot) {
 		//format des demandes d'interactions '</COMMAND:BOT_ID> '
@@ -15,10 +14,10 @@ export default class InteractionBase {
 		AppManager.setBot(bot);
 	}
 
-	global() { return AppManager.getGlobal(); }
-	guilds(id) { return AppManager.getGuild(id); }
-	getTarget(id) { return AppManager.getTarget(id); }
-	getCmdFrom(guild_id = undefined) { return AppManager.getCmdFrom(guild_id); }
+	global = AppManager.getGlobal;
+	guilds = AppManager.getGuild;
+	getTarget = AppManager.getTarget;
+	getCmdFrom = AppManager.getCmdFrom;
 
 	async loadCommands() {
 		const targetPrivate = this.getTarget(security.guild_test);

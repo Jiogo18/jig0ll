@@ -1,10 +1,9 @@
-import security from '../Interaction/security.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
 import { CommandData, CommandContent } from '../lib/commandData.js';
 
 function makeMessage(description, error) {
 	const color = error ? 'red' : undefined;
-	return new MessageMaker.Embed('Help', description, {color: color});
+	return new EmbedMaker('Help', description, {color: color});
 }
 
 function getCommandToHelp(cmdData) {

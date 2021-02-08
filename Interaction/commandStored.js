@@ -1,6 +1,6 @@
 import Security from './security.js';
-import MessageMaker from '../lib/messageMaker.js';
-import help from '../commands/help.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
+import { getFullDescriptionFor } from '../commands/help.js';
 
 
 const ApplicationCommandOptionType = {
@@ -34,7 +34,7 @@ class CommandBase {
 	isAllowedOptionType() { return false; }
 	description;
 		getHelpDescription(context) {
-			return help.getFullDescriptionFor(context, this);
+			return getFullDescriptionFor(context, this);
 		}
 	default;
 	required;
@@ -138,7 +138,7 @@ class CommandExtendable extends CommandBase {
 		}
 		
 		//terminus => #execute
-		if(!this.security || this.security.isAllowedToUse(cmdData.context) == false) { return new MessageMaker.Embed('', "Sorry you can't do that", { color: 'red' }); }
+		if(!this.security || this.security.isAllowedToUse(cmdData.context) == false) { return new EmbedMaker('', "Sorry you can't do that", { color: 'red' }); }
 		
 		if(typeof levelOptions == 'object' && levelOptions.length) {
 			if(typeof this.#executeAttribute == 'function') {
@@ -149,7 +149,7 @@ class CommandExtendable extends CommandBase {
 		if(typeof this.#execute == 'function') {
 			return this.#execute(cmdData, levelOptions);
 		}
-		return new MessageMaker.Embed('', this.getHelpDescription(cmdData.context));
+		return new EmbedMaker('', this.getHelpDescription(cmdData.context));
 	}
 
 	getSubCommand(levelOptions) {
@@ -178,7 +178,9 @@ class CommandExtendable extends CommandBase {
 	}
 }
 
-class CommandStored extends CommandExtendable {
+
+
+export default class CommandStored extends CommandExtendable {
 	get type() { return ApplicationCommandOptionType.INTERACTION; }
 	isAllowedOptionType(type) {
 		return [ ApplicationCommandOptionType.SUB_COMMAND, ApplicationCommandOptionType.SUB_COMMAND_GROUP, ...CommandAttribute.Types ].includes(type);
@@ -307,6 +309,3 @@ function possibleTypesOfValue(value) {
 	}
 	return types;
 }
-
-
-export default CommandStored;

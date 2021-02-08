@@ -1,14 +1,14 @@
-import Plenitude from './plenitude.js';
-import security from '../Interaction/security.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { getLocation, setLocation } from './plenitude.js';
+import { isPlenitudePrivilege } from '../Interaction/security.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
 
 
 const vars = [{
 	name: 'PlenCity',
-	get: function() { return Plenitude.getLocation(); },
+	get: function() { return getLocation(); },
 	set: function(value) {
 		
-		return Plenitude.setLocation(value);
+		return setLocation(value);
 	},
 
 	textGet: async function() { return `La ville de Plénitude se trouve à ${await this.get()}`},
@@ -21,6 +21,7 @@ const vars = [{
 const optionVariable = {
 	name: 'variable',
 	type: 3,
+	required: true,
 	choices: vars.map(e => { return { name: e.name, value: e.name } }),
 }
 
@@ -33,7 +34,7 @@ export default {
 	
 	security: {
 		place: 'private',
-		isAllowedToUse(cmdData) { return security.isPlenitudePrivilege(cmdData.author.id); },
+		isAllowedToUse(cmdData) { return isPlenitudePrivilege(cmdData.author.id); },
 	},
 
 	//format: get [variable], set [variable] [value]
@@ -86,8 +87,8 @@ function findVar(name) {
 	return vars.find(e => e.name.toLowerCase() == name.toLowerCase());
 }
 
-function makeMessage(text) { return new MessageMaker.Embed('Plénitude', text); }
-function makeError(text) { return new MessageMaker.Embed('Plénitude', text || 'Une erreur est survenue', {color: 'red'}); }
+function makeMessage(text) { return new EmbedMaker('Plénitude', text); }
+function makeError(text) { return new EmbedMaker('Plénitude', text || 'Une erreur est survenue', {color: 'red'}); }
 function makeVariablesAvailable() {
 	return makeMessage('Variables disponibles : ' + optionVariable.choices.map(e => e.name).join(', '));
 }

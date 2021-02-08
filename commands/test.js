@@ -1,5 +1,5 @@
 import { Guild } from 'discord.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
 
 export default {
 	name: 'test',
@@ -39,7 +39,7 @@ async function embedIdTime(guild, nb) {
 	const data = await idTime(guild, nb);
 
 	const decription = [`${data.length} channel${data.length==1 ? ' créé' : 's créés'}`];
-	var retour = new MessageMaker.Embed('test idTime', decription);
+	var retour = new EmbedMaker('test idTime', decription);
 	for(let i=0; i<data.length; i++) {
 		const channelInfo = data[i];
 		retour.addField(`Channel ${i+1} :`,

@@ -1,18 +1,18 @@
 import InteractionBase from './base.js';
 import { CommandInteraction } from '../lib/commandData.js';
-import MessageMaker from '../lib/messageMaker.js';
-import security from './security.js';
-import Snowflake from '../lib/snowflake.js';
+import { InteractionSpecialMaker, MessageMaker } from '../lib/messageMaker.js';
+import { botIsAllowedToDo } from './security.js';
+import { getDateSinceEpoch as getSnowflakeTimestamp } from '../lib/snowflake.js';
 
 
 async function safeInteractionAnswer(cmdData) {
-	const timestampId = Snowflake.getDateSinceEpoch(cmdData.commandSource.id);
+	const timestampId = getSnowflakeTimestamp(cmdData.commandSource.id);
 	//ne fonctionne que si la commande fonctionne au await (pas au sleep des dates)
 	const timeRemaining = 3000 + timestampId - Date.now();
 	const t = setTimeout(async function() {
 		if(cmdData.answered) return;
 		console.log(`Interaction is too long, an acknowledgement will be sent (for '/${cmdData.commandLine}')`);
-		cmdData.sendAnswer(new MessageMaker.InteractionSpecial(5));//accepte l'intéraction (et attent le retour)
+		cmdData.sendAnswer(new InteractionSpecialMaker(5));//accepte l'intéraction (et attent le retour)
 	}, timeRemaining - 1000);//on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
 
@@ -30,7 +30,7 @@ export default class InteractionManager extends InteractionBase {
 
 		const cmdData = new CommandInteraction(interaction, this);
 
-		if(security.botIsAllowedToDo(cmdData.context) == false) return;
+		if(botIsAllowedToDo(cmdData.context) == false) return;
 
 
 		safeInteractionAnswer(cmdData);
@@ -59,11 +59,11 @@ export default class InteractionManager extends InteractionBase {
 		}
 		catch(error) {
 			console.warn(error.yellow);
-			return new MessageMaker.Message(error);
+			return new MessageMaker(error);
 		}
 		if(!command) return;
 		if(typeof command == 'string') {
-			return new MessageMaker.Message(command);
+			return new MessageMaker(command);
 		}
 
 
@@ -79,7 +79,7 @@ export default class InteractionManager extends InteractionBase {
 
 		} catch (error) {
 			console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
-			return new MessageMaker.Message(`Sorry I've had an error (${error})`);
+			return new MessageMaker(`Sorry I've had an error (${error})`);
 		}
 	}
 }

@@ -1,10 +1,10 @@
-import Discord from 'discord.js';
+import { Collection } from 'discord.js';
 import fs from 'fs';
 const defaultCommandsPath = './commands';
-var existingCommands = new Discord.Collection();//stocker les commandes et pas les redemander h24//TODO: liste avec database.js car c'est une même fonction pour tous
-import Security from './security.js';
+var existingCommands = new Collection();//stocker les commandes et pas les redemander h24//TODO: liste avec database.js car c'est une même fonction pour tous
+import { SecurityPlace } from './security.js';
 import CommandStored from './commandStored.js';
-import AppManager from './AppManager.js';
+import { postCommand, removeCommand } from './AppManager.js';
 
 export default {
 
@@ -37,7 +37,7 @@ export default {
 	},
 
 	resetCacheTimer(target) {
-		commands = existingCommands.get(target.path);
+		var commands = existingCommands.get(target.path);
 		if(commands) commands.timeUpdate = 0;
 	},
 
@@ -52,41 +52,23 @@ export default {
 
 
 
-	commands: new Discord.Collection(),//les commandes stockées par le bot (avec les execute())
+	commands: new Collection(),//les commandes stockées par le bot (avec les execute())
 
-	addCommand(command, target) {
-
-		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
+	async addCommand(command, target) {
+		this.commands.set(command.name, command);
 		
-		var posted = new Promise((resolve, reject) => {
-			AppManager.post(command, target)
-				.then(() => {
-					this.resetCacheTimer(target);
-					resolve(true);
-				})
-				.catch(() => resolve(false) );
-		});
-		this.commands.set(command.name, command);//registered also if it's not posted
+		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
+		const posted = await postCommand(command, target);
+		if(posted) this.resetCacheTimer(target);
 		return posted;
 	},
 
-	removeCommand(command, target) {
-		target = target.clone();//don't change ths path for others
+	async removeCommand(command, target) {
+		if(this.commands.has(command.name)) this.commands.delete(command.name);
 
-		return new Promise((resolve, reject) => {
-			target.go(command.id);
-			target.r.delete()
-			.catch(e => {
-				console.error(`Error while removing command ${command.name}`.red);
-				console.log(e);
-				resolve(false);
-			})
-			.then(() => {
-				if(this.commands.has(command.name)) this.commands.delete(command.name);
-				this.resetCacheTimer(target);
-				resolve(true);
-			});
-		});
+		const removed = await removeCommand(command, target);
+		if(removed) this.resetCacheTimer(target);
+		return removed;
 	},
 
 	async loadCommands(targetGlobal, targetPrivate) {
@@ -119,8 +101,8 @@ export default {
 		const commandSent = cmdsLoaded.map(async command => {
 			var target = undefined;
 			switch(command.allowedPlacesToCreateInteraction) {
-				case Security.SecurityPlace.PUBLIC: target = targetGlobal; break;
-				case Security.SecurityPlace.PRIVATE: target = targetPrivate; break;
+				case SecurityPlace.PUBLIC: target = targetGlobal; break;
+				case SecurityPlace.PRIVATE: target = targetPrivate; break;
 			}
 			
 			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)

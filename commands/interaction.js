@@ -1,5 +1,5 @@
 import AppManager from '../Interaction/AppManager.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { MessageMaker, EmbedMaker } from '../lib/messageMaker.js';
 const spaces = '\u200b \u200b \u200b \u200b ';
 
 export default {
@@ -49,7 +49,7 @@ async function listInteraction(context) {
 	globalInte = globalInte.map(option => { return option.name; });
 	localInte = localInte.map(option => { return option.name; });
 
-	const retour = new MessageMaker.Embed('Interaction list', `${counter} interactions are available in this guild`);
+	const retour = new EmbedMaker('Interaction list', `${counter} interactions are available in this guild`);
 	if(globalInte.length > 0) retour.addField('Global', `${spaces}${globalInte.join(`\n${spaces}`,)}`);
 	if(localInte.length > 0) retour.addField('Local', `${spaces}${localInte.join(`\n${spaces}`)}`);
 	return retour;
@@ -70,5 +70,5 @@ async function cleanInteraction(context) {
 	localInte = await slashCmd.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
 	const counterAfter = globalInte.length + localInte.length;
 
-	return new MessageMaker.Message(`There were ${counterBefore} interactions, there are ${counterAfter}.`);
+	return new MessageMaker(`There were ${counterBefore} interactions, there are ${counterAfter}.`);
 }

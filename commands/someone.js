@@ -1,4 +1,4 @@
-import MessageMaker from '../lib/messageMaker.js';
+import { MessageMaker } from '../lib/messageMaker.js';
 
 var useInMinute = [];
 var lastReset = [];
@@ -30,7 +30,7 @@ export default {
 		}
 		useInMinute[id]++;
 		
-		return new MessageMaker.Message(`@someone ${getRandomMeme()} ${randomUser}`, 3);//don't reply
+		return new MessageMaker(`@someone ${getRandomMeme()} ${randomUser}`, 3);//don't reply
 	}
 }
 

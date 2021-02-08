@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import MessageMaker from '../lib/messageMaker.js';
+import { EmbedMaker } from '../lib/messageMaker.js';
 import { Snowflake } from '../lib/snowflake.js';
 
 
@@ -40,7 +40,7 @@ export default {
  * @param {string} author_id
  */
 function makePrePingMessage(time, author_id) {
-	return new MessageMaker.Embed('Ping', `@Jig0ll:${time}\nfor:${author_id}`);
+	return new EmbedMaker('Ping', `@Jig0ll:${time}\nfor:${author_id}`);
 }
 
 /**
@@ -92,7 +92,7 @@ function catchPrePingMessage(cmdData, timePrePingSentLocal, message) {
 	const decalage = (decalagePrePingSent + decalagePrePingServ) / 2
 
 
-	message.edit(new MessageMaker.Embed('Ping',
+	message.edit(new EmbedMaker('Ping',
 		`Pong en ${Math.round(pingSinceMessageCreated)} msec
 		Ping du bot : ${Math.round(pingBot)} msec
 		Décalage avec le serveur : ${Math.round(decalage)} msec`).content);

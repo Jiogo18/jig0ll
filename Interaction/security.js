@@ -10,7 +10,7 @@ const user_plenitude_privilege = [ config.jiogo18, config.rubis ];//plenitude_lo
 const user_private = [ config.jiogo18, config.jig0ll ];
 
 
-const SecurityPlace = {
+export const SecurityPlace = {
 	PUBLIC: 'public',
 	PRIVATE: 'private',
 	NONE: 'none'
@@ -23,24 +23,23 @@ function getStricFunction(func) {//obtenir une fonction ou une fonction avec le 
 	return () => { return func; }
 }
 
-const is = {
-	betaAllowed(context) {
-		const guild_id = context.guild && context.guild.id || context.guild_id;
-		if(guild_id == undefined) {//mp
-			return this.betaTester(context.author.id);
-		}
-		return this.betaGuild(guild_id);
-	},
 
-	betaGuild(guild_id) { return guild_beta_tester.includes(guild_id); },
-	betaOnlyChannel(channel_id) { return channel_beta_only.includes(channel_id); },
-	betaTester(user_id) { return user_beta_tester.includes(user_id); },
-
-	hightPrivilegeUser(user_id) { return user_high_privilege.includes(user_id); },
-	privateUser(user_id) { return user_private.includes(user_id); },//le bot et moi
-
-	PlenitudePrivilege(user_id) { return user_plenitude_privilege.includes(user_id); },
+export function isBetaAllowed(context) {
+	const guild_id = context.guild && context.guild.id || context.guild_id;
+	if(guild_id == undefined) {//mp
+		return isBetaTester(context.author.id);
+	}
+	return isBetaGuild(guild_id);
 }
+
+export function isBetaGuild(guild_id) { return guild_beta_tester.includes(guild_id); }
+export function isBetaOnlyChannel(channel_id) { return channel_beta_only.includes(channel_id); }
+export function isBetaTester(user_id) { return user_beta_tester.includes(user_id); }
+
+export function isHightPrivilegeUser(user_id) { return user_high_privilege.includes(user_id); }
+export function isPrivateUser(user_id) { return user_private.includes(user_id); }//le bot et moi
+export function isPlenitudePrivilege(user_id) { return user_plenitude_privilege.includes(user_id); }
+
 
 
 
@@ -86,7 +85,7 @@ class SecurityCommand {
 
 
 	isAllowedToUse(context) {
-		if((this.wip) && is.betaAllowed(context) == false) return false;
+		if(this.wip && isBetaAllowed(context) != true) return false;
 
 		if(this.inheritance && this.parent && this.parent.isAllowedToUse) {
 			if(this.parent.isAllowedToUse(context) == false)
@@ -97,7 +96,7 @@ class SecurityCommand {
 	}
 	#isAllowedToUse2 = function(context) {
 		switch(this.place) {
-			case SecurityPlace.PRIVATE: return is.hightPrivilegeUser(context.author.id);
+			case SecurityPlace.PRIVATE: return isHightPrivilegeUser(context.author.id);
 			case SecurityPlace.PUBLIC: return true;
 			case SecurityPlace.NONE: return false;
 			case undefined: return false;
@@ -111,7 +110,24 @@ class SecurityCommand {
 
 
 
-
+export function botIsAllowedToDo(context) {
+	const guild_id = (context.guild && context.guild.id) || context.guild_id;
+	const channel_id = (context.channel && context.channel.id) || context.channel_id;
+	if(process.env.WIPOnly) {
+		//en WIPOnly on n'autorise que les serveurs de beta test
+		return isBetaAllowed(context);
+	}
+	else {
+		//en normal on autorise tout SAUF les channels de Beta Only
+		if(is.betaGuild(guild_id) == false) {
+			return true;//autorise si c'est pas une guild de beta test
+		}
+		if(is.betaOnlyChannel(channel_id)) {
+			return false;//si c'est un channel de beta only
+		}
+		return true;//sinon c'est autorisé
+	}
+}
 
 
 export default {
@@ -121,39 +137,21 @@ export default {
 	get jig0ll() { return config.jig0ll; },
 
 
-	is: is,
-	isBetaAllowed: is.betaAllowed,
-	isBetaGuild: is.betaGuild,
-	isBetaOnlyChannel: is.betaOnlyChannel,
-	isBetaTester: is.betaTester,
+	isBetaAllowed,
+	isBetaGuild,
+	isBetaOnlyChannel,
+	isBetaTester,
 
-	isHightPrivilegeUser: is.hightPrivilegeUser,
-	isPrivateUser: is.privateUser,
-	isPlenitudePrivilege: is.PlenitudePrivilege,
+	isHightPrivilegeUser,
+	isPrivateUser,
+	isPlenitudePrivilege,
 	
 
 
-	botIsAllowedToDo(context) {
-		const guild_id = (context.guild && context.guild.id) || context.guild_id;
-		const channel_id = (context.channel && context.channel.id) || context.channel_id;
-		if(process.env.WIPOnly) {
-			//en WIPOnly on n'autorise que les serveurs de beta test
-			return is.betaAllowed(context);
-		}
-		else {
-			//en normal on autorise tout SAUF les channels de Beta Only
-			if(is.betaGuild(guild_id) == false) {
-				return true;//autorise si c'est pas une guild de beta test
-			}
-			if(is.betaOnlyChannel(channel_id)) {
-				return false;//si c'est un channel de beta only
-			}
-			return true;//sinon c'est autorisé
-		}
-	},
+	botIsAllowedToDo,
 
 
-	SecurityPlace: SecurityPlace,
+	SecurityPlace,
 
-	SecurityCommand: SecurityCommand
+	SecurityCommand
 }
