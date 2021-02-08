@@ -1,6 +1,6 @@
 import { getLocation, setLocation } from './plenitude.js';
-import { isPlenitudePrivilege } from '../Interaction/security.js';
-import { EmbedMaker } from '../lib/messageMaker.js';
+import { isPlenitudePrivilege } from '../../Interaction/security.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 
 
 const vars = [{

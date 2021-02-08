@@ -1,7 +1,7 @@
-import DataBase from '../lib/database.js';
-import { EmbedMaker } from '../lib/messageMaker.js';
-import { getFrenchDate } from '../lib/date.js';
-import { sendWeatherRequest } from './meteo.js';
+import DataBase from '../../lib/database.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
+import { getFrenchDate } from '../../lib/date.js';
+import { sendWeatherRequest } from '../meteo.js';
 
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];

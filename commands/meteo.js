@@ -1,6 +1,6 @@
 import https from 'https';
 const meteoColor = 3447003;
-import { getMeteo as getMeteoPlenitude } from './plenitude.js';
+import { getMeteo as getMeteoPlenitude } from './plenitude/plenitude.js';
 import { EmbedMaker } from '../lib/messageMaker.js';
 import { getFrenchDate, getFrenchTime } from '../lib/date.js';
 
