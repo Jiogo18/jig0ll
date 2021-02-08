@@ -62,7 +62,7 @@ export default {
 
 
 //get a complete description of the command
-function getFullDescriptionFor(context, command) {
+export function getFullDescriptionFor(context, command) {
 	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, command.commandLine);
 }
 
