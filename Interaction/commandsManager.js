@@ -71,20 +71,18 @@ export default {
 		return removed;
 	},
 
-	async loadCommands(targetGlobal, targetPrivate) {
-		console.log(`Loading commands...`.green);
+	async loadCommands() {
+		var start = Date.now();
+		
+		const cmdsLoaded = await getAllCommandFiles(defaultCommandsPath);
+		for(const cmd of cmdsLoaded) this.commands.set(cmd.name, cmd);
 
-		const commandFiles = fs.readdirSync(defaultCommandsPath).filter(file => file.endsWith('.js'))
-		const cmdsLoaded = await Promise.all(commandFiles.map(async file => {
-			const command = (await import(`../${defaultCommandsPath}/${file}`)).default;
-			if(command) {
-				return new CommandStored(command);
-			}
-			else {
-				console.error(`Command not loaded : ${file}`.red);
-			}
-		}).filter(c => c != undefined));
+		console.debug(`Loaded ${cmdsLoaded.length} commands in ${Date.now() - start} msec`.green);
 
+		return cmdsLoaded.length;
+	},
+	
+	async postCommands(targetGlobal, targetPrivate) {
 		var c = {
 			before: this.commands.length,
 			after: 0,
@@ -95,10 +93,9 @@ export default {
 			hidden: 0,
 			interaction: 0,
 		};
+		console.log(`Posting ${this.commands.array().length} commands...`.green);
 
-		console.log(`Adding ${cmdsLoaded.length} commands...`.green);
-
-		const commandSent = cmdsLoaded.map(async command => {
+		const commandSent = this.commands.map(async command => {
 			var target = undefined;
 			switch(command.allowedPlacesToCreateInteraction) {
 				case SecurityPlace.PUBLIC: target = targetGlobal; break;
@@ -154,4 +151,32 @@ export default {
 		return command;
 	}
 
+}
+
+
+
+
+//https://stackoverflow.com/a/24594123/12908345
+const getDirectories = source => fs.readdirSync(source, { withFileTypes: true })
+	.filter(dirent => dirent.isDirectory())
+	.map(dirent => dirent.name)
+
+async function getCommandFiles(path) {
+	const files = fs.readdirSync(path).filter(file => file.endsWith('.js'));
+
+	return await Promise.all(files.map(async file => {
+		const command = (await import(`../${path}/${file}`)).default;
+
+		if(command) return new CommandStored(command);
+
+		console.error(`Command not loaded : ${file}`.red);
+	}).filter(c => c != undefined));
+}
+async function getAllCommandFiles(path) {
+	var files = await getCommandFiles(path);
+	for(const directory of getDirectories(path)) {
+		const subFiles = await getAllCommandFiles(path + '/' + directory);
+		files = [...files, ...subFiles];
+	}
+	return files;
 }

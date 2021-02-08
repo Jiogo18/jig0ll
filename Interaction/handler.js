@@ -21,6 +21,9 @@ export default class InteractionManager extends InteractionBase {
 		super(bot);
 
 		bot.ws.on('INTERACTION_CREATE', inte => { this.onInteraction(inte); });//to keep the function with the right 'this'
+		this.loadCommands().then(posted => {
+			if(!posted) bot.on('ready', () => { this.postCommands() });
+		});
 	}
 
 

@@ -20,9 +20,17 @@ export default class InteractionBase {
 	getCmdFrom = AppManager.getCmdFrom;
 
 	async loadCommands() {
+		await this.commandsMgr.loadCommands();
+		if(this.bot && this.bot.user) {//charger les commandes si c'est possible
+			this.postCommands();
+			return true;
+		}
+		return false;
+	}
+	async postCommands() {
 		const targetPrivate = this.getTarget(security.guild_test);
 		const targetGlobal = this.getTarget();
-		return this.commandsMgr.loadCommands(targetGlobal, targetPrivate);
+		return this.commandsMgr.postCommands(targetGlobal, targetPrivate);
 	}
 
 	async cleanCommands(target_id = undefined) {

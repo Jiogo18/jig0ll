@@ -25,8 +25,6 @@ bot.on(Discord.Constants.Events.CLIENT_READY, () => {
 	if(process.env.WIPOnly) {
 		console.warn(`You are in WIP mode, @${bot.user.username} will only answer on Jiogo18's serv`);
 	}
-
-	interactionMgr.loadCommands();
 });
 
 
