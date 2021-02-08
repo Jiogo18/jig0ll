@@ -1,4 +1,5 @@
 var bot;
+var canPostCommands = true;
 
 //https://discord.com/developers/docs/interactions/slash-commands#get-global-application-commands
 //https://stackoverflow.com/questions/65402187/new-discord-slash-commands#answer-65422307
@@ -51,13 +52,25 @@ export async function postCommand(command, target) {
 
 	var promise = target.r.post(command.JSON);
 	//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
-
 	return new Promise((resolve, reject) => {
 		promise
 		.then(() => resolve(true) )
 		.catch(e => {
-			console.error(`Error while posting command '${command.name}'`.red);
-			console.error(e);
+			if(!canPostCommands) { resolve(false); return; }//on sait déjà qu'on peut pas poster
+
+			console.error(`Error while posting command '${command.name}' code: ${e.httpStatus}`.red);
+
+			switch(e.code) {
+				case 0:
+					console.error(e.message);
+					canPostCommands = false;//on a dépassé le quota des 200 messages
+					setTimeout(() => { canPostCommands = true; }, 10000);//peut être dans 10s
+					break;
+				default:
+					console.error(e);
+					break;
+			}
+			
 			resolve(false);
 		})
 	});
