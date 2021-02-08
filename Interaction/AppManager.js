@@ -56,7 +56,7 @@ export async function postCommand(command, target) {
 		promise
 		.then(() => resolve(true) )
 		.catch(e => {
-			console.error(`Error while posting command ${command.name}`.red);
+			console.error(`Error while posting command '${command.name}'`.red);
 			console.error(e);
 			resolve(false);
 		})
@@ -71,7 +71,7 @@ export async function removeCommand(command, target) {
 		target.r.delete()
 		.then(() => resolve(true) )
 		.catch(e => {
-			console.error(`Error while removing command ${command.name}`.red);
+			console.error(`Error while removing command '${command.name}'`.red);
 			console.log(e);
 			reject(false);
 		})
