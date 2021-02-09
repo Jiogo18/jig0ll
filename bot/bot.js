@@ -1,8 +1,11 @@
-import { Client, ClientApplication, Constants, Message } from "discord.js";
+import { Client, Constants, Message } from "discord.js";
 
 import InteractionManager from '../Interaction/handler.js';
-import messageHandler from './messageHandler.js';
+import { CommandInteraction } from "../lib/commandData.js";
+
 import { botIsAllowedToDo } from '../Interaction/security.js';
+import messageHandler from './messageHandler.js';
+import interactionHandler from "./interactionHandler.js";
 
 
 
@@ -19,6 +22,7 @@ export default class DiscordBot extends Client {
 
 		this.on(Constants.Events.CLIENT_READY, onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
+		this.ws.on('INTERACTION_CREATE', onInteraction);
 	}
 
 
@@ -72,4 +76,19 @@ function onMessage(message) {
 
 
 	messageHandler.call(this, message);
+}
+
+
+/**
+ * Récéption d'une interaction et vérification avant de l'analyser
+ * @param {Object} interaction 
+ */
+function onInteraction(interaction) {
+	if(process.stopped == true || this.stopped) return;
+
+	const cmdData = new CommandInteraction(interaction, this);
+
+	if(!botIsAllowedToDo(cmdData.context)) return;
+
+	interactionHandler.call(this, cmdData);
 }
