@@ -1,5 +1,5 @@
-import AppManager from '../Interaction/AppManager.js';
-import { MessageMaker, EmbedMaker } from '../lib/messageMaker.js';
+import AppManager from '../../Interaction/AppManager.js';
+import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const spaces = '\u200b \u200b \u200b \u200b ';
 
 export default {

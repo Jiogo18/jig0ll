@@ -1,5 +1,5 @@
 import { Guild } from 'discord.js';
-import { EmbedMaker } from '../lib/messageMaker.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 
 export default {
 	name: 'test',

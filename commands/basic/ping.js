@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
-import { EmbedMaker } from '../lib/messageMaker.js';
-import { Snowflake } from '../lib/snowflake.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
+import { Snowflake } from '../../lib/snowflake.js';
 
 
 export default {

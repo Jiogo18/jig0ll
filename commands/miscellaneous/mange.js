@@ -1,5 +1,5 @@
-import { EmbedMaker } from '../lib/messageMaker.js';
-import { isSnowflake } from '../lib/snowflake.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
+import { isSnowflake } from '../../lib/snowflake.js';
 
 const logChannels = {
 	'313048977962565652': '801844472836784167',//serveur Jiogo #log-manger

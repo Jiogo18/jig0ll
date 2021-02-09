@@ -1,5 +1,5 @@
-import { EmbedMaker } from '../lib/messageMaker.js';
-import { CommandData, CommandContent } from '../lib/commandData.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
+import { CommandData, CommandContent } from '../../lib/commandData.js';
 
 function makeMessage(description, error) {
 	const color = error ? 'red' : undefined;

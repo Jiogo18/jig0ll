@@ -1,6 +1,6 @@
 import Security from './security.js';
 import { EmbedMaker } from '../lib/messageMaker.js';
-import { getFullDescriptionFor } from '../commands/help.js';
+import { getFullDescriptionFor } from '../commands/basic/help.js';
 
 
 const ApplicationCommandOptionType = {

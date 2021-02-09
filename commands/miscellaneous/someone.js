@@ -1,4 +1,4 @@
-import { MessageMaker } from '../lib/messageMaker.js';
+import { MessageMaker } from '../../lib/messageMaker.js';
 
 var useInMinute = [];
 var lastReset = [];

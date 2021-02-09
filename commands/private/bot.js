@@ -1,5 +1,5 @@
-import { EmbedMaker } from '../lib/messageMaker.js';
-import { getDurationTime } from '../lib/date.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
+import { getDurationTime } from '../../lib/date.js';
 
 
 export default {

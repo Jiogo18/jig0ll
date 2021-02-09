@@ -1,4 +1,4 @@
-import { EmbedMaker } from '../lib/messageMaker.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 
 
 export default {
