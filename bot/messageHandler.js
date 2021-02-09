@@ -1,6 +1,7 @@
 import { Message } from 'discord.js';
 import { removePrefix as removeCommandPrefix } from '../lib/command.js';
 import { CommandMessage } from '../lib/commandData.js';
+import commandHandler from './commandHandler.js';
 
 
 /**
@@ -39,20 +40,13 @@ function isCommand(message) {
 async function onMessageCommand(message) {
 	if(!isCommand(message)) return;
 
-	var command = new CommandMessage(message, this.interactionMgr);
-	const retour = await this.interactionMgr.onCommand(command)
-		.catch(error => {
-			message.reply(`Sorry I've had an error: ${error}`);
-			console.error(error);
-		});
-
-	if(!retour) return;
-
 	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
 
-	command.sendAnswer(retour)
-		.catch(error => {
-			message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-			console.error(error);
-		});
+	var command = new CommandMessage(message, this.interactionMgr);
+	await commandHandler.call(this, command)
+	.catch(error => {
+		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
+		console.error(`Error while sending an answer for '${command.commandLine}'`.red);
+		console.error(error);
+	});
 }

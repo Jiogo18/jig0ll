@@ -1,6 +1,7 @@
 import { CommandInteraction } from '../lib/commandData.js';
 import { InteractionSpecialMaker } from '../lib/messageMaker.js';
 import { getDateSinceEpoch as getSnowflakeTimestamp } from '../lib/snowflake.js';
+import commandHandler from './commandHandler.js';
 
 
 async function safeInteractionAnswer(cmdData) {
@@ -22,18 +23,15 @@ export default async function interactionHandler(interaction) {
 
 	safeInteractionAnswer(interaction);
 
+	const answered = await commandHandler.call(this, interaction)
+	.catch(e => {
+		console.error(`Error with an interaction`.red);
+		console.error(e);
+	});
 
-	const retour = await this.interactionMgr.onCommand(cmdData);
-	console.log(`Interaction done for ${interaction.author.username} : "${interaction.commandLine}" in ${Date.now() - interaction.receivedAt} msec`);
+	console.log(`Interaction done for ${interaction.author.username} : "${interaction.commandLine}" in ${Date.now() - interaction.receivedAt} msec`.gray);
 
-	if(!retour) return;
-
-	const answerOk = await interaction.sendAnswer(retour)
-		.catch(e => {
-			console.error(`Error while sending an answer`.red);
-			console.error(e);
-		})
-	if(!answerOk)
-		console.warn(`Interaction "${interaction.commandLine}" has no answer`.yellow);
-		interaction.answered = true;
+	if(!answered && interaction.needAnswer != false) {
+		console.warn(`Interaction '${interaction.commandLine}' has no answer`.yellow);
+	}
 }
