@@ -1,6 +1,5 @@
 import Security from './security.js';
 import { EmbedMaker } from '../lib/messageMaker.js';
-import { getFullDescriptionFor } from '../commands/basic/help.js';
 
 
 const ApplicationCommandOptionType = {
@@ -33,9 +32,15 @@ class CommandBase {
 	get type() { return ApplicationCommandOptionType.NONE; }
 	isAllowedOptionType() { return false; }
 	description;
-		getHelpDescription(context) {
-			return getFullDescriptionFor(context, this);
-		}
+	getHelpDescription(context) {
+		if(!this.security.isAllowedToSee(context)) return;
+		return this.description();
+	}
+	getHelpSmallDescription(context) {
+		if(!this.security.isAllowedToSee(context)) return;
+		return this.commandLine + (this.description ? ` : ${this.description}` : '');
+	}
+
 	default;
 	required;
 	
@@ -84,6 +89,13 @@ class CommandExtendable extends CommandBase {
 	#execute;
 	#executeAttribute;
 	options = [];
+	getHelpDescription(context, spaces = '\xa0 \xa0 ') {
+		if(!this.security.isAllowedToSee(context)) return;
+		const descriptionStr = [ this.description, ...this.options.map(option => {
+			return option.getHelpSmallDescription(context);
+		}).filter(o => o!=undefined) ];
+		return descriptionStr.join('\n' + spaces);
+	}
 
 	constructor(commandConfig, parent) {
 		super(commandConfig, parent);

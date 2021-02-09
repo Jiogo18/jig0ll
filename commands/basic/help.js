@@ -1,13 +1,24 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { CommandData, CommandContent } from '../../lib/commandData.js';
 
+/**
+ * Make a Help message
+ * @param {string} description 
+ * @param {boolean} error 
+ */
 function makeMessage(description, error) {
-	const color = error ? 'red' : undefined;
+	const color = error && 'red';
 	return new EmbedMaker('Help', description, {color: color});
 }
 
-function getCommandToHelp(cmdData) {
-	var commandToHelp = [...cmdData.content.optionsValue];
+/**
+ * get a command base on the option given
+ * @param {CommandData} cmdData 
+ * @param {Array} levelOptions 
+ */
+function getCommandToHelp(cmdData, levelOptions) {
+	const commandToHelp = levelOptions.map(o => o.value);
+
 	if(typeof commandToHelp[0] == 'string') {
 		const first = commandToHelp.shift();
 		for(const word of first.split(' ').reverse()) {
@@ -42,58 +53,35 @@ export default {
 	}],
 
 	executeAttribute(cmdData, levelOptions) {
-		const command = getCommandToHelp(cmdData);
+		const command = getCommandToHelp(cmdData, levelOptions);
 
 		if(typeof command == 'string') { return makeMessage(command, true); }
 		if(!command) { return this.execute(cmdData); }
 		if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
-		return makeMessage(getFullDescriptionFor(cmdData, command));
+		return makeMessage(command.getHelpDescription(cmdData.context));
 	},
 
 	execute(cmdData) {
-		return makeMessage(getBetterDescriptionFor('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands, ''));
+		return makeMessage(getFullDescription('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands));
 	},
 
-
-	getDescriptionFor: getDescriptionFor,
-	getFullDescriptionFor: getFullDescriptionFor,
 };
 
 
-//get a complete description of the command
-export function getFullDescriptionFor(context, command) {
-	return command.description + '\n' + getBetterDescriptionFor('\xa0 \xa0 ', context, command.options, command.commandLine);
-}
+/**
+ * get a readable description of options
+ * @param {string} spaces - indentation
+ * @param {CommandContext} context 
+ * @param {CommandStored} commands 
+ */
+function getFullDescription(spaces, context, commands) {
+	//every commands
+	var commandsDesc = commands.map(command => {
+		return command.getHelpSmallDescription(context).replace(/\n/g, '\n' + spaces + spaces);
+	}).join('\n' + spaces);
+	if(commandsDesc != '') commandsDesc = `\n${spaces}${commandsDesc}`;
 
-//get a readable description of options
-function getBetterDescriptionFor(spaces, context, options, commandLine) {
-	const description = getDescriptionFor(context, options);
-	var descriptionStr = [];
-	if(commandLine != '') commandLine += ' ';
-	for(const line of description || []) {
-		const currentCommandLine = commandLine + line.name;
-		const desc = line.description ?  ` : ${line.description}` : '';
-		descriptionStr.push(spaces + '/' + currentCommandLine + desc);
-	}
-	//affiche une liste avec une indentation et un retour à la ligne
-	return descriptionStr.join('\n');
-}
-
-//get the description with objects
-function getDescriptionFor(context, commands) {
-	if(!commands) return [];
-
-	var retour = [];
-	commands.forEach((command, key) => {
-		if(!command.security.isAllowedToSee(context)) {
-			return;
-		}
-		var commandName = command.name;
-		if(command.type >= 3)
-			commandName = `[${commandName}]`;
-		retour.push({ name: commandName, description: command.description });
-	});
-
-	return retour;
+	commandsDesc = "Préfix du bot : '!', '@Jig0ll', compatible avec les interactions" + commandsDesc;
+	return commandsDesc;
 }
