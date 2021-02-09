@@ -1,11 +1,8 @@
-import { Client, Constants } from "discord.js";
+import { Client, ClientApplication, Constants, Message } from "discord.js";
 
-import { removePrefix as removeCommandPrefix } from '../lib/command.js';
 import InteractionManager from '../Interaction/handler.js';
-var interactionMgr;
-import { CommandMessage } from '../lib/commandData.js';
+import messageHandler from './messageHandler.js';
 import { botIsAllowedToDo } from '../Interaction/security.js';
-
 
 
 
@@ -13,15 +10,15 @@ export default class DiscordBot extends Client {
 
 	startedTime;
 	#stopped = false; get stopped() { return this.#stopped; }
+	interactionMgr;
 	
 	constructor() {
 		super();
 		this.startedTime = Date.now();
+		this.interactionMgr = new InteractionManager(this);
 
 		this.on(Constants.Events.CLIENT_READY, onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
-
-		interactionMgr = new InteractionManager(this);
 	}
 
 
@@ -57,50 +54,22 @@ function onBotConnected() {
 
 
 
-async function onMessage(message) {
-
+/**
+ * Récéption d'un message et vérification avant de l'analyser
+ * @param {Message} message 
+ */
+function onMessage(message) {
 	if(process.stopped == true || this.stopped) return;
-	
+
+
 	if(!botIsAllowedToDo(
 		{
 			author: message.author,
 			guild: message.channel.guild,
 			channel: message.channel,
-			on: 'message'
 		})
 	) { return; }//pas autorisé en WIPOnly
 
-	//préparer le message pour les commandes
-	try {
-		const [content, prefix] = removeCommandPrefix(message.content);
-		if(prefix == undefined) return;
 
-		message.content = content;
-		message.prefix = prefix;
-
-	} catch(error) {
-		console.error(`Error with a message: ${error}`);
-		return;
-	}
-
-
-	//on suppose que message.content et message.prefix ont été séparés
-	var cmdData = new CommandMessage(message, interactionMgr);
-	const retour = await interactionMgr.onCommand(cmdData)
-		.catch(error => {
-			message.channel.send(`Sorry I've had an error: ${error}`);
-			console.error(error);
-		});
-	
-	if(!retour) return;
-	
-	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
-	
-	cmdData.sendAnswer(retour)
-		.catch(error => {
-			message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-			console.error(error);
-		});
+	messageHandler.call(this, message);
 }
-
-
