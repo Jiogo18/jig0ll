@@ -30,7 +30,7 @@ export default {
 	}],
 
 	async executeAttribute(cmdData, levelOptions) {
-		if(levelOptions.length < 2) return new EmbedMaker('Mange', module.exports.description);//n'a pas respecté les options
+		if(levelOptions.length < 2) return new EmbedMaker('Mange', this.description);//n'a pas respecté les options
 
 
 		const guildId = cmdData.guild.id;

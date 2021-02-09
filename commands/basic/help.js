@@ -45,7 +45,7 @@ export default {
 		const command = getCommandToHelp(cmdData);
 
 		if(typeof command == 'string') { return makeMessage(command, true); }
-		if(!command) { return module.exports.execute(cmdData); }
+		if(!command) { return this.execute(cmdData); }
 		if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
 
 		return makeMessage(getFullDescriptionFor(cmdData, command));
