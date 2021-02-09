@@ -65,17 +65,19 @@ function onBotConnected() {
 function onMessage(message) {
 	if(process.stopped == true || this.stopped) return;
 
+	try {
+		if(!botIsAllowedToDo(
+			{
+				author: message.author,
+				guild: message.channel.guild,
+				channel: message.channel,
+			})
+		) { return; }//pas autorisé en WIPOnly
 
-	if(!botIsAllowedToDo(
-		{
-			author: message.author,
-			guild: message.channel.guild,
-			channel: message.channel,
-		})
-	) { return; }//pas autorisé en WIPOnly
 
+		messageHandler.call(this, message).catch(console.error);
 
-	messageHandler.call(this, message);
+	} catch(error) { console.error(error) }
 }
 
 
@@ -86,9 +88,12 @@ function onMessage(message) {
 function onInteraction(interaction) {
 	if(process.stopped == true || this.stopped) return;
 
-	const cmdData = new CommandInteraction(interaction, this);
+	try {
+		const cmdData = new CommandInteraction(interaction, this);
 
-	if(!botIsAllowedToDo(cmdData.context)) return;
+		if(!botIsAllowedToDo(cmdData.context)) return;
 
-	interactionHandler.call(this, cmdData);
+		interactionHandler.call(this, cmdData);
+		
+	} catch(error) { console.error(error) }
 }
