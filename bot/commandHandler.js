@@ -1,4 +1,4 @@
-import { CommandData } from '../lib/commandData.js';
+import { ReceivedCommand } from './command/received.js';
 import { MessageMaker } from '../lib/messageMaker.js';
 
 
@@ -46,7 +46,7 @@ async function onCommand(cmdData) {
 
 /**
  * Called when any commands are catched
- * @param {CommandData} cmdData - The command
+ * @param {ReceivedCommand} cmdData - The command
  */
 export default async function commandHandler(cmdData) {
 	

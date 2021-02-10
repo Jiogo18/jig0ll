@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import { removePrefix as removeCommandPrefix } from '../lib/command.js';
-import { CommandMessage } from '../lib/commandData.js';
+import { ReceivedMessage } from './command/received.js';
 import commandHandler from './commandHandler.js';
 
 
@@ -40,7 +40,7 @@ function isCommand(message) {
 async function onMessageCommand(message) {
 	if(!isCommand(message)) return;
 
-	var command = new CommandMessage(message, this.interactionMgr);
+	var command = new ReceivedMessage(message, this.interactionMgr);
 	commandHandler.call(this, command)
 	.catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);

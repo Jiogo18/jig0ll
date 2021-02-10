@@ -56,14 +56,14 @@ if ( !matchPrePingMessage(makePrePingMessage(0, 0).content, 0) ) console.error(`
 
 
 /**
- * @param {CommandData} cmdData - Original message
+ * @param {ReceivedCommand} cmdData - Original message
  * @param {number} timePrePingSentLocal - Time of the ping
  * @param {Message} message - Message of the bot
  */
 function catchPrePingMessage(cmdData, timePrePingSentLocal, message) {
 
 	/** Steps:
-	 * CommandMessage (Discord)
+	 * ReceivedMessage (Discord)
 	 * PrePingSent (bot)
 	 * PrePingServ (Discord)
 	 * PrePingCatched (bot)

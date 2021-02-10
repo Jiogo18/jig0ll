@@ -1,4 +1,4 @@
-import { CommandInteraction } from '../lib/commandData.js';
+import { ReceivedInteraction } from './command/received.js';
 import { InteractionSpecialMaker } from '../lib/messageMaker.js';
 import { getDateSinceEpoch as getSnowflakeTimestamp } from '../lib/snowflake.js';
 import commandHandler from './commandHandler.js';
@@ -17,7 +17,7 @@ async function safeInteractionAnswer(cmdData) {
 
 
 /**
- * @param {CommandInteraction} interaction 
+ * @param {ReceivedInteraction} interaction 
  */
 export default async function interactionHandler(interaction) {
 

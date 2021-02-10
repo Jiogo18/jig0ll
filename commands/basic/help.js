@@ -1,5 +1,5 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { CommandData, CommandContent } from '../../lib/commandData.js';
+import { ReceivedCommand, CommandContent } from '../../bot/command/received.js';
 
 /**
  * Make a Help message
@@ -13,7 +13,7 @@ function makeMessage(description, error) {
 
 /**
  * get a command base on the option given
- * @param {CommandData} cmdData 
+ * @param {ReceivedCommand} cmdData 
  * @param {Array} levelOptions 
  */
 function getCommandToHelp(cmdData, levelOptions) {
@@ -27,7 +27,7 @@ function getCommandToHelp(cmdData, levelOptions) {
 	}
 	
 
-	const cmdData2 = new CommandData(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
+	const cmdData2 = new ReceivedCommand(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
 
 	const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
 	return command;

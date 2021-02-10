@@ -1,7 +1,7 @@
 import { Client, Constants, Message } from "discord.js";
 
 import InteractionManager from '../Interaction/base.js';
-import { CommandInteraction } from "../lib/commandData.js";
+import { ReceivedInteraction } from "./command/received.js";
 
 import { botIsAllowedToDo } from '../Interaction/security.js';
 import messageHandler from './messageHandler.js';
@@ -89,7 +89,7 @@ function onInteraction(interaction) {
 	if(process.stopped == true || this.stopped) return;
 
 	try {
-		const cmdData = new CommandInteraction(interaction, this.interactionMgr);
+		const cmdData = new ReceivedInteraction(interaction, this.interactionMgr);
 
 		if(!botIsAllowedToDo(cmdData.context)) return;
 

@@ -1,6 +1,6 @@
-import { MessageMaker, EmbedMaker } from './messageMaker.js';
+import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const inspect = Symbol.for('nodejs.util.inspect.custom');
-import { splitCommand } from '../lib/command.js';
+import { splitCommand } from '../../lib/command.js';
 
 
 export class CommandContent {
@@ -85,7 +85,7 @@ export class CommandContext {
 function makeSafeMessage(message) {
 	if(message == undefined) { return undefined; }
 	if(!message.getForMessage) {
-		console.warn('CommandData::sendAnswer Message not created with MessageMaker'.yellow)
+		console.warn('ReceivedCommand::sendAnswer Message not created with MessageMaker'.yellow)
 		if(message.type == 'rich')
 			return new EmbedMaker(message.title, message.description, message.cosmetic, message.fields);
 		else
@@ -94,7 +94,7 @@ function makeSafeMessage(message) {
 	return message;
 }
 
-export class CommandData {
+export class ReceivedCommand {
 	#content; get content() { return this.#content; }
 	#context; get context() { return this.#context; }//readonly
 
@@ -133,16 +133,16 @@ export class CommandData {
 	}
 
 	[inspect]() {
-		return `CommandData ${ { on: this.on, commandName: this.commandName, guild_id: this.guild_id } }`;
+		return `ReceivedCommand ${ { on: this.on, commandName: this.commandName, guild_id: this.guild_id } }`;
 	}
 
-	clone() { return new CommandData(this.content.clone(), this.context, this.interactionMgr); }
+	clone() { return new ReceivedCommand(this.content.clone(), this.context, this.interactionMgr); }
 
 
 	async sendAnswer(target, message) {
 		if(!message) { return false; }
 		if(!target) {
-			console.warn(`CommandData can't answer ${this.source}`);
+			console.warn(`ReceivedCommand can't answer ${this.source}`);
 			return false;
 		}
 		return await target(message);
@@ -150,7 +150,7 @@ export class CommandData {
 }
 
 
-export class CommandInteraction extends CommandData {
+export class ReceivedInteraction extends ReceivedCommand {
 	answered = false;
 	constructor(interaction, interactionMgr) {
 		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction, interactionMgr.bot), interaction, interactionMgr);
@@ -176,7 +176,7 @@ export class CommandInteraction extends CommandData {
 		return retour;
 	}
 }
-export class CommandMessage extends CommandData {
+export class ReceivedMessage extends ReceivedCommand {
 	#message_private = false;
 
 	constructor(message, interactionMgr) {
@@ -184,7 +184,7 @@ export class CommandMessage extends CommandData {
 		this.#message_private = message.channel == undefined;
 	}
 
-	clone() { return new CommandMessage(this.commandSource, this.interactionMgr); }
+	clone() { return new ReceivedMessage(this.commandSource, this.interactionMgr); }
 
 	get isMessage() { return true };
 	get isMessagePrivate() { return this.#message_private; }
@@ -202,9 +202,9 @@ export class CommandMessage extends CommandData {
 
 
 export default {
-	CommandContent: CommandContent,
-	CommandContext: CommandContext,
-	CommandData: CommandData,
-	CommandInteraction: CommandInteraction,
-	CommandMessage: CommandMessage,
+	CommandContent,
+	CommandContext,
+	ReceivedCommand,
+	ReceivedInteraction,
+	ReceivedMessage,
 }
