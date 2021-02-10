@@ -83,7 +83,10 @@ function idVerificator(name, description, funcExec) {
 			type: 4,
 		}],
 		executeAttribute(cmdData, levelOptions) {
-			if(!isLocalId(levelOptions[levelOptions.length-1].value)) return;//ne réagit pas
+			if(!isLocalId(levelOptions[levelOptions.length-1].value)) {
+				cmdData.needAnswer = false;
+				return;//ne réagit pas
+			}
 			return funcExec(cmdData);
 		},
 		execute() { return new EmbedMaker('', `${description}\nid de ce bot : ${getLocalId()} (bot sur ${getBotLocation()})`); }
