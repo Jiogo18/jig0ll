@@ -1,6 +1,6 @@
-import { ReceivedInteraction } from './command/received.js';
-import { InteractionSpecialMaker } from '../lib/messageMaker.js';
-import { getDateSinceEpoch as getSnowflakeTimestamp } from '../lib/snowflake.js';
+import { ReceivedInteraction } from './received.js';
+import { InteractionSpecialMaker } from '../../lib/messageMaker.js';
+import { getDateSinceEpoch as getSnowflakeTimestamp } from '../../lib/snowflake.js';
 import commandHandler from './commandHandler.js';
 
 

@@ -1,5 +1,5 @@
-import { ReceivedCommand } from './command/received.js';
-import { MessageMaker } from '../lib/messageMaker.js';
+import { ReceivedCommand } from './received.js';
+import { MessageMaker } from '../../lib/messageMaker.js';
 
 
 function getCommand(commandName) {

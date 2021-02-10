@@ -5,7 +5,7 @@ import { ReceivedInteraction } from "./command/received.js";
 
 import { botIsAllowedToDo } from '../Interaction/security.js';
 import messageHandler from './messageHandler.js';
-import interactionHandler from "./interactionHandler.js";
+import interactionHandler from "./command/interactionHandler.js";
 
 
 

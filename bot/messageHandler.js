@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
 import { removePrefix as removeCommandPrefix } from '../lib/command.js';
 import { ReceivedMessage } from './command/received.js';
-import commandHandler from './commandHandler.js';
+import commandHandler from './command/commandHandler.js';
 
 
 /**
