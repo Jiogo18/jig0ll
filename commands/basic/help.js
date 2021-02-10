@@ -77,7 +77,7 @@ export default {
  */
 function getFullDescription(spaces, context, commands) {
 	//every commands
-	var commandsDesc = commands.map(command => {
+	var commandsDesc = commands.sort((a,b) => a.name < b.name ? -1 : 1).map(command => {
 		return command.getHelpSmallDescription(context).replace(/\n/g, '\n' + spaces + spaces);
 	}).join('\n' + spaces);
 	if(commandsDesc != '') commandsDesc = `\n${spaces}${commandsDesc}`;
