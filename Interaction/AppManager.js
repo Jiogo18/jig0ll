@@ -75,7 +75,7 @@ export async function postCommand(command, target) {
 		})
 	});
 }
-export async function removeCommand(command, target) {
+export async function deleteCommand(command, target) {
 	if(!target) return false;
 	target = target.clone();//don't change ths path for others
 
@@ -103,6 +103,6 @@ export default {
 	getCmdFrom,
 
 	postCommand,
-	removeCommand,
+	deleteCommand,
 	
 };

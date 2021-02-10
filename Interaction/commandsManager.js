@@ -52,20 +52,4 @@ export default {
 
 	get commands() { return bot.commandMgr.commands },//les commandes stockées par le bot (avec les execute())
 	setBot(b) { bot = b; },//temporaire
-
-	async addCommand(...o) {
-		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
-		console.debug(`CommandsManager::addCommand is deprecated`.yellow);
-		return bot.interactionMgr2.addCommand(...o);
-	},
-
-	async removeCommand(...o) {
-		console.debug(`CommandsManager::removeCommand is deprecated`.yellow);
-		return bot.interactionMgr2.deleteCommand(...o);
-	},
-
-	async postCommands(...o) {
-		console.debug(`CommandsManager::postCommands is deprecated`.yellow);
-		return bot.interactionMgr2.postCommands(...o);
-	},
 }
