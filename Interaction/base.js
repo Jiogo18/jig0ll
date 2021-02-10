@@ -11,7 +11,7 @@ export default class InteractionBase {
 		//format des retours d'interactions: 'réponse'
 		this.bot = bot;
 		AppManager.setBot(bot);
-
+		commandsMgr.setBot(bot);
 		this.loadCommands().then(posted => {
 			if(!posted) bot.on('ready', () => { this.postCommands() });
 		});
@@ -23,7 +23,7 @@ export default class InteractionBase {
 	getCmdFrom = AppManager.getCmdFrom;
 
 	async loadCommands() {
-		await this.commandsMgr.loadCommands();
+		await this.bot.commandMgr.loadCommands();
 		if(this.bot && this.bot.user) {//charger les commandes si c'est possible
 			this.postCommands();
 			return true;

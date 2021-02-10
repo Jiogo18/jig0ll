@@ -6,6 +6,8 @@ import { SecurityPlace } from './security.js';
 import CommandStored from '../bot/command/commandStored.js';
 import { postCommand, removeCommand } from './AppManager.js';
 
+var bot;
+
 export default {
 
 	async getExistingCommands(target, forceUpdate) {
@@ -52,11 +54,10 @@ export default {
 
 
 
-	commands: new Collection(),//les commandes stockées par le bot (avec les execute())
+	get commands() { return bot.commandMgr.commands },//les commandes stockées par le bot (avec les execute())
+	setBot(b) { bot = b; },//temporaire
 
 	async addCommand(command, target) {
-		this.commands.set(command.name, command);
-		
 		// on ecrasera forcément les anciens post car on sait pas s'ils sont utilisés (ils restent même si le bot est off)
 		const posted = await postCommand(command, target);
 		if(posted) this.resetCacheTimer(target);
@@ -64,23 +65,11 @@ export default {
 	},
 
 	async removeCommand(command, target) {
-		if(this.commands.has(command.name)) this.commands.delete(command.name);
-
 		const removed = await removeCommand(command, target);
 		if(removed) this.resetCacheTimer(target);
 		return removed;
 	},
 
-	async loadCommands() {
-		var start = Date.now();
-		
-		const cmdsLoaded = await getAllCommandFiles(defaultCommandsPath);
-		for(const cmd of cmdsLoaded) this.commands.set(cmd.name, cmd);
-
-		console.debug(`Loaded ${cmdsLoaded.length} commands in ${Date.now() - start} msec`.green);
-
-		return cmdsLoaded.length;
-	},
 	
 	async postCommands(targetGlobal, targetPrivate) {
 		var c = {
@@ -118,39 +107,11 @@ export default {
 		});
 		await Promise.all(commandSent);
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
-		console.log(`Loaded ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.hidden} hidden`.green);
+		console.log(`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.hidden} hidden`.green);
 
 		c.after = this.commands.length;
 		return c;
 	},
-
-	getCommand(commandName) {
-		return this.commands.find(command => command.isCommand(commandName));
-	},
-	getCommandForData(cmdData, readOnly) {//TODO: remove it
-		var command = this.getCommand(cmdData.commandName);
-
-		if(!command) return;
-		
-
-		if(cmdData.options && cmdData.options.length > 0)
-			[command,] = command.getSubCommand(cmdData.options);
-		if(!command) { throw `Command not found`; }
-
-
-		if(readOnly) {
-			if(!command.security.isAllowedToSee(cmdData.context))
-				return `You can't do that`;
-			//command.execute = undefined;//can't execute it
-			//fix for the new CommandStored : it can't be removed like this, use security insted
-		}
-		else {
-			if(!command.security.isAllowedToUse(cmdData.context))
-				return `You can't do that`;
-		}
-		return command;
-	}
-
 }
 
 

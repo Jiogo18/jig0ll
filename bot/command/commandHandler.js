@@ -4,7 +4,7 @@ import { MessageMaker } from '../../lib/messageMaker.js';
 
 function getCommand(commandName) {
 	try {
-		return this.interactionMgr.commandsMgr.getCommand(commandName);
+		return this.commandMgr.getCommand(commandName);
 	}
 	catch(error) {
 		console.warn(`Error whilte getting the command with '${commandName}'`.yellow);

@@ -26,11 +26,14 @@ function getCommandToHelp(cmdData, levelOptions) {
 		}
 	}
 	
+	const commandName = commandToHelp.shift();
 
-	const cmdData2 = new ReceivedCommand(new CommandContent(commandToHelp.shift(), commandToHelp), cmdData.context, cmdData.commandSource, cmdData.interactionMgr);
-
-	const command = cmdData.interactionMgr.commandsMgr.getCommandForData(cmdData2, true);
-	return command;
+	const command = cmdData.bot.commandMgr.getCommand(commandName, true);
+	const [subCommand,] = command.getSubCommand(commandToHelp);
+	if(!subCommand.security.isAllowedToSee(cmdData.context)) {
+		return `You can't do that`;
+	}
+	return subCommand;
 }
 
 
@@ -78,8 +81,9 @@ export default {
 function getFullDescription(spaces, context, commands) {
 	//every commands
 	var commandsDesc = commands.sort((a,b) => a.name < b.name ? -1 : 1).map(command => {
-		return command.getHelpSmallDescription(context).replace(/\n/g, '\n' + spaces + spaces);
-	}).join('\n' + spaces);
+		//description?.replace() because description can be undefined
+		return command.getHelpSmallDescription(context)?.replace(/\n/g, '\n' + spaces + spaces);
+	}).filter(c => c!=undefined).join('\n' + spaces);
 	if(commandsDesc != '') commandsDesc = `\n${spaces}${commandsDesc}`;
 
 	commandsDesc = "Préfix du bot : '!', '@Jig0ll', compatible avec les interactions" + commandsDesc;

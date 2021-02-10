@@ -37,7 +37,7 @@ class CommandBase {
 		return this.description();
 	}
 	getHelpSmallDescription(context) {
-		if(!this.security.isAllowedToSee(context)) return;
+		if(!this.security.isAllowedToSee(context) || this.security.hidden) return;
 		return this.commandLine + (this.description ? ` : ${this.description}` : '');
 	}
 

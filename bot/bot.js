@@ -6,6 +6,7 @@ import { ReceivedInteraction } from "./command/received.js";
 import { botIsAllowedToDo } from '../Interaction/security.js';
 import messageHandler from './messageHandler.js';
 import interactionHandler from "./command/interactionHandler.js";
+import CommandManager from "./command/commandManager.js";
 
 
 
@@ -18,6 +19,7 @@ export default class DiscordBot extends Client {
 	constructor() {
 		super();
 		this.startedTime = Date.now();
+		this.commandMgr = new CommandManager(this);
 		this.interactionMgr = new InteractionManager(this);
 
 		this.on(Constants.Events.CLIENT_READY, onBotConnected);
