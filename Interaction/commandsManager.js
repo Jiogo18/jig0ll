@@ -165,9 +165,10 @@ async function getCommandFiles(path) {
 	const files = fs.readdirSync(path).filter(file => file.endsWith('.js'));
 
 	return await Promise.all(files.map(async file => {
-		const command = (await import(`../${path}/${file}`)).default;
+		const filename = `../${path}/${file}`
+		const command = (await import(filename)).default;
 
-		if(command) return new CommandStored(command);
+		if(command) return new CommandStored(command, filename);
 
 		console.error(`Command not loaded : ${file}`.red);
 	}).filter(c => c != undefined));

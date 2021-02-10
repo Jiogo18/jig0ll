@@ -201,7 +201,9 @@ export default class CommandStored extends CommandExtendable {
 		get interaction() { return this.#interactionInterface; };
 		enableInteraction(enabled = true) { this.#interactionInterface = enabled; return this; };
 	
-	constructor(commandConfig) {
+	#filename; get filename() { return this.#filename; }
+
+	constructor(commandConfig, filename) {
 		super(commandConfig);
 		this.#interactionInterface = commandConfig.interaction;//enable interactions
 		
@@ -211,6 +213,8 @@ export default class CommandStored extends CommandExtendable {
 		if(this.security.wip) {
 			console.warn(`Command /${this.name} is WIP`.yellow)
 		}
+
+		this.#filename = filename;
 	}
 
 	get allowedPlacesToCreateInteraction() {
