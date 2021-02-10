@@ -1,4 +1,4 @@
-import config from './config.js';
+import config from '../bot/config.js';
 
 
 const guild_beta_tester = [ config.guild_test ];

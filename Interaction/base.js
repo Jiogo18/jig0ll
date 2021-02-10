@@ -1,7 +1,6 @@
 import security from './security.js';
 import AppManager from './AppManager.js';
 import commandsMgr from './commandsManager.js';
-import config from './config.js';
 
 export default class InteractionBase {
 	bot = undefined;
