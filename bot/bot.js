@@ -27,7 +27,7 @@ export default class DiscordBot extends Client {
 		this.interactionMgr = new OldInteractionManager(this);
 		this.interactionMgr2 = new InteractionManager(this);
 
-		this.on(Constants.Events.CLIENT_READY, onBotConnected);
+		this.on(Constants.Events.CLIENT_READY, this.onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
 		this.ws.on('INTERACTION_CREATE', (...a) => onInteraction.call(this, ...a) );
 	}
@@ -45,23 +45,24 @@ export default class DiscordBot extends Client {
 		if(!this.#stopped) this.stop();
 		this.start();
 	}
-}
 
 
-
-
-function onBotConnected() {
-	process.env.BOT_ID = this.user.id
-
-	this.user.setActivity(`/help || @${this.user.username} help`, {type: 'WATCHING'})
-			.then(presence => console.log(
-				`Activitée de ${this.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`.cyan))
-			.catch(console.error);
-
-	if(process.env.WIPOnly) {
-		console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`);
+	onBotConnected() {
+		process.env.BOT_ID = this.user.id
+	
+		this.user.setActivity(`/help || @${this.user.username} help`, {type: 'WATCHING'})
+				.then(presence => console.log(
+					`Activitée de ${this.user.username} mis à "${presence.activities.length>0 ? presence.activities[0].name : 'none'}"`.cyan))
+				.catch(console.error);
+	
+		if(process.env.WIPOnly) {
+			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`);
+		}
+	
+		this.interactionMgr2.postCommands();
 	}
 }
+
 
 
 

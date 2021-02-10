@@ -11,9 +11,6 @@ export default class InteractionBase {
 		this.bot = bot;
 		AppManager.setBot(bot);
 		commandsMgr.setBot(bot);
-		this.loadCommands().then(posted => {
-			if(!posted) bot.on('ready', () => { this.postCommands() });
-		});
 	}
 
 	global = AppManager.getGlobal;
@@ -21,17 +18,6 @@ export default class InteractionBase {
 	getTarget = AppManager.getTarget;
 	getCmdFrom = AppManager.getCmdFrom;
 
-	async loadCommands() {
-		await this.bot.commandMgr.loadCommands();
-		if(this.bot && this.bot.user) {//charger les commandes si c'est possible
-			this.postCommands();
-			return true;
-		}
-		return false;
-	}
-	async postCommands() {
-		return this.bot.interactionMgr2.postCommands();
-	}
 
 	async cleanCommands(target_id) {
 		console.debug(`InteractionBase::cleanCommands is deprecated`.yellow);
