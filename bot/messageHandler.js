@@ -40,10 +40,8 @@ function isCommand(message) {
 async function onMessageCommand(message) {
 	if(!isCommand(message)) return;
 
-	console.log(`nouvelle commande (par ${message.author.username} @${message.author.id}) : ${message.content}`);
-
 	var command = new CommandMessage(message, this.interactionMgr);
-	await commandHandler.call(this, command)
+	commandHandler.call(this, command)
 	.catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
 		console.error(`Error while sending an answer for '${command.commandLine}'`.red);

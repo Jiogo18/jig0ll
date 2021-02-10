@@ -22,7 +22,7 @@ export default class DiscordBot extends Client {
 
 		this.on(Constants.Events.CLIENT_READY, onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
-		this.ws.on('INTERACTION_CREATE', onInteraction);
+		this.ws.on('INTERACTION_CREATE', (...a) => onInteraction.call(this, ...a) );
 	}
 
 
@@ -89,7 +89,7 @@ function onInteraction(interaction) {
 	if(process.stopped == true || this.stopped) return;
 
 	try {
-		const cmdData = new CommandInteraction(interaction, this);
+		const cmdData = new CommandInteraction(interaction, this.interactionMgr);
 
 		if(!botIsAllowedToDo(cmdData.context)) return;
 

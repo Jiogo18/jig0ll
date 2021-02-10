@@ -22,7 +22,7 @@ async function executeCommand(cmdData) {
 			resolve(command.execute(cmdData, cmdData.options));//try to solve with it
 			setTimeout(() => reject('timeout'), 60000);//more than 60s
 		});
-		if(!retour) {
+		if(!retour && cmdData.needAnswer != false) {
 			console.warn(`Command "${cmdData.commandLine}" has no answer`.yellow);
 		}
 		
@@ -34,6 +34,14 @@ async function executeCommand(cmdData) {
 	}
 }
 
+async function onCommand(cmdData) {
+
+	const retour = await executeCommand.call(this, cmdData);
+	if(!retour) return;
+
+	return cmdData.sendAnswer(retour);
+	
+}
 
 
 /**
@@ -41,8 +49,24 @@ async function executeCommand(cmdData) {
  * @param {CommandData} cmdData - The command
  */
 export default async function commandHandler(cmdData) {
-	const retour = await executeCommand.call(this, cmdData);
-	if(!retour) return;
+	
+	var timeoutLogged = false;
+	const timeoutLog = setTimeout(_ => {
 
-	return cmdData.sendAnswer(retour);
+		console.log(`Command #${cmdData.id} by ${cmdData.author.username} : '${cmdData.commandLine}' not finished yet`.gray);
+		timeoutLogged = true;
+
+	}, 30000);//30s pour répondre, sinon il envoit un message d'info
+
+	const retour = await onCommand.call(this, cmdData)
+
+	clearTimeout(timeoutLog);
+	if(!timeoutLogged) {
+		console.log(`Command #${cmdData.id} by ${cmdData.author.username} : '${cmdData.commandLine}' done in ${Date.now() - cmdData.receivedAt} msec`.gray);
+	}
+	else {
+		console.log(`Command #${cmdData.id} done in ${Date.now() - cmdData.receivedAt} msec`.gray);
+	}
+
+	return retour;
 }
