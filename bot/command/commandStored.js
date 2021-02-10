@@ -1,4 +1,4 @@
-import Security from '../../Interaction/security.js';
+import Security from './security.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 
 

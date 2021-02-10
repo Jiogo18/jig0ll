@@ -1,6 +1,6 @@
 import { Collection } from 'discord.js';
 import fs from 'fs';
-import { SecurityPlace } from '../../Interaction/security.js';
+import { SecurityPlace } from './security.js';
 const defaultCommandsPath = './commands';//from index.js !
 import CommandStored from './commandStored.js';
 

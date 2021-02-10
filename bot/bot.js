@@ -1,11 +1,11 @@
 import { Client, Constants, Message } from "discord.js";
 
-import AppManager from "../Interaction/AppManager.js";
+import AppManager from "./AppManager.js";
 import CommandManager from "./command/commandManager.js";
 import InteractionManager from "./command/interactionManager.js";
 
 import { ReceivedInteraction } from "./command/received.js";
-import { botIsAllowedToDo } from '../Interaction/security.js';
+import { botIsAllowedToDo } from './command/security.js';
 import messageHandler from './messageHandler.js';
 import interactionHandler from "./command/interactionHandler.js";
 

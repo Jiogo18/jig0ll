@@ -1,6 +1,6 @@
 import { Collection } from 'discord.js';
-import { SecurityPlace } from '../../Interaction/security.js';
-import AppManager from '../../Interaction/AppManager.js';
+import { SecurityPlace } from './security.js';
+import AppManager from '../AppManager.js';
 import config from '../config.js';
 
 export default class InteractionManager {
@@ -8,7 +8,7 @@ export default class InteractionManager {
 	bot;
 	get commands() { return this.bot.commandMgr.commands; }
 	interactionsOnline = new Collection();//TODO: un tableau database
-	interactionsPosted = [];//commandes postées
+	interactionsPosted = new Collection();//commandes postées
 
 	constructor(bot) {
 		this.bot = bot;
