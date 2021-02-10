@@ -12,6 +12,10 @@ export default class InteractionBase {
 		//format des retours d'interactions: 'réponse'
 		this.bot = bot;
 		AppManager.setBot(bot);
+
+		this.loadCommands().then(posted => {
+			if(!posted) bot.on('ready', () => { this.postCommands() });
+		});
 	}
 
 	global = AppManager.getGlobal;
