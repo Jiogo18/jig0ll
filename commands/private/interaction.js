@@ -56,7 +56,7 @@ async function listInteraction(context) {
 
 
 async function cleanInteraction(context) {
-	var slashCmd = context.interactionMgr2;
+	var slashCmd = context.interactionMgr;
 
 	var globalInte = await AppManager.getCmdFrom();
 	var localInte = await AppManager.getCmdFrom(context.guild_id);

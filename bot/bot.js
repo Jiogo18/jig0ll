@@ -2,7 +2,6 @@ import { Client, Constants, Message } from "discord.js";
 
 import AppManager from "../Interaction/AppManager.js";
 import CommandManager from "./command/commandManager.js";
-import OldInteractionManager from '../Interaction/base.js';
 import InteractionManager from "./command/interactionManager.js";
 
 import { ReceivedInteraction } from "./command/received.js";
@@ -18,16 +17,14 @@ export default class DiscordBot extends Client {
 	startedTime;
 	#stopped = false; get stopped() { return this.#stopped; }
 	commandMgr;
-	interactionMgr;//deprecated
-	interactionMgr2;
+	interactionMgr;
 	
 	constructor() {
 		super();
 		this.startedTime = Date.now();
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
-		this.interactionMgr = new OldInteractionManager(this);
-		this.interactionMgr2 = new InteractionManager(this);
+		this.interactionMgr = new InteractionManager(this);
 
 		this.on(Constants.Events.CLIENT_READY, this.onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
@@ -61,7 +58,7 @@ export default class DiscordBot extends Client {
 			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`);
 		}
 	
-		this.interactionMgr2.postCommands();
+		this.interactionMgr.postCommands();
 	}
 }
 
@@ -99,7 +96,7 @@ function onInteraction(interaction) {
 	if(process.stopped == true || this.stopped) return;
 
 	try {
-		const cmdData = new ReceivedInteraction(interaction, this.interactionMgr);
+		const cmdData = new ReceivedInteraction(interaction, this);
 
 		if(!botIsAllowedToDo(cmdData.context)) return;
 

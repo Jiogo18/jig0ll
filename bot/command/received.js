@@ -116,19 +116,19 @@ export class ReceivedCommand {
 
 	#commandSource; get commandSource() { return this.#commandSource; }
 	get id() { return this.commandSource.id; }
-	#interactionMgr;
-		get interactionMgr() { return this.#interactionMgr; }
-		get bot() { return this.interactionMgr.bot; }
-		get commands() { return this.interactionMgr.commandsMgr.commands; }
+	#bot;
+		get bot() { return this.#bot; }
+		get interactionMgr() { return this.bot.interactionMgr; }
+		get commands() { return this.bot.commandMgr.commands; }
 
 	receivedAt;
 	
 
-	constructor(content, context, commandSource, interactionMgr) {
+	constructor(content, context, commandSource, bot) {
 		this.#content = content;
 		this.#context = context;
 		this.#commandSource = commandSource;
-		this.#interactionMgr = interactionMgr;
+		this.#bot = bot;
 		this.receivedAt = Date.now();
 	}
 
@@ -136,7 +136,7 @@ export class ReceivedCommand {
 		return `ReceivedCommand ${ { on: this.on, commandName: this.commandName, guild_id: this.guild_id } }`;
 	}
 
-	clone() { return new ReceivedCommand(this.content.clone(), this.context, this.interactionMgr); }
+	clone() { return new ReceivedCommand(this.content.clone(), this.context, this.bot); }
 
 
 	async sendAnswer(target, message) {
@@ -152,8 +152,8 @@ export class ReceivedCommand {
 
 export class ReceivedInteraction extends ReceivedCommand {
 	answered = false;
-	constructor(interaction, interactionMgr) {
-		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction, interactionMgr.bot), interaction, interactionMgr);
+	constructor(interaction, bot) {
+		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction, bot), interaction, bot);
 	}
 
 	get isInteraction() { return true };
@@ -179,12 +179,12 @@ export class ReceivedInteraction extends ReceivedCommand {
 export class ReceivedMessage extends ReceivedCommand {
 	#message_private = false;
 
-	constructor(message, interactionMgr) {
-		super(CommandContent.fromMessage(message), CommandContext.fromMessage(message), message, interactionMgr);
+	constructor(message, bot) {
+		super(CommandContent.fromMessage(message), CommandContext.fromMessage(message), message, bot);
 		this.#message_private = message.channel == undefined;
 	}
 
-	clone() { return new ReceivedMessage(this.commandSource, this.interactionMgr); }
+	clone() { return new ReceivedMessage(this.commandSource, this.bot); }
 
 	get isMessage() { return true };
 	get isMessagePrivate() { return this.#message_private; }

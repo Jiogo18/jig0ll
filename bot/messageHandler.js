@@ -40,7 +40,7 @@ function isCommand(message) {
 async function onMessageCommand(message) {
 	if(!isCommand(message)) return;
 
-	var command = new ReceivedMessage(message, this.interactionMgr);
+	var command = new ReceivedMessage(message, this);
 	commandHandler.call(this, command)
 	.catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
