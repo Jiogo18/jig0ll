@@ -1,5 +1,5 @@
-import Security from './security.js';
-import { EmbedMaker } from '../lib/messageMaker.js';
+import Security from '../../Interaction/security.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 
 
 const ApplicationCommandOptionType = {

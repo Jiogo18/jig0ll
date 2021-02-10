@@ -3,7 +3,7 @@ import fs from 'fs';
 const defaultCommandsPath = './commands';
 var existingCommands = new Collection();//stocker les commandes et pas les redemander h24//TODO: liste avec database.js car c'est une même fonction pour tous
 import { SecurityPlace } from './security.js';
-import CommandStored from './commandStored.js';
+import CommandStored from '../bot/command/commandStored.js';
 import { postCommand, removeCommand } from './AppManager.js';
 
 export default {
