@@ -44,7 +44,6 @@ export function isPlenitudePrivilege(user_id) { return user_plenitude_privilege.
 
 
 class SecurityCommand {
-	get securityCommand() { return true; }
 	#securityPlace;
 		get place() {
 			if(this.wip && this.#securityPlace == SecurityPlace.PUBLIC) return SecurityPlace.PRIVATE;
@@ -55,6 +54,7 @@ class SecurityCommand {
 		get wip() { return this.#wip || (this.parent && this.parent.wip); };
 		get wipSet() { return this.#wip; };
 		setWip(wip = true) { this.#wip = wip; return this; };
+	hidden = false;
 	
 	#parent;
 		get parent() { return this.#parent; };
@@ -76,6 +76,7 @@ class SecurityCommand {
 		if(security.inheritance) this.#inheritance = security.inheritance;
 		if(security.isAllowedToSee) this.isAllowedToSee = security.isAllowedToSee;
 		if(security.isAllowedToUse) this.#isAllowedToUse2 = security.isAllowedToUse;
+		this.hidden = security.hidden;
 	}
 
 	isAllowedToSee = function(context) {

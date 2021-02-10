@@ -66,3 +66,6 @@ typings/
 
 # Local DataBase
 *.sqlite
+
+# VSCode debug profile
+*.cpuprofile
