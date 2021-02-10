@@ -1,12 +1,14 @@
 import { Client, Constants, Message } from "discord.js";
 
-import InteractionManager from '../Interaction/base.js';
-import { ReceivedInteraction } from "./command/received.js";
+import CommandManager from "./command/commandManager.js";
+import OldInteractionManager from '../Interaction/base.js';
+import InteractionManager from "./command/interactionManager.js";
 
+import { ReceivedInteraction } from "./command/received.js";
 import { botIsAllowedToDo } from '../Interaction/security.js';
 import messageHandler from './messageHandler.js';
 import interactionHandler from "./command/interactionHandler.js";
-import CommandManager from "./command/commandManager.js";
+
 
 
 
@@ -14,13 +16,16 @@ export default class DiscordBot extends Client {
 
 	startedTime;
 	#stopped = false; get stopped() { return this.#stopped; }
-	interactionMgr;
+	commandMgr;
+	interactionMgr;//deprecated
+	interactionMgr2;
 	
 	constructor() {
 		super();
 		this.startedTime = Date.now();
 		this.commandMgr = new CommandManager(this);
-		this.interactionMgr = new InteractionManager(this);
+		this.interactionMgr = new OldInteractionManager(this);
+		this.interactionMgr2 = new InteractionManager(this);
 
 		this.on(Constants.Events.CLIENT_READY, onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
