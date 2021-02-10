@@ -40,7 +40,6 @@ export default {
 
 
 async function listInteraction(context) {
-	AppManager.setBot(context.bot);
 	var globalInte = await AppManager.getCmdFrom()
 	var localInte = await AppManager.getCmdFrom(context.guild_id)
 	//attendre les 2 intéractions pour envoyer
@@ -57,17 +56,17 @@ async function listInteraction(context) {
 
 
 async function cleanInteraction(context) {
-	var slashCmd = context.interactionMgr;
+	var slashCmd = context.interactionMgr2;
 
-	var globalInte = await slashCmd.getCmdFrom();
-	var localInte = await slashCmd.getCmdFrom(context.guild_id);
+	var globalInte = await AppManager.getCmdFrom();
+	var localInte = await AppManager.getCmdFrom(context.guild_id);
 	const counterBefore = globalInte.length + localInte.length;
 
 	await slashCmd.cleanCommands().catch(e => { console.error('error: cleanCommands global'); });//global
 	await slashCmd.cleanCommands(context.guild_id).catch(e => { console.error('error: cleanCommands guild'); console.log(e) });
 	await slashCmd.loadCommands();
-	globalInte = await slashCmd.getCmdFrom().catch(e => { console.error('error: getCmdFrom 1'); });
-	localInte = await slashCmd.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
+	globalInte = await AppManager.getCmdFrom().catch(e => { console.error('error: getCmdFrom 1'); });
+	localInte = await AppManager.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });
 	const counterAfter = globalInte.length + localInte.length;
 
 	return new MessageMaker(`There were ${counterBefore} interactions, there are ${counterAfter}.`);

@@ -1,5 +1,6 @@
 import { Client, Constants, Message } from "discord.js";
 
+import AppManager from "../Interaction/AppManager.js";
 import CommandManager from "./command/commandManager.js";
 import OldInteractionManager from '../Interaction/base.js';
 import InteractionManager from "./command/interactionManager.js";
@@ -23,6 +24,7 @@ export default class DiscordBot extends Client {
 	constructor() {
 		super();
 		this.startedTime = Date.now();
+		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
 		this.interactionMgr = new OldInteractionManager(this);
 		this.interactionMgr2 = new InteractionManager(this);

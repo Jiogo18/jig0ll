@@ -52,3 +52,7 @@ Application Command: https://discord.com/developers/docs/interactions/slash-comm
 	name: entrée de la commande
 	description: petit texte de description (pas visible si la commande peut pas se faire toute seule)
 	options: [] facultatif, les arguments qui suivent https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoption
+
+
+N.B. Lorsqu'une interaction affiche la commande utilisateur, cette dernière est un message avec le préfix '</COMMAND:BOT_ID> '
+Le retour du bot n'a rien de particulier, c'est un message

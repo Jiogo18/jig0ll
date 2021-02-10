@@ -125,7 +125,7 @@ export default class InteractionManager {
 	 * @param {string} targetId Where you want to clean
 	 */
 	async cleanCommands(targetId) {
-		const target = this.bot.interactionMgr.getTarget(targetId);
+		const target = AppManager.getTarget(targetId);
 
 		const commandsOnline = this.getCommandsOnline(targetId)
 		if(!commandsOnline) {
