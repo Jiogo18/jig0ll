@@ -309,7 +309,6 @@ class CommandAttribute extends CommandBase {
 	];
 	choices;//only for String and Integer
 
-	execute;//TODO: remove it
 	/**
 	 * @param {{name:string, description:string, type:number, default:boolean, required:boolean, choices:*[]}} commandConfig The config of the command (like Discord format)
 	 * @param {CommandExtendable} parent The parent of this option
@@ -317,10 +316,6 @@ class CommandAttribute extends CommandBase {
 	constructor(commandConfig, parent) {
 		super(commandConfig, parent);
 		this.#type = commandConfig.type;
-		if(commandConfig.execute) {
-			console.warn(`execute is deprecated for CommandAttribute (${this.commandLine})`);
-			this.execute = commandConfig.execute;
-		}
 		if(commandConfig.options) console.warn(`CommandAttribute shouldn't have options (in '${this.commandLine}')`.yellow);
 
 		this.choices = commandConfig.choices;
