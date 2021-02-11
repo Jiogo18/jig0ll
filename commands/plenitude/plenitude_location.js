@@ -6,11 +6,8 @@ import { ReceivedCommand } from '../../bot/command/received.js';
 
 const vars = [{
 	name: 'PlenCity',
-	get: function() { return getLocation(); },
-	set: function(value) {
-		
-		return setLocation(value);
-	},
+	get: getLocation,
+	set: setLocation,
 
 	textGet: async function() { return `La ville de Plénitude se trouve à ${await this.get()}`},
 	textSet: async function(value) {

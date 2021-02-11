@@ -39,7 +39,7 @@ export async function getLocation() { return PlenCity.get(); }
  * Change the location of Plénitude
  * @param {string} l The new location
  */
-export async function setLocation(l) { PlenCity.set(l); }
+export async function setLocation(l) { return PlenCity.set(l); }
 
 export default {
 	name: 'plénitude',
