@@ -9,7 +9,7 @@ const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messi
 
 
 const PlenCity = {
-	database: new DataBase('PlenCity', 'Bayonne', 10000),
+	database: new DataBase('PlenCity', 'Chamonix-Mont-Blanc', 10000),
 
 	/**
 	 * Get the location of Plénitude
