@@ -1,4 +1,5 @@
 import { Guild } from 'discord.js';
+import { ReceivedCommand } from '../../bot/command/received.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 
 export default {
@@ -21,9 +22,18 @@ export default {
 			type: 4,
 			
 		}],
+		/**
+		 * Executed with option
+		 * @param {ReceivedCommand} cmdData 
+		 * @param {*} levelOptions 
+		 */
 		async executeAttribute(cmdData, levelOptions) {
-			return await embedIdTime(cmdData.guild, levelOptions[0].value);
+			return await embedIdTime(cmdData.guild, levelOptions.number || levelOptions[0].value);
 		},
+		/**
+		 * Executed when there is no valid option
+		 * @param {ReceivedCommand} cmdData 
+		 */
 		async execute(cmdData) {
 			return await embedIdTime(cmdData.guild, 1);
 		}
@@ -32,8 +42,9 @@ export default {
 
 
 /**
- * @param {Guild} guild - Guilde cible
- * @param {number} nb - Nombre de channels à créer
+ * Get embed informations on temporary channels
+ * @param {Guild} guild Guilde cible
+ * @param {number} nb Nombre de channels à créer
  */
 async function embedIdTime(guild, nb) {
 	const data = await idTime(guild, nb);
@@ -50,9 +61,10 @@ async function embedIdTime(guild, nb) {
 	return retour;
 }
 /**
- * @param {Guild} guild - Guilde cible
- * @param {number} nb - Nombre de channels à créer
- * @returns {Object[]} - Informations sur de nouveaux channels
+ * Create channels and delete them to get informations
+ * @param {Guild} guild Guild targeted
+ * @param {number} nb Number of channel to create
+ * @returns {Promise<{id:string, createdTimestamp:number, createdAt:Date}>} Informations on the new channels
  */
 async function idTime(guild, nb) {
 	if(typeof nb != 'number') nb = parseInt(nb);

@@ -1,6 +1,8 @@
 import { EmbedMaker } from '../lib/messageMaker.js';
 import { Snowflake } from '../lib/snowflake.js';
 import { getFrenchDate } from '../lib/date.js';
+import { Channel, Guild, Role, User } from 'discord.js';
+import { ReceivedCommand } from '../bot/command/received.js';
 
 export default {
 
@@ -63,11 +65,19 @@ export default {
 }
 
 
-
+/**
+ * Make an embed message with `Info` as title
+ * @param {string} description The content
+ */
 function makeMessage(description) {
 	return new EmbedMaker('Info', description);
 }
 
+/**
+ * Get a mention/name of the target
+ * @param {string|Guild|Channel|User|Role} target The target
+ * @returns {string} A mention or a name to identify the target
+ */
 function getTargetName(target) {
 	if(typeof target != 'object') return target;
 	if(target.partial == false) return target;
@@ -75,6 +85,11 @@ function getTargetName(target) {
 	return target;//sinon target.name éventuellement
 }
 
+/**
+ * Get basic informations for the target
+ * @param {string} targetTitle The type of the target
+ * @param {string|Guild|Channel|User|Role} target The target
+ */
 function getBasicInfo(targetTitle, target) {
 	const snowflake = new Snowflake(target.id);
 	const date = getFrenchDate(snowflake.msecSinceEpoch);
@@ -87,6 +102,11 @@ function getBasicInfo(targetTitle, target) {
 		Créé ${date}`);
 }
 
+/**
+ * Get inforamtions about the target and his snowflake
+ * @param {string} targetTitle The type of the target
+ * @param {string|Guild|Channel|User|Role} target The target
+ */
 function getInfo(targetTitle, target) {
 	const snowflake = new Snowflake(target.id);
 	const time = snowflake.msecSinceDiscord;
@@ -101,7 +121,12 @@ function getInfo(targetTitle, target) {
 	return info;
 }
 
-
+/**
+ * `info user` was called
+ * @param {ReceivedCommand} cmdData 
+ * @param {*} levelOptions 
+ * @returns informations about the user targeted or the user who executed this command
+ */
 async function executeInfoUser(cmdData, levelOptions) {
 	const userId = levelOptions ? levelOptions.user || (levelOptions[0] && levelOptions[0].value) : undefined;
 
@@ -112,6 +137,12 @@ async function executeInfoUser(cmdData, levelOptions) {
 
 	return getBasicInfo("de l'utilisateur", user);
 }
+/**
+ * `info channel` was called
+ * @param {ReceivedCommand} cmdData 
+ * @param {*} levelOptions 
+ * @returns informations about the channel targeted or the channel where this command is executed
+ */
 async function executeInfoChannel(cmdData, levelOptions) {
 	const channelId = levelOptions ? levelOptions.channel || (levelOptions[0] && levelOptions[0].value) : undefined;
 
@@ -123,6 +154,12 @@ async function executeInfoChannel(cmdData, levelOptions) {
 	return getBasicInfo("du channel", channel).addField('',
 		`Membres (minimum) : ${channel.members.array().length}`);
 }
+/**
+ * `info role` was called
+ * @param {ReceivedCommand} cmdData 
+ * @param {*} levelOptions 
+ * @returns informations about the role targeted
+ */
 async function executeInfoRole(cmdData, levelOptions) {
 	const roleId = levelOptions.role || (levelOptions[0] && levelOptions[0].value);
 
@@ -134,6 +171,12 @@ async function executeInfoRole(cmdData, levelOptions) {
 	return getBasicInfo("du role", role).addField('',
 		`Membres (minimum) : ${role.members.array().length}`);
 }
+/**
+ * `info guild` was called
+ * @param {ReceivedCommand} cmdData 
+ * @param {*} levelOptions 
+ * @returns informations about the guild
+ */
 function executeInfoGuild(cmdData) {
 	const guild = cmdData.guild;
 	return getBasicInfo("du serveur", guild).addField('',
@@ -141,7 +184,11 @@ function executeInfoGuild(cmdData) {
 }
 
 
-
+/**
+ * `info snowflake` was called
+ * @param {ReceivedCommand} cmdData 
+ * @returns informations about the snowflake
+ */
 function executeSnowflake(cmdData) {
 	const option = cmdData.options ? cmdData.options[1] : undefined;//TODO: change this
 	const snowflake = option ? option.value : undefined;

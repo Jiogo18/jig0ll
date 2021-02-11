@@ -1,3 +1,4 @@
+import { ReceivedCommand } from '../../bot/command/received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
 
 const done = new MessageMaker('Done');
@@ -45,8 +46,13 @@ export default {
 
 			choices: options.filter(o => o.name).map(o => { return { name: o.name, value: o.value || o.name } }),
 		}],
+		/**
+		 * Executed with option(s)
+		 * @param {ReceivedCommand} cmdData
+		 * @param {[*]} levelOptions
+		 */
 		executeAttribute(cmdData, levelOptions) {
-			const optionName = levelOptions[0].value;
+			const optionName = levelOptions.fonction || levelOptions[0].value;
 			const option = options.find(o => (o.value||o.name) == optionName );
 			if(!option) return new MessageMaker(`There is no option for ${optionName}`);
 			if(typeof option.execute != 'function') return new MessageMaker(`Option ${optionName} is incomplete`);
@@ -64,6 +70,7 @@ export default {
 
 
 /**
+ * Stop the application for `milliseconds`
  * @param {number} milliseconds - time to sleep in milliseconds
  */
 function sleep(milliseconds) {
@@ -71,6 +78,7 @@ function sleep(milliseconds) {
 	while (Date.now() - start < milliseconds);
 }
 /**
+ * Stop this part of application for `milliseconds`
  * @param {number} time - time to sleep in milliseconds
  */
 async function sleepAwait(time) {

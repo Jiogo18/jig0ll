@@ -21,6 +21,11 @@ export default {
 		required: true,
 	}],
 
+	/**
+	 * Executed with option(s)
+	 * @param {ReceivedCommand} cmdData 
+	 * @param {[*]} levelOptions
+	 */
 	executeAttribute(cmdData, levelOptions) {
 		var options = levelOptions.map(e => e.value);
 

@@ -12,6 +12,10 @@ export default {
 		place: 'public',
 	},
 
+	/**
+	 * Executed when there is no valid option
+	 * @param {ReceivedCommand} cmdData 
+	 */
 	execute(cmdData) {
 		const time = Date.now();
 

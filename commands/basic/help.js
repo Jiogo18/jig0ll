@@ -1,5 +1,5 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { ReceivedCommand, CommandContent } from '../../bot/command/received.js';
+import { ReceivedCommand } from '../../bot/command/received.js';
 
 /**
  * Make a Help message
@@ -55,6 +55,11 @@ export default {
 
 	}],
 
+	/**
+	 * Executed with option(s)
+	 * @param {ReceivedCommand} cmdData 
+	 * @param {[*]} levelOptions
+	 */
 	executeAttribute(cmdData, levelOptions) {
 		const command = getCommandToHelp(cmdData, levelOptions);
 
@@ -65,6 +70,10 @@ export default {
 		return makeMessage(command.getHelpDescription(cmdData.context));
 	},
 
+	/**
+	 * Executed when there is no valid option
+	 * @param {ReceivedCommand} cmdData 
+	 */
 	execute(cmdData) {
 		return makeMessage(getFullDescription('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands));
 	},

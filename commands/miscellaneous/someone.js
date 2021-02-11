@@ -14,6 +14,10 @@ export default {
 		hidden: true,
 	},
 
+	/**
+	 * Executed when there is no valid option
+	 * @param {ReceivedCommand} cmdData
+	 */
 	execute(cmdData) {
 		const id = cmdData.guild_id;
 		
@@ -47,5 +51,9 @@ const meme = [
 	"¯(°_o)/¯",
 	"(⁄ ⁄•⁄ω⁄•⁄ ⁄)"
 ];
+/**
+ * @param {number} max 
+ * @returns {number} An integer between `0` and `max` excluded
+ */
 function getRandomInt(max) { return Math.floor(Math.random() * Math.floor(max)); }
-function getRandomMeme() { return meme[getRandomInt(meme.length)]; }
+export function getRandomMeme() { return meme[getRandomInt(meme.length)]; }

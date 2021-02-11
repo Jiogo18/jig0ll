@@ -21,21 +21,31 @@ export default {
 		required: true,
 	}],
 	
+	/**
+	 * Executed with the location
+	 * @param {ReceivedCommand} cmdData
+	 * @param {{location: string}} levelOptions
+	 */
 	async executeAttribute(cmdData, levelOptions) {
-		const location = levelOptions[0].value;
+		const location = levelOptions.location || levelOptions[0].value;
 		
 		switch(location.toLowerCase()) {
 			case "plenitude":
 			case "plénitude":
-				return await (getMeteoPlenitude(cmdData));
+				return getMeteoPlenitude(cmdData);
 			default:
-				return await (sendWeatherRequest(location));
+				return sendWeatherRequest(location);
 		}
 	},
 };
 
 
 //https://www.twilio.com/blog/2017/08/http-requests-in-node-js.html
+/**
+ * Get data for the location
+ * @param {string} location The location
+ * @returns {{*}} Data get from the api
+ */
 async function getData(location) {
 	const data = new Promise((resolve, reject) => {
 
@@ -60,7 +70,11 @@ async function getData(location) {
 	return data;
 }
 
-
+/**
+ * Send a request to the weather api for the location
+ * @param {string} location The location
+ * @param {Function} funcOnData Things to do when data are received
+ */
 export async function sendWeatherRequest(location, funcOnData) {
 	var data = JSON.parse(await getData(location));
 	if(typeof funcOnData == 'function') funcOnData(data);
@@ -75,11 +89,21 @@ export async function sendWeatherRequest(location, funcOnData) {
 }
 
 
-function makeMeteoEmbed(location, date, desc) {
-	return new EmbedMaker(`Météo de __${location}__ ${date}`, (desc||[]).join('\n'), {color: meteoColor});
+/**
+ * Make an embed for Météo
+ * @param {string} location Where is the weather based
+ * @param {string} date When the meteo was received
+ * @param {string[]} desc The description of the embed
+ */
+function makeMeteoEmbed(location, date, desc = []) {
+	return new EmbedMaker(`Météo de __${location}__ ${date}`, desc.join('\n'), {color: meteoColor});
 }
 
-
+/**
+ * Get the translation of a weather condition in french
+ * @param {string} condition A weather condition in `english`
+ * @returns {string} A weather condition in `french`
+ */
 function getConditionFr(condition) {
 	switch(condition) {
 		case "Clouds": return "Nuages";
@@ -93,6 +117,12 @@ function getConditionFr(condition) {
 		default: return condition;
 	}
 }
+/**
+ * Fill the embed with data received
+ * @param {EmbedMaker} embed The embed with the title only
+ * @param {*} data The data received
+ * @returns {EmbedMaker} The embed filled with data
+ */
 function getDescription(embed, data) {
 	
 	if(data.main && data.main.temp) embed.addField('Température', `${Math.round((data.main.temp-273.15)*10)/10} °C`, true);

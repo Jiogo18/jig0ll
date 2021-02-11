@@ -1,5 +1,7 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { getDurationTime } from '../../lib/date.js';
+import DiscordBot from '../../bot/bot.js';
+import { ReceivedCommand } from '../../bot/command/received.js';
 
 
 export default {
@@ -15,7 +17,10 @@ export default {
 		name: 'info',
 		description: "Informations sur le bot",
 		type: 1,
-
+		
+		/**
+		 * @param {ReceivedCommand} cmdData
+		 */
 		execute(cmdData) { return getInfo(cmdData.bot); }
 	},{
 		//TODO: selectionner l'id puis quoi faire avec un str à choix multiple
@@ -32,19 +37,33 @@ export default {
 }
 
 
-
+/**
+ * Reset the `local id` of the bot
+ */
 function resetLocalId() {
 	const nb = Math.floor(Math.random() * 1000);//id à 3 chiffres
 	process.localId = nb==0 ? 1 : nb;
 }
 resetLocalId();
+
+/**
+ * Get the `local id` of the bot
+ * @returns {number}
+ */
 function getLocalId() { return process.localId; }
+/**
+ * Is it the id of this bot?
+ * @param {number} idMsg 
+ * @returns {boolean} if `true` then this bot is targeted
+ */
 function isLocalId(idMsg) {
 	if(idMsg == 0) return true;//cible tout le monde
 	return getLocalId() == idMsg;
 }
 
-
+/**
+ * Get a small description here the bot is
+ */
 function getBotLocation() {
 	if(process.env.HEROKU) {
 		return 'Heroku';
@@ -55,10 +74,16 @@ function getBotLocation() {
 	return 'Unkown'
 }
 
+/**
+ * Get the session duraction of the bot
+ */
 function getSessionTime(start) { return getDurationTime(Date.now() - start); }
 
 
-
+/**
+ * Get info on the bot
+ * @param {DiscordBot} bot 
+ */
 function getInfo(bot) {
 	const idLocal = `Id local du bot : ${getLocalId()}`;
 	const retour = new EmbedMaker('Informations sur bot', idLocal);
@@ -70,7 +95,13 @@ function getInfo(bot) {
 }
 
 
-
+/**
+ * Make an option with id verification
+ * @deprecated TODO: Use a choice of option and ask the id then
+ * @param {string} name Name of the option
+ * @param {string} description Description of the option
+ * @param {Function} funcExec Things to do if this bot is targeted
+ */
 function idVerificator(name, description, funcExec) {
 	return {
 		name: name,
@@ -82,6 +113,11 @@ function idVerificator(name, description, funcExec) {
 			required: true,
 			type: 4,
 		}],
+		/**
+		 * Executed with option(s)
+		 * @param {ReceivedCommand} cmdData 
+		 * @param {*} levelOptions 
+		 */
 		executeAttribute(cmdData, levelOptions) {
 			if(!isLocalId(levelOptions[levelOptions.length-1].value)) {
 				cmdData.needAnswer = false;
@@ -89,10 +125,19 @@ function idVerificator(name, description, funcExec) {
 			}
 			return funcExec(cmdData);
 		},
+		/**
+		 * Executed when there is no valid option
+		 */
 		execute() { return new EmbedMaker('', `${description}\nid de ce bot : ${getLocalId()} (bot sur ${getBotLocation()})`); }
 	}
 }
 
+/**
+ * Stop the bot
+ * @deprecated TODO: use bot.stop() from DiscordBot
+ * @param {DiscordBot} bot The bot
+ * @param {string} source A name to identify the source
+ */
 export function stop(bot, source) {
 	process.stopped = true;
 	console.warn(`Stoppé par ${source} le ${new Date().toUTCString()}`.red);

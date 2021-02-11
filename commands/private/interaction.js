@@ -1,4 +1,5 @@
 import AppManager from '../../bot/AppManager.js';
+import { CommandContext } from '../../bot/command/received.js';
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const spaces = '\u200b \u200b \u200b \u200b ';
 
@@ -38,7 +39,11 @@ export default {
 
 
 
-
+/**
+ * List all interactions in the guild
+ * `interaction list` was called
+ * @param {CommandContext} context 
+ */
 async function listInteraction(context) {
 	var globalInte = await AppManager.getCmdFrom()
 	var localInte = await AppManager.getCmdFrom(context.guild_id)
@@ -54,7 +59,12 @@ async function listInteraction(context) {
 	return retour;
 }
 
-
+/**
+ * Clean ALL interactions of the bot
+ * `interaction clean` was called
+ * @deprecated
+ * @param {CommandContext} context 
+ */
 async function cleanInteraction(context) {
 	var slashCmd = context.interactionMgr;
 

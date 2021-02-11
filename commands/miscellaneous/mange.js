@@ -1,3 +1,4 @@
+import DiscordBot from '../../bot/bot.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { isSnowflake } from '../../lib/snowflake.js';
 
@@ -29,6 +30,11 @@ export default {
 		required: true,
 	}],
 
+	/**
+	 * Executed with option(s)
+	 * @param {ReceivedCommand} cmdData
+	 * @param {[*]} levelOptions
+	 */
 	async executeAttribute(cmdData, levelOptions) {
 		if(levelOptions.length < 2) return new EmbedMaker('Mange', this.description);//n'a pas respecté les options
 
@@ -53,7 +59,12 @@ export default {
 }
 
 
-
+/**
+ * Get a mention of the user
+ * @param {DiscordBot} bot The bot
+ * @param {string} str The id of the user
+ * @returns {Promise<User|string>} Return the user, the mention or the name of the user
+ */
 async function getTarget(bot, str)
 {
 	if(!isSnowflake(str)) return str;
