@@ -3,12 +3,17 @@ import fs from 'fs';
 import { SecurityPlace } from './security.js';
 const defaultCommandsPath = './commands';//from index.js !
 import CommandStored from './commandStored.js';
+import DiscordBot from '../bot.js';
 
 
 export default class CommandManager {
 	bot;
 	#commands = new Collection(); get commands() { return this.#commands; }
 
+	/**
+	 * The command manager store every commands of the bot
+	 * @param {DiscordBot} bot 
+	 */
 	constructor(bot) {
 		this.bot = bot;
 		if(bot.commandEnabled) this.loadCommands();
@@ -24,7 +29,7 @@ export default class CommandManager {
 	/**
 	 * Load and store the command
 	 * @param {string} commandFilename The filename of the command
-	 * @returns {CommandStored} `undefined` if the command wasn't created
+	 * @returns {Pomise<CommandStored>} `undefined` if the command wasn't created
 	 */
 	async loadCommand(commandFilename) {
 		const commandFile = (await import('../../'+commandFilename)).default;
@@ -39,6 +44,7 @@ export default class CommandManager {
 	}
 	/**
 	 * Load every commands from the defaultCommandsPath
+	 * @returns Return stats from loaded commands
 	 */
 	async loadCommands() {
 		var start = Date.now();
@@ -88,7 +94,7 @@ export default class CommandManager {
 	/**
 	 * Reload a command
 	 * @param {CommandStored} command The command to reload
-	 * @returns {boolean} `true` if the command was reloaded.
+	 * @returns {Promise<boolean>} `true` if the command was reloaded.
 	 */
 	async reloadCommand(command) {
 		this.removeCommand(command);
@@ -100,12 +106,18 @@ export default class CommandManager {
 
 
 //https://stackoverflow.com/a/24594123/12908345
-const getDirectories = source => fs.readdirSync(source, { withFileTypes: true })
+/**
+ * Obtenir les dossiers dans path
+ * @param {string} path 
+ * @returns Les noms des dossiers du répertoire
+ */
+const getDirectories = path => fs.readdirSync(path, { withFileTypes: true })
 	.filter(dirent => dirent.isDirectory())
 	.map(dirent => dirent.name);
 /**
  * Obtenir tous les dossiers et sous dossiers dans path
  * @param {string} path 
+ * @returns Les chemins d'accès à tous les sous dossiers du répertoire
  */
 function getAllDir(path) {
 	const directories = getDirectories(path);
@@ -120,6 +132,7 @@ function getAllDir(path) {
 /**
  * Obtenir les noms des commandes du dossier
  * @param {string} path 
+ * @returns Les noms des fichiers de commande du répertoire
  */
 function getCommandFiles(path) {
 	return fs.readdirSync(path).filter(file => file.endsWith('.js'));
@@ -127,6 +140,7 @@ function getCommandFiles(path) {
 /**
  * Obtenir les chemins d'accès de toutes les commandes du dossier path
  * @param {string} path 
+ * @returns Les chemins complets vers tous les fichiers de commande du répertoire
  */
 function getAllCommandFiles(path) {
 	var files = getCommandFiles(path).map(f => path+'/'+f);

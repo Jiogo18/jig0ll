@@ -4,6 +4,11 @@ import { getDateSinceEpoch as getSnowflakeTimestamp } from '../../lib/snowflake.
 import commandHandler from './commandHandler.js';
 
 
+/**
+ * Set a timer to display the interaction if the command is too long
+ * @param {ReceivedInteraction} cmdData 
+ * @returns The timer
+ */
 async function safeInteractionAnswer(cmdData) {
 	const timestampId = getSnowflakeTimestamp(cmdData.commandSource.id);
 	//ne fonctionne que si la commande fonctionne au await (pas au sleep des dates)
@@ -17,6 +22,7 @@ async function safeInteractionAnswer(cmdData) {
 
 
 /**
+ * Read every interactions handled by the bot
  * @param {ReceivedInteraction} interaction 
  */
 export default async function interactionHandler(interaction) {

@@ -1,4 +1,5 @@
 import config from '../config.js';
+import { CommandContext } from './received.js';
 
 
 const guild_beta_tester = [ config.guild_test ];
@@ -17,13 +18,19 @@ export const SecurityPlace = {
 };
 
 
-
-function getStricFunction(func) {//obtenir une fonction ou une fonction avec le retour func
+/**
+ * Get the function wich returns the content of func
+ * @param {*} func A function or the result of the function
+ */
+function getStricFunction(func) {
 	if(typeof func == 'function') return func;
-	return () => { return func; }
+	return () => func;
 }
 
-
+/**
+ * Is `context` a beta allowed context
+ * @param {CommandContext} context 
+ */
 export function isBetaAllowed(context) {
 	const guild_id = context.guild && context.guild.id || context.guild_id;
 	if(guild_id == undefined) {//mp
@@ -32,12 +39,42 @@ export function isBetaAllowed(context) {
 	return isBetaGuild(guild_id);
 }
 
+/**
+ * Is this guild a beta allowed guild?
+ * @param {string} guild_id 
+ * @returns {boolean} `true` if this guild is allowed to do beta things
+ */
 export function isBetaGuild(guild_id) { return guild_beta_tester.includes(guild_id); }
+/**
+ * Is this channel a beta only channel?
+ * @param {string} channel_id 
+ * @returns {boolean} `true` if this channel is only allowed to do beta things
+ */
 export function isBetaOnlyChannel(channel_id) { return channel_beta_only.includes(channel_id); }
+/**
+ * Is this user a beta tester?
+ * @param {string} user_id
+ * @returns {boolean} `true` if this user is allowed to do beta things
+ */
 export function isBetaTester(user_id) { return user_beta_tester.includes(user_id); }
 
+/**
+ * Is this user has elevated privileges?
+ * @param {string} user_id 
+ * @returns {boolean} `true` if this user has elevated privileges
+ */
 export function isHightPrivilegeUser(user_id) { return user_high_privilege.includes(user_id); }
-export function isPrivateUser(user_id) { return user_private.includes(user_id); }//le bot et moi
+/**
+ * Is this user has private privileges?
+ * @param {string} user_id only the bot and the author
+ * @returns {boolean} `true` if this user has private privileges
+ */
+export function isPrivateUser(user_id) { return user_private.includes(user_id); }
+/**
+ * Is this user has privileges for Plénitude?
+ * @param {string} user_id 
+ * @returns {boolean} `true` if this user has privileges for Plénitude
+ */
 export function isPlenitudePrivilege(user_id) { return user_plenitude_privilege.includes(user_id); }
 
 
@@ -58,12 +95,20 @@ class SecurityCommand {
 	
 	#parent;
 		get parent() { return this.#parent; };
+		/**
+		 * Set the parent of this security
+		 * @param {SecurityCommand} parent
+		 */
 		set parent(parent) { this.#parent = (parent != this) ? parent : undefined; }
 		setParent(parent) { this.parent = parent; return this; }
 	
 	#inheritance = true;
 		get inheritance() { return this.#inheritance; }
 	
+	/**
+	 * @param {{wip:boolean, place:SecurityPlace, inheritance:boolean, isAllowedToSee:Function, isAllowedToUse:Function, hidden:boolean}} security 
+	 * @param {SecurityCommand} parent 
+	 */
 	constructor(security, parent) {
 		this.parent = parent;
 		if(!security) {
@@ -79,22 +124,37 @@ class SecurityCommand {
 		this.hidden = security.hidden;
 	}
 
+	/**
+	 * @param {CommandContext} context The context where you want to see this
+	 * @returns {boolean} `true` if you are allowed to see this
+	 */
 	isAllowedToSee = function(context) {
 		return this.isAllowedToUse(context);//si on peut l'utiliser alors on l'affiche
 	}
+	/**
+	 * Change the rule of isAllowedToSee
+	 * @param {Function} func 
+	 */
 	setIsAllowedToSee(func) { this.isAllowedToSee = getStricFunction(func); return this; }
 
-
+	/**
+	 * @param {CommandContext} context The context where you want to use this
+	 * @returns {boolean} `true` if you are allowed to user this
+	 */
 	isAllowedToUse(context) {
 		if(this.wip && isBetaAllowed(context) != true) return false;
 
 		if(this.inheritance && this.parent && this.parent.isAllowedToUse) {
-			if(this.parent.isAllowedToUse(context) == false)
+			if(this.parent.isAllowedToUse(context) != true)
 				return false;
 		}
 
 		return this.#isAllowedToUse2(context);
 	}
+	/**
+	 * @param {CommandContext} context The context where you want to use this
+	 * @returns {boolean} `true` if you are allowed to user this
+	 */
 	#isAllowedToUse2 = function(context) {
 		switch(this.place) {
 			case SecurityPlace.PRIVATE: return isHightPrivilegeUser(context.author.id);
@@ -106,11 +166,18 @@ class SecurityCommand {
 				return false;
 		}
 	}
+	/**
+	 * Change the rule of isAllowedToUse
+	 * @param {Function} func 
+	 */
 	setIsAllowedToUse(func) { this.#isAllowedToUse2 = getStricFunction(func); return this; }
 }
 
 
-
+/**
+ * @param {CommandContext} context The context where you want to work
+ * @returns {boolean} `true` if the bot can do things
+ */
 export function botIsAllowedToDo(context) {
 	const guild_id = (context.guild && context.guild.id) || context.guild_id;
 	const channel_id = (context.channel && context.channel.id) || context.channel_id;

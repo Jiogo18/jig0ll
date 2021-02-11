@@ -2,6 +2,8 @@ import { Collection } from 'discord.js';
 import { SecurityPlace } from './security.js';
 import AppManager from '../AppManager.js';
 import config from '../config.js';
+import DiscordBot from '../bot.js';
+import CommandStored from './commandStored.js';
 
 export default class InteractionManager {
 
@@ -10,11 +12,18 @@ export default class InteractionManager {
 	interactionsOnline = new Collection();//TODO: un tableau database
 	interactionsPosted = new Collection();//commandes postées
 
+	/**
+	 * @param {DiscordBot} bot 
+	 */
 	constructor(bot) {
 		this.bot = bot;
 	}
 
-
+	/**
+	 * Get interactions posted in the target
+	 * @param {string} targetId 
+	 * @returns {Promise<Object[]>} JSON de discord TODO: plus d'info
+	 */
 	async getCommandsOnline(targetId) {
 		return this.interactionsOnline.get(targetId);
 	}
@@ -22,7 +31,7 @@ export default class InteractionManager {
 	 * Get the interaction posted in the target
 	 * @param {string} commandName 
 	 * @param {string} targetId 
-	 * @returns JSON de discord TODO: plus d'info
+	 * @returns {Promise<Object>} JSON de discord TODO: plus d'info
 	 */
 	async getCommandOnline(commandName, targetId) {
 		const interactions = await this.getCommandsOnline(targetId);
@@ -36,7 +45,7 @@ export default class InteractionManager {
 	 * Please note that `postCommand` isn't linked to `commandManager::loadCommand`
 	 * @param {CommandStored} command The command to post
 	 * @param target The target were you want to post
-	 * @returns {boolean} `true` if the command has been posted, `false` if it's not
+	 * @returns {Promise<boolean>} `true` if the command has been posted, `false` if it's not
 	 */
 	async postCommand(command, target) {
 		const online = await this.getCommandOnline(command, target);
@@ -111,7 +120,7 @@ export default class InteractionManager {
 	 * Please note that this `deleteCommand` is not linked to `commandManager::removeCommand`
 	 * @param {CommandStored} command The command to delete
 	 * @param {Object} target Where you want to delete it
-	 * @returns {boolean} `true` if the command has been deleted, `false` if it's not
+	 * @returns {Promise<boolean>} `true` if the command has been deleted, `false` if it's not
 	 */
 	async deleteCommand(command, target) {
 		const removed = await AppManager.deleteCommand(command, target);

@@ -1,16 +1,28 @@
 import { ReceivedCommand } from './received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
+import CommandStored from './commandStored.js';
 
 
+/**
+ * Get the command in CommandManager
+ * @param {string} commandName 
+ * @returns {CommandStored}
+ */
 function getCommand(commandName) {
 	try {
 		return this.commandMgr.getCommand(commandName);
 	}
 	catch(error) {
-		console.warn(`Error whilte getting the command with '${commandName}'`.yellow);
+		console.warn(`Error while getting the command with '${commandName}'`.yellow);
 		console.warn(error);
 	};
 }
+
+/**
+ * Execute the command and return the result
+ * @param {ReceivedCommand} cmdData 
+ * @returns {Promise<MessageMaker>} The result of the execution
+ */
 async function executeCommand(cmdData) {
 	const command = getCommand.call(this, cmdData.commandName)
 	if(!command) return;
@@ -33,7 +45,11 @@ async function executeCommand(cmdData) {
 		return new MessageMaker(`Sorry I've had an error (${error})`);
 	}
 }
-
+/**
+ * Execute and send the anwser of the command
+ * @param {ReceivedCommand} cmdData 
+ * @returns Return a `falsy` value if the answer was not sent
+ */
 async function onCommand(cmdData) {
 
 	const retour = await executeCommand.call(this, cmdData);
@@ -47,6 +63,7 @@ async function onCommand(cmdData) {
 /**
  * Called when any commands are catched
  * @param {ReceivedCommand} cmdData - The command
+ * @returns Return a `falsy` value if the answer was not sent
  */
 export default async function commandHandler(cmdData) {
 	

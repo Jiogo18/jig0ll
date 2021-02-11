@@ -1,6 +1,8 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const inspect = Symbol.for('nodejs.util.inspect.custom');
 import { splitCommand } from '../../lib/command.js';
+import { Message } from 'discord.js';
+import DiscordBot from '../bot.js';
 
 
 export class CommandContent {
@@ -23,6 +25,10 @@ export class CommandContent {
 
 	clone() { return new CommandContent(this.#commandName, [...this.#options]); }
 
+	/**
+	 * Make a CommandContent from an interaction
+	 * @param {Object} interaction
+	 */
 	static fromInteraction(interaction) {
 		//format de interaction.data.options: [{ 'name':'a', options: [{'name':'b','value':'123'}] }], ou undefined si vide
 		const options = [];
@@ -44,6 +50,10 @@ export class CommandContent {
 		
 		return new CommandContent(interaction.data.name, options);
 	}
+	/**
+	 * Make a CommandContent from a message
+	 * @param {Message} message
+	 */
 	static fromMessage(message) {
 		const options = splitCommand(message.content) || [];//on suppose que le préfix est enlevé
 		const firstOption = options.shift();
@@ -69,10 +79,18 @@ export class CommandContext {
 		this.#channel = channel;
 		this.#author = author;
 	}
-
+	/**
+	 * Make a CommandContext from an interaction
+	 * @param {Object} interaction
+	 * @param {DiscordBot} bot
+	 */
 	static fromInteraction(interaction, bot) {
 		return new CommandContext(bot.guilds.cache.get(interaction.guild_id), bot.channels.cache.get(interaction.channel_id), interaction.member.user);
 	}
+	/**
+	 * Make a CommandContent from a message
+	 * @param {Message} message
+	 */
 	static fromMessage(message) {
 		const channel = message.channel;
 		return new CommandContext(channel ? channel.guild : undefined, channel, message.author);
@@ -81,7 +99,11 @@ export class CommandContext {
 
 
 
-
+/**
+ * Get a MessageMaker for the given message
+ * @param {any} message The message to transform
+ * @returns {MessageMaker|EmbedMaker}
+ */
 function makeSafeMessage(message) {
 	if(message == undefined) { return undefined; }
 	if(!message.getForMessage) {
@@ -123,7 +145,12 @@ export class ReceivedCommand {
 
 	receivedAt;
 	
-
+	/**
+	 * @param {CommandContent} content 
+	 * @param {CommandContext} context 
+	 * @param {Message|Object} commandSource The message or the interaction
+	 * @param {DiscordBot} bot 
+	 */
 	constructor(content, context, commandSource, bot) {
 		this.#content = content;
 		this.#context = context;
@@ -138,7 +165,12 @@ export class ReceivedCommand {
 
 	clone() { return new ReceivedCommand(this.content.clone(), this.context, this.bot); }
 
-
+	/**
+	 * Send the answer to the target
+	 * @param {*} target The target
+	 * @param {MessageMaker|EmbedMaker} message The answer
+	 * @returns {Promise<boolean>} Return a `falsy` if the answer was not sent
+	 */
 	async sendAnswer(target, message) {
 		if(!message) { return false; }
 		if(!target) {
@@ -152,12 +184,21 @@ export class ReceivedCommand {
 
 export class ReceivedInteraction extends ReceivedCommand {
 	answered = false;
+	/**
+	 * @param {Message|Object} interaction The interaction received
+	 * @param {DiscordBot} bot 
+	 */
 	constructor(interaction, bot) {
 		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction, bot), interaction, bot);
 	}
 
 	get isInteraction() { return true };
 	
+	/**
+	 * Send the answer to the command
+	 * @param {MessageMaker|EmbedMaker} message The answer
+	 * @returns {Promise<boolean>} Return a `falsy` value if the answer was not sent
+	 */
 	async sendAnswer(message) {
 		this.answered = true;
 		message = makeSafeMessage(message);
@@ -179,6 +220,10 @@ export class ReceivedInteraction extends ReceivedCommand {
 export class ReceivedMessage extends ReceivedCommand {
 	#message_private = false;
 
+	/**
+	 * @param {Message} message 
+	 * @param {DiscordBot} bot 
+	 */
 	constructor(message, bot) {
 		super(CommandContent.fromMessage(message), CommandContext.fromMessage(message), message, bot);
 		this.#message_private = message.channel == undefined;
@@ -189,6 +234,11 @@ export class ReceivedMessage extends ReceivedCommand {
 	get isMessage() { return true };
 	get isMessagePrivate() { return this.#message_private; }
 
+	/**
+	 * Send the answer to the command
+	 * @param {MessageMaker|EmbedMaker} message The answer
+	 * @returns {Promise<boolean>} Return a `falsy` value if the answer was not sent
+	 */
 	async sendAnswer(message) {
 		message = makeSafeMessage(message);
 		if(!message) { return false; }
