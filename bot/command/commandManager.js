@@ -11,7 +11,7 @@ export default class CommandManager {
 
 	constructor(bot) {
 		this.bot = bot;
-		this.loadCommands();
+		if(bot.commandEnabled) this.loadCommands();
 	}
 
 	/**

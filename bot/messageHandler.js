@@ -10,7 +10,7 @@ import commandHandler from './command/commandHandler.js';
  */
 export default async function messageHandler(message) {
 
-	if(isCommand(message)) {
+	if(isCommand(message) && this.commandEnabled) {
 		onMessageCommand.call(this, message)
 		.catch(error => console.error(`Error with a command: ${error}`) );
 	}

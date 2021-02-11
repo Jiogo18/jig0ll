@@ -18,6 +18,7 @@ export default class DiscordBot extends Client {
 	#stopped = false; get stopped() { return this.#stopped; }
 	commandMgr;
 	interactionMgr;
+	commandEnabled = true;
 	
 	constructor() {
 		super();
@@ -28,7 +29,12 @@ export default class DiscordBot extends Client {
 
 		this.on(Constants.Events.CLIENT_READY, this.onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
-		this.ws.on('INTERACTION_CREATE', (...a) => onInteraction.call(this, ...a) );
+		if(this.commandEnabled) {
+			this.ws.on('INTERACTION_CREATE', (...a) => onInteraction.call(this, ...a) );
+		}
+		else {
+			console.warn('Commands are disabled by the bot'.yellow);
+		}
 	}
 
 
@@ -58,7 +64,9 @@ export default class DiscordBot extends Client {
 			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`);
 		}
 	
-		this.interactionMgr.postCommands();
+		if(this.commandEnabled) {
+			this.interactionMgr.postCommands();
+		}
 	}
 }
 
@@ -82,7 +90,7 @@ function onMessage(message) {
 		) { return; }//pas autorisé en WIPOnly
 
 
-		messageHandler.call(this, message).catch(console.error);
+		messageHandler.call(this, message);
 
 	} catch(error) { console.error(error) }
 }
