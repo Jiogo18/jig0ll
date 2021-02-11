@@ -26,13 +26,19 @@ class DiscordRequest {
 	}
 
 	clone() { return new DiscordRequest(this.path); }
+	/**
+	 * Go to the sub link
+	 * @param {string} path 
+	 */
 	go(path) {
 		if(path.length > 0) {
 			this.#path = this.#path.concat(path.split('/'));
 		}
 		return this;
 	}
-
+	/**
+	 * Go back in the link
+	 */
 	back() {
 		this.#path.pop();
 		//ou : this.path += '/..';
@@ -41,12 +47,33 @@ class DiscordRequest {
 	}
 }
 
+/**
+ * Get the link for global request
+ */
 export function getGlobal() { return new DiscordRequest(); }
-export function getGuild(id) { return new DiscordRequest(id ? `guilds/${id}` : ''); }
-export function getTarget(id) { return getGuild(id).go('commands'); }
+/**
+ * Get the link for the guild
+ * @param {string} guild_id the id of the guild
+ */
+export function getGuild(guild_id) { return new DiscordRequest(guild_id ? `guilds/${guild_id}` : ''); }
+/**
+ * Get the link for the global/commands or the guild/commands
+ * @param {undefined|string} guild_id the id of the target
+ */
+export function getTarget(guild_id) { return getGuild(guild_id).go('commands'); }
+/**
+ * Get commands of the target
+ * @param {undefined|string} guild_id the id of the target
+ */
 export function getCmdFrom(guild_id) { return getTarget(guild_id).request.get(); }
 
 
+/**
+ * Post an interaction on Discord
+ * @param {CommandStored} command The command to post
+ * @param {DiscordRequest} target Where you want to post the command
+ * @returns {Promise<boolean>} `true` if the command was sent, `false` if it was not sent
+ */
 export async function postCommand(command, target) {
 	if(!target) return false;
 
@@ -74,7 +101,14 @@ export async function postCommand(command, target) {
 			resolve(false);
 		})
 	});
+
 }
+/**
+ * Delete an interaction posted on Discord
+ * @param {CommandStored} command The command to delete
+ * @param {DiscordRequest} target Where you want to delete the command
+ * @returns {Promise<boolean>} `true` if the command was deleted, `false` if it was not deleted
+ */
 export async function deleteCommand(command, target) {
 	if(!target) return false;
 	target = target.clone();//don't change ths path for others
