@@ -32,8 +32,9 @@ export default class CommandManager {
 	 * @returns {Pomise<CommandStored>} `undefined` if the command wasn't created
 	 */
 	async loadCommand(commandFilename) {
-		const commandFile = (await import('../../'+commandFilename)).default;
-		if(!commandFile) { console.error(`Command not loaded : ${file}`.red); return; }
+		const file = await import('../../'+commandFilename).catch(console.error);
+		const commandFile = file?.default;
+		if(!commandFile) { console.error(`Command not loaded : ${commandFilename}`.red); return; }
 		const command = new CommandStored(commandFile, commandFilename);
 		if(this.#commands.has(command.name)) {
 			console.warn(`Conflict with two commands named '${command.name}', please use reloadCommand if it's not intended`.yellow);
@@ -61,9 +62,8 @@ export default class CommandManager {
 			interaction: 0,
 		};
 		
-		const loadedCommands = await Promise.all(commandPaths
-			.map(c => this.loadCommand(c))
-			.filter(c => c != undefined));
+		const loadedCommands = (await Promise.all(commandPaths
+			.map(c => this.loadCommand(c)))).filter(c => c != undefined);
 		//toutes les commandes qui ont été chargées
 
 		loadedCommands.forEach(command => {
