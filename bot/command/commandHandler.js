@@ -1,10 +1,12 @@
 import { ReceivedCommand } from './received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
 import CommandStored from './commandStored.js';
+import DiscordBot from '../bot.js';
 
 
 /**
  * Get the command in CommandManager
+ * @this {DiscordBot}
  * @param {string} commandName 
  * @returns {CommandStored}
  */
@@ -19,6 +21,7 @@ function getCommand(commandName) {
 
 /**
  * Execute the command and return the result
+ * @this {DiscordBot}
  * @param {ReceivedCommand} cmdData 
  * @returns {Promise<MessageMaker>} The result of the execution
  */
@@ -46,6 +49,7 @@ async function executeCommand(cmdData) {
 }
 /**
  * Execute and send the anwser of the command
+ * @this {DiscordBot}
  * @param {ReceivedCommand} cmdData 
  * @returns Return a `falsy` value if the answer was not sent
  */
@@ -61,6 +65,7 @@ async function onCommand(cmdData) {
 
 /**
  * Called when any commands are catched
+ * @this {DiscordBot}
  * @param {ReceivedCommand} cmdData - The command
  * @returns Return a `falsy` value if the answer was not sent
  */
@@ -74,11 +79,13 @@ export default async function commandHandler(cmdData) {
 
 	}, 30000);//30s pour répondre, sinon il envoit un message d'info
 
-	const retour = await onCommand.call(this, cmdData)
+	const retour = await onCommand.call(this, cmdData);
 
 	clearTimeout(timeoutLog);
 	if(!timeoutLogged) {
-		console.log(`Command #${cmdData.id} by ${cmdData.author.username} : '${cmdData.commandLine}' done in ${Date.now() - cmdData.receivedAt} msec`.gray);
+		if(retour) {
+			console.log(`Command #${cmdData.id} by ${cmdData.author.username} : '${cmdData.commandLine}' done in ${Date.now() - cmdData.receivedAt} msec`.gray);
+		}
 	}
 	else {
 		console.log(`Command #${cmdData.id} done in ${Date.now() - cmdData.receivedAt} msec`.gray);
