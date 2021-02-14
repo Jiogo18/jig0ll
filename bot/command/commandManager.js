@@ -32,9 +32,13 @@ export default class CommandManager {
 	 * @returns {Pomise<CommandStored>} `undefined` if the command wasn't created
 	 */
 	async loadCommand(commandFilename) {
-		const file = await import('../../'+commandFilename).catch(console.error);
+		var file;
+		try { file = await import('../../'+commandFilename); }
+		catch(e) { console.error(e); return; }
+		
 		const commandFile = file?.default;
 		if(!commandFile) { console.error(`Command not loaded : ${commandFilename}`.red); return; }
+		commandFile.setBot?.(this.bot);
 		const command = new CommandStored(commandFile, commandFilename);
 		if(this.#commands.has(command.name)) {
 			console.warn(`Conflict with two commands named '${command.name}', please use reloadCommand if it's not intended`.yellow);

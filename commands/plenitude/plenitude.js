@@ -1,15 +1,15 @@
-import DataBase from '../../lib/database.js';
+import { DataBase, KVDataBase } from '../../lib/database.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { getFrenchDate } from '../../lib/date.js';
 import { sendWeatherRequest } from '../meteo.js';
-
+var kvPlenitude = new KVDataBase(undefined, 'plenitude');
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
 const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messidor","Thermidor","Fructidor","Vendémiaire","Brumaire","Frimaire","Nivôse"];
 
 
 const PlenCity = {
-	database: new DataBase('PlenCity', 'Chamonix-Mont-Blanc', 10000),
+	database: new DataBase('PlenCity', 'Chamonix-Mont-Blanc', 10000, kvPlenitude),
 
 	/**
 	 * Get the location of Plénitude
@@ -67,6 +67,7 @@ export default {
 	getMeteo,
 	getLocation,
 	setLocation,
+	setBot: bot => kvPlenitude.setDatabase(bot.database),
 }
 
 

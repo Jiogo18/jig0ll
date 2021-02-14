@@ -8,6 +8,7 @@ import { ReceivedInteraction } from "./command/received.js";
 import { botIsAllowedToDo } from './command/security.js';
 import messageHandler from './messageHandler.js';
 import interactionHandler from "./command/interactionHandler.js";
+import { PGDatabase } from "../lib/database.js";
 
 
 
@@ -35,6 +36,7 @@ export default class DiscordBot extends Client {
 		else {
 			console.warn('Commands are disabled by the bot'.yellow);
 		}
+		this.database = new PGDatabase(process.env.DATABASE_URL);
 	}
 
 
@@ -61,7 +63,7 @@ export default class DiscordBot extends Client {
 				.catch(console.error);
 	
 		if(process.env.WIPOnly) {
-			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`);
+			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`.cyan);
 		}
 	
 		if(this.commandEnabled) {
