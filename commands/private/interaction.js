@@ -73,7 +73,7 @@ async function cleanInteraction(context) {
 	const counterBefore = globalInte.length + localInte.length;
 
 	await slashCmd.cleanCommands().catch(e => { console.error('error: cleanCommands global'); });//global
-	await slashCmd.cleanCommands(context.guild_id).catch(e => { console.error('error: cleanCommands guild'); console.log(e) });
+	await slashCmd.cleanCommands(context.guild_id).catch(e => { console.error('error: cleanCommands guild', e); });
 	await slashCmd.loadCommands();
 	globalInte = await AppManager.getCmdFrom().catch(e => { console.error('error: getCmdFrom 1'); });
 	localInte = await AppManager.getCmdFrom(context.guild_id).catch(e => { console.error('error: getCmdFrom 2'); });

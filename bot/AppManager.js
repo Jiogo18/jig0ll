@@ -118,8 +118,7 @@ export async function deleteCommand(command, target) {
 		target.r.delete()
 		.then(() => resolve(true) )
 		.catch(e => {
-			console.error(`Error while removing command '${command.name}'`.red);
-			console.log(e);
+			console.error(`Error while removing command '${command.name}'`.red, e);
 			reject(false);
 		})
 	});

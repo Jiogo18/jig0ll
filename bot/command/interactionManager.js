@@ -50,8 +50,7 @@ export default class InteractionManager {
 	async postCommand(command, target) {
 		const online = await this.getCommandOnline(command, target);
 		if(online) {
-			console.debug(`Une interaction existe déjà`);
-			console.debug(online == command.JSON);
+			console.debug(`Une interaction existe déjà`, online == command.JSON);
 			return false;
 		}
 		const posted = await AppManager.postCommand(command, target);

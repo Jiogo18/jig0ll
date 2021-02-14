@@ -30,9 +30,6 @@ export default async function interactionHandler(interaction) {
 	const safeTimeout = safeInteractionAnswer(interaction);
 
 	await commandHandler.call(this, interaction)
-	.catch(e => {
-		console.error(`Error with an interaction`.red);
-		console.error(e);
-	});
+	.catch(e => console.error(`Error with an interaction`.red, e));
 	clearTimeout(safeTimeout);
 }

@@ -13,8 +13,7 @@ function getCommand(commandName) {
 		return this.commandMgr.getCommand(commandName);
 	}
 	catch(error) {
-		console.warn(`Error while getting the command with '${commandName}'`.yellow);
-		console.warn(error);
+		console.warn(`Error while getting the command with '${commandName}'`.yellow, error);
 	};
 }
 
