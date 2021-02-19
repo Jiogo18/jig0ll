@@ -1,6 +1,6 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const inspect = Symbol.for('nodejs.util.inspect.custom');
-import { splitCommand } from '../../lib/command.js';
+import { splitCommand } from '../../lib/commandTools.js';
 import { Message } from 'discord.js';
 import DiscordBot from '../bot.js';
 

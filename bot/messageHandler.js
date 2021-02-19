@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import { extractPrefix } from '../lib/command.js';
+import { extractPrefix } from '../lib/commandTools.js';
 import { ReceivedMessage } from './command/received.js';
 import commandHandler from './command/commandHandler.js';
 import DiscordBot from './bot.js'
