@@ -1,11 +1,13 @@
 import { Message } from 'discord.js';
-import { removePrefix as removeCommandPrefix } from '../lib/command.js';
+import { extractPrefix } from '../lib/command.js';
 import { ReceivedMessage } from './command/received.js';
 import commandHandler from './command/commandHandler.js';
+import DiscordBot from './bot.js'
 
 
 /**
  * Read every messages that the bot can read
+ * @this {DiscordBot}
  * @param {Message} message
  */
 export default async function messageHandler(message) {
@@ -24,7 +26,7 @@ export default async function messageHandler(message) {
 function isCommand(message) {
 	if(message.isCommand) return true;
 
-	const [content, prefix] = removeCommandPrefix(message.content);
+	const [content, prefix] = extractPrefix(message.content);
 	if(prefix == undefined) return;
 
 	message.content = content;
@@ -35,6 +37,7 @@ function isCommand(message) {
 
 /**
  * Read every commands from a message
+ * @this {DiscordBot}
  * @param {Message} message
  */
 async function onMessageCommand(message) {
