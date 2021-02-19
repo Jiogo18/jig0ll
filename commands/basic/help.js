@@ -29,6 +29,7 @@ function getCommandToHelp(cmdData, levelOptions) {
 	const commandName = commandToHelp.shift();
 
 	const command = cmdData.bot.commandMgr.getCommand(commandName, true);
+	if(!command) return;
 	const [subCommand,] = command.getSubCommand(commandToHelp);
 	if(!subCommand.security.isAllowedToSee(cmdData.context)) {
 		return `You can't do that`;
