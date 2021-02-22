@@ -34,7 +34,7 @@ export default class CommandManager {
 	async loadCommand(commandFilename) {
 		var file;
 		try { file = await import('../../'+commandFilename); }
-		catch(e) { console.error(e); return; }
+		catch(e) { console.error(`Error while loading '${commandFilename}'`.red, e); return; }
 		
 		const commandFile = file?.default;
 		if(!commandFile) { console.error(`Command not loaded : ${commandFilename}`.red); return; }
