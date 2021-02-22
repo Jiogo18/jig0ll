@@ -5,8 +5,7 @@ export default {
 	description: 'Calculs et lancés de dés',
 	
 	security: {
-		place: 'public',
-		wip: true
+		place: 'public'
 	},
 
 	options: [{
