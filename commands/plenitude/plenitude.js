@@ -15,7 +15,7 @@ const PlenCity = {
 	 * Get the location of Plénitude
 	 * @returns {string} The current location
 	 */
-	get: async function () { return await this.value.get() || 'Chamonix-Mont-BlanC'; },
+	get: async function () { return await this.value.get() || 'Chamonix-Mont-Blanc'; },
 	/**
 	 * Change the location of Plénitude
 	 * @param {string} location Where you want to move
