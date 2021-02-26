@@ -1,8 +1,10 @@
 import { MessageMaker } from '../../lib/messageMaker.js';
 
 export default {
-	name: 'r',
+	name: 'calc',
 	description: 'Calculs et lancés de dés',
+	alts: ['r'],
+	interactions: true,
 	
 	security: {
 		place: 'public'
@@ -37,8 +39,8 @@ function getRandomInt(max) { return Math.floor(Math.random() * Math.floor(max));
 
 const diceMatch = '(\\d*)d(\\d*)';
 function rollDices(dices = 1, max = 6) {
-	return new Array(parseInt(dices)).fill(0)
-		.map(_ => getRandomInt(parseInt(max))+1);
+	return new Array(parseInt(dices || 1)).fill(0)
+		.map(_ => getRandomInt(parseInt(max || 6))+1);
 }
 
 const specialCalc = [
