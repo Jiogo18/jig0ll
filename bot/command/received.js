@@ -1,7 +1,7 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const inspect = Symbol.for('nodejs.util.inspect.custom');
 import { splitCommand } from '../../lib/commandTools.js';
-import { Message } from 'discord.js';
+import { Channel, Guild, Message, User } from 'discord.js';
 import DiscordBot from '../bot.js';
 
 
@@ -65,12 +65,24 @@ export class CommandContent {
 
 export class CommandContext {
 	#guild = { partiel: true };
+		/**
+		 * The guild where the action is
+		 * @returns {Guild}
+		 */
 		get guild() { return this.#guild || {partiel:true}; }
 		get guild_id() { return typeof this.guild == 'object' ? this.guild.id : undefined  }
 	#channel = { partiel: true };
+		/**
+		 * The channel where the action is
+		 * @returns {Channel}
+		 */
 		get channel() { return this.#channel || {partiel:true}; }
 		get channel_id() { return typeof this.channel == 'object' ? this.channel.id : undefined  }
 	#author = { partiel: true };
+		/**
+		 * The user initiating the action
+		 * @returns {User}
+		 */
 		get author() { return this.#author || {partiel:true}; };
 		get username() { return this.author ? this.author.username : undefined; }
 	

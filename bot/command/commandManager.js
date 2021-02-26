@@ -9,6 +9,7 @@ import DiscordBot from '../bot.js';
 export default class CommandManager {
 	bot;
 	#commands = new Collection(); get commands() { return this.#commands; }
+	#altCommands = new Collection(); get altCommands() { return this.#altCommands; }
 
 	/**
 	 * The command manager store every commands of the bot
@@ -24,7 +25,7 @@ export default class CommandManager {
 	 * @param {string} commandName The name of the command
 	 * @returns {CommandStored} The command
 	 */
-	getCommand(commandName) { return this.commands.find(c => c.isCommand(commandName));	}
+	getCommand(commandName) { return this.commands.find(c => c.isCommand(commandName)) || this.altCommands.get(commandName); }
 
 	/**
 	 * Load and store the command
@@ -45,6 +46,15 @@ export default class CommandManager {
 		}
 
 		this.#commands.set(command.name, command);
+		if (command.alts?.length) {
+			command.alts.forEach(alt => {
+				if (this.#altCommands.has(alt)) {
+					console.warn(`Conflict with alts '${alt}' of two commands named '${command.name}' and '${this.#altCommands.get(alt).name}'`.yellow);
+				}
+				else this.#altCommands.set(alt, command);
+			});
+			
+		}
 		return command;
 	}
 	/**

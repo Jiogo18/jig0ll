@@ -29,9 +29,8 @@ function strToFlatStr(str) {
 
 class CommandBase {
 	//https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoption
-	#name;
-		get name() { return this.#name; }
-		set name(name) { this.#name = name; this.#flatName = strToFlatStr(name); }
+	name;
+	setName(name) { this.name = name; this.#flatName = strToFlatStr(name); }
 	#flatName; get flatName() { return this.#flatName; }
 	get type() { return ApplicationCommandOptionType.NONE; }
 	isAllowedOptionType() { return false; }
@@ -69,7 +68,7 @@ class CommandBase {
 	 */
 	constructor(commandConfig, parent) {
 		this.parent = parent;
-		this.name = commandConfig.name;
+		this.setName(commandConfig.name);
 		this.description = commandConfig.description;
 		this.default = commandConfig.default;
 		this.required = commandConfig.required;
@@ -110,6 +109,7 @@ class CommandExtendable extends CommandBase {
 	#execute;
 	#executeAttribute;
 	options = [];
+	alts = [];
 	/**
 	 * Get the full Help for this command
 	 * @param {CommandContext} context The context where you need this help
@@ -156,6 +156,8 @@ class CommandExtendable extends CommandBase {
 			}
 			this.options.push(subCommand);
 		}
+
+		this.alts = commandConfig.alts || [];
 	}
 
 	get JSON() {
