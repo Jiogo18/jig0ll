@@ -17,20 +17,13 @@ function makeMessage(description, error) {
  * @param {Array} levelOptions 
  */
 function getCommandToHelp(cmdData, levelOptions) {
-	const commandToHelp = levelOptions.map(o => o.value);
-
-	if(typeof commandToHelp[0] == 'string') {
-		const first = commandToHelp.shift();
-		for(const word of first.split(' ').reverse()) {
-			commandToHelp.unshift(word);
-		}
-	}
 	
-	const commandName = commandToHelp.shift();
+	const commandName = levelOptions.shift().value;
 
 	const command = cmdData.bot.commandMgr.getCommand(commandName, true);
-	if(!command) return;
-	const [subCommand,] = command.getSubCommand(commandToHelp);
+	if (!command) return;
+
+	const [subCommand,] = command.getSubCommand(levelOptions);
 	if(!subCommand.security.isAllowedToSee(cmdData.context)) {
 		return `You can't do that`;
 	}
@@ -67,8 +60,9 @@ export default {
 		if(typeof command == 'string') { return makeMessage(command, true); }
 		if(!command) { return this.execute(cmdData); }
 		if(!command.description) { return console.warn(`${command.name} has no description`.yellow); }
-
-		return makeMessage(command.getHelpDescription(cmdData.context));
+		const helpDesc = command.getHelpDescription(cmdData.context);
+		if (helpDesc.constructor == EmbedMaker) return helpDesc;
+		return makeMessage(helpDesc);
 	},
 
 	/**

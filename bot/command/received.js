@@ -57,7 +57,7 @@ export class CommandContent {
 	static fromMessage(message) {
 		const options = splitCommand(message.content) || [];//on suppose que le préfix est enlevé
 		const firstOption = options.shift();
-		const options2 = options.map(option => { return  {value: option} });
+		const options2 = options.map(option => { return { value: option } });
 		return new CommandContent(firstOption, options2);
 	}
 }

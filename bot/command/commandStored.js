@@ -42,7 +42,7 @@ class CommandBase {
 	 */
 	getHelpDescription(context) {
 		if(!this.security.isAllowedToSee(context)) return;
-		return this.description;
+		return new EmbedMaker(`Help ${this.commandLine}`, this.description);
 	}
 	/**
 	 * Get the description of this command
@@ -117,11 +117,13 @@ class CommandExtendable extends CommandBase {
 	 * @returns {string} The description
 	 */
 	getHelpDescription(context, spaces = '\xa0 \xa0 ') {
-		if(!this.security.isAllowedToSee(context)) return;
-		const descriptionStr = [ this.description, ...this.options.map(option => {
-			return option.getHelpSmallDescription(context);
-		}).filter(o => o!=undefined) ];
-		return descriptionStr.join('\n' + spaces);
+		if (!this.security.isAllowedToSee(context)) return;
+		
+		const descriptionStr = [this.description, ...this.options.map(o => o.getHelpSmallDescription(context)).filter(o => o != undefined)];
+		const retour = new EmbedMaker(`Help ${this.commandLine}`, descriptionStr.join('\n' + spaces));
+
+		if (this.alts?.length) retour.addField('Alias', [this.name, ...this.alts].join(', '), true);
+		return retour;
 	}
 
 	/**
@@ -204,7 +206,7 @@ class CommandExtendable extends CommandBase {
 		if(typeof this.#execute == 'function') {
 			return this.#execute(cmdData, levelOptions);
 		}
-		return new EmbedMaker('', this.getHelpDescription(cmdData.context));
+		return this.getHelpDescription(cmdData.context);
 	}
 
 	/**
