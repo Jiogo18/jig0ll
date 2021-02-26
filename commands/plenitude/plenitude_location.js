@@ -12,8 +12,8 @@ const vars = [{
 	textGet: async function() { return `La ville de Plénitude se trouve à ${await this.get()}`},
 	textSet: async function(value) {
 		const optionsValue = value.map(e => e.value);
-		await this.set(optionsValue.join(','));
-		return `La ville de Plénitude est maintenant ${await this.get()}`
+		const newValue = await this.set(optionsValue.join(','));
+		return `La ville de Plénitude est maintenant ${newValue}`;
 	},
 }];
 const optionVariable = {

@@ -1,31 +1,29 @@
-import { DataBase, KVDataBase } from '../../lib/database.js';
+import { TemporaryKVDatabase } from '../../lib/database.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { getFrenchDate } from '../../lib/date.js';
 import { sendWeatherRequest } from '../meteo.js';
-var kvPlenitude = new KVDataBase(undefined, 'plenitude');
+var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', undefined, 10000);
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
 const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messidor","Thermidor","Fructidor","Vendémiaire","Brumaire","Frimaire","Nivôse"];
 
 
 const PlenCity = {
-	database: new DataBase('PlenCity', 'Chamonix-Mont-Blanc', 10000, kvPlenitude),
+	value: kvPlenitude.getRow('PlenCity'),
 
 	/**
 	 * Get the location of Plénitude
 	 * @returns {string} The current location
 	 */
-	get: async function () {
-		return await PlenCity.database.get();
-		//you need to set async and await everywhere this function is called
-	},
+	get: async function () { return await this.value.get() || 'Chamonix-Mont-BlanC'; },
 	/**
 	 * Change the location of Plénitude
 	 * @param {string} location Where you want to move
 	 * @returns {string} The new location
 	 */
 	set: async function (location) {
-		const answer = await PlenCity.database.set(location);
+		await this.value.set(location);
+		const answer = await this.get();
 		console.log(`La ville de Plénitude est maintenant ${answer}`);
 		return answer;
 	}
