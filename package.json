@@ -4,9 +4,8 @@
   "description": "Bot à tout faire",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 0",
-    "start": "node index.js",
-    "wip": "node index.js WIP"
+    "test": "node index.js WIP",
+    "start": "node index.js"
   },
   "author": "Jiogo18",
   "license": "ISC",
