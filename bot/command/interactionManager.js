@@ -22,14 +22,20 @@ export default class InteractionManager {
 	}
 
 	/**
+	 * Get the temporaryValue with interactions of the target
+	 * @param {string} targetId Id of the guild, `undefined` for global
+	 * @returns {TemporaryValue} The row linked to the target
+	 */
+	getGuildInteractionsRow(targetId) {
+		if (!targetId) return this.interactionsOnlineGlobal;
+		return this.interactionsOnline.getRow(targetId);
+	}
+	/**
 	 * Get interactions posted in the target
 	 * @param {string} targetId Id of the guild, `undefined` for global
 	 * @returns {Promise<[object]>} JSON de discord TODO: plus d'info
 	 */
-	async getCommandsOnline(targetId) {
-		if (!targetId) return this.interactionsOnlineGlobal.get();
-		return this.interactionsOnline.get(targetId);
-	}
+	async getCommandsOnline(targetId) { return this.getGuildInteractionsRow(targetId).get(); }
 	/**
 	 * Get the interaction posted in the target
 	 * @param {string} commandName 
@@ -66,6 +72,8 @@ export default class InteractionManager {
 		const posted = await AppManager.postCommand(command, target);
 
 		//TODO database: this.resetCacheTimer(target);
+		this.getGuildInteractionsRow(targetId).resetSoon(1000);
+
 		if(posted) {
 			this.interactionsPosted.set(command.name, command.JSON);
 		}
