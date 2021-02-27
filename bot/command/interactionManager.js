@@ -61,7 +61,7 @@ export default class InteractionManager {
 		const matchWithOnline = online ? command.matchWith(online) : false;
 		if (matchWithOnline) {
 			// console.log(`Interaction '${command.name}' existe déjà => pas postée`.gray);
-			return false;
+			return true;
 		}
 		if (online) {
 			console.debug(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
