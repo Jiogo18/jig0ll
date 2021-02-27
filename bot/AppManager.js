@@ -11,7 +11,7 @@ var canPostCommands = true;
 // post({data:{}}): post une commande
 // patch: edit une commande (mais peut aussi être écrasé par un post)
 // (id)delete: delete une commande
-class DiscordRequest {
+export class DiscordRequest {
 	#path = [];
 		get path() { return this.#path.join('/'); }
 	//TODO: bot.api peut être récup sans le bot ? ça serait plus simple
@@ -47,6 +47,16 @@ class DiscordRequest {
 	}
 }
 
+export class DiscordInteractionStored {
+	/** @type {string} */ id;
+	/** @type {string} */ application_id;
+	/** @type {string} */ name;
+	/** @type {string} */ description;
+	/** @type {string} */ version;
+	/** @type {string} */ guild_id;
+	/** @type {[Object]} */ options;
+}
+
 /**
  * Get the link for global request
  */
@@ -64,18 +74,24 @@ export function getTarget(guild_id) { return getGuild(guild_id).go('commands'); 
 /**
  * Get commands of the target
  * @param {undefined|string} guild_id the id of the target
+ * @returns {Promise<[DiscordInteractionStored]>}
  */
-export function getCmdFrom(guild_id) { return getTarget(guild_id).request.get(); }
+export async function getCmdFrom(guild_id) { return getTarget(guild_id).request.get(); }
 
 
 /**
  * Post an interaction on Discord
  * @param {CommandStored} command The command to post
  * @param {DiscordRequest} target Where you want to post the command
+ * @param {boolean} force // TODO: remove it !!
  * @returns {Promise<boolean>} `true` if the command was sent, `false` if it was not sent
  */
-export async function postCommand(command, target) {
-	if(!target) return false;
+export async function postCommand(command, target, force) {
+	if(!target || !canPostCommands) return false;
+	if(process.env.WIPOnly && force != true) {
+		console.warn(`AppManager::postCommand: Commands are not posted`.yellow);//TODO: d'abord get les commandes puis faire un post / un patch
+		return false;
+	}
 
 	var promise = target.r.post(command.JSON);
 	//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
@@ -105,7 +121,7 @@ export async function postCommand(command, target) {
 }
 /**
  * Delete an interaction posted on Discord
- * @param {CommandStored} command The command to delete
+ * @param {CommandStored} command The command to delete or its id
  * @param {DiscordRequest} target Where you want to delete the command
  * @returns {Promise<boolean>} `true` if the command was deleted, `false` if it was not deleted
  */
@@ -114,12 +130,12 @@ export async function deleteCommand(command, target) {
 	target = target.clone();//don't change ths path for others
 
 	return new Promise((resolve, reject) => {
-		target.go(command.id);
+		target.go(command.id || command);
 		target.r.delete()
-		.then(() => resolve(true) )
+		.then(_ => resolve(true))
 		.catch(e => {
-			console.error(`Error while removing command '${command.name}'`.red, e);
-			reject(false);
+			console.error(`Error while removing command '${command.name || command.id || command}'`.red, e);
+			resolve(false);
 		})
 	});
 }
@@ -129,6 +145,7 @@ export default {
 	setBot(b) { bot = b; },
 
 	DiscordRequest,
+	DiscordInteractionStored,
 
 	getGlobal,
 	getGuild,
