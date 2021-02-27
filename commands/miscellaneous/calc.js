@@ -11,7 +11,7 @@ export default {
 	},
 
 	options: [{
-		name: 'ligne de calcul',
+		name: 'ligne_de_calcul',
 		description: 'Le calcul à faire',
 		type: 3,
 		required: true
