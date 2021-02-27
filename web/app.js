@@ -52,23 +52,11 @@ app.use((req, res) => {
 
 
 
-
-//TODO: tests pour Heroku
-import os, { networkInterfaces } from 'os';
-import dns from 'dns';
-const nets = networkInterfaces();
-
-
 export default {
 	start() {
 		const port = parseInt(process.env.PORT) || 80;
 		app.listen(port, () => {
-			console.log(`Network Interaces : `, nets);
-			dns.lookup(os.hostname(), function (err, add, fam) {
-				console.log('addr: ' + add);
-			})
-			var ipv4Addr = Object.values(nets)?.[0]?.find(c => c.family === 'IPv4')?.address;
-			console.log(`Server running at http://${ipv4Addr}:${port}/`.blue);
+			console.log(`Server running on port ${port}`.blue);
 		});
 	},
 };
