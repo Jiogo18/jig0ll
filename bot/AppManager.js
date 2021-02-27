@@ -87,12 +87,8 @@ export async function getCmdFrom(guild_id) { return getTarget(guild_id).request.
  * @returns {Promise<boolean>} `true` if the command was sent, `false` if it was not sent
  */
 export async function postCommand(command, target, force) {
-	if(!target || !canPostCommands) return false;
-	if(process.env.WIPOnly && force != true) {
-		console.warn(`AppManager::postCommand: Commands are not posted`.yellow);//TODO: d'abord get les commandes puis faire un post / un patch
-		return false;
-	}
-
+	if (!target || (!canPostCommands && !force)) return false;
+	
 	var promise = target.r.post(command.JSON);
 	//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
 	return new Promise((resolve, reject) => {

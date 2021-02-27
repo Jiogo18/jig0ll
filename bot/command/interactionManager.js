@@ -1,15 +1,17 @@
 import { Collection } from 'discord.js';
 import { SecurityPlace } from './security.js';
-import AppManager from '../AppManager.js';
+import AppManager, { DiscordRequest } from '../AppManager.js';
 import config from '../config.js';
 import DiscordBot from '../bot.js';
 import CommandStored from './commandStored.js';
+import { TemporaryList, TemporaryValue } from '../../lib/database.js';
 
 export default class InteractionManager {
 
 	bot;
 	get commands() { return this.bot.commandMgr.commands; }
-	interactionsOnline = new Collection();//TODO: un tableau database
+	interactionsOnline = new TemporaryList({ get: guild_id => AppManager.getCmdFrom(guild_id) }, 60000);//reset après une minute
+	interactionsOnlineGlobal = new TemporaryValue({ get: _ => AppManager.getCmdFrom() }, 60000);
 	interactionsPosted = new Collection();//commandes postées
 
 	/**
@@ -21,22 +23,22 @@ export default class InteractionManager {
 
 	/**
 	 * Get interactions posted in the target
-	 * @param {string} targetId 
-	 * @returns {Promise<Object[]>} JSON de discord TODO: plus d'info
+	 * @param {string} targetId Id of the guild, `undefined` for global
+	 * @returns {Promise<[object]>} JSON de discord TODO: plus d'info
 	 */
 	async getCommandsOnline(targetId) {
+		if (!targetId) return this.interactionsOnlineGlobal.get();
 		return this.interactionsOnline.get(targetId);
 	}
 	/**
 	 * Get the interaction posted in the target
 	 * @param {string} commandName 
 	 * @param {string} targetId 
-	 * @returns {Promise<Object>} JSON de discord TODO: plus d'info
+	 * @returns {Promise<object>} JSON de discord TODO: plus d'info
 	 */
 	async getCommandOnline(commandName, targetId) {
 		const interactions = await this.getCommandsOnline(targetId);
-		if(!interactions) return;
-		return interactions.get(commandName);
+		return interactions?.find(c => c.name == commandName);
 	}
 
 
@@ -44,16 +46,25 @@ export default class InteractionManager {
 	 * Post a command to Discord
 	 * Please note that `postCommand` isn't linked to `commandManager::loadCommand`
 	 * @param {CommandStored} command The command to post
-	 * @param target The target were you want to post
+	 * @param {DiscordRequest} target The target were you want to post
 	 * @returns {Promise<boolean>} `true` if the command has been posted, `false` if it's not
 	 */
 	async postCommand(command, target) {
-		const online = await this.getCommandOnline(command, target);
-		if(online) {
-			console.debug(`Une interaction existe déjà`, online == command.JSON);
+		const targetId = target.path.match(/\d+/)?.[0];
+		const online = await this.getCommandOnline(command.name, targetId);
+		const matchWithOnline = online ? command.matchWith(online) : false;
+		if (matchWithOnline) {
+			// console.log(`Interaction '${command.name}' existe déjà => pas postée`.gray);
 			return false;
 		}
+		if (online) {
+			console.debug(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
+		}
+		else {
+			console.debug(`L'Intéraction pour '${command.name}' n'existe pas encore dans ${targetId || 'global'}`.green);
+		}
 		const posted = await AppManager.postCommand(command, target);
+
 		//TODO database: this.resetCacheTimer(target);
 		if(posted) {
 			this.interactionsPosted.set(command.name, command.JSON);
@@ -81,6 +92,7 @@ export default class InteractionManager {
 			return command.allowedPlacesToCreateInteraction != SecurityPlace.NONE;
 		});
 
+		const start = Date.now();
 		console.log(`Posting ${commandsToPost.length} commands...`.green);
 
 		const commandSent = commandsToPost.map(async command => {
@@ -91,7 +103,7 @@ export default class InteractionManager {
 				default: return;
 			}
 			
-			if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
+			//if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 			
 			if(await this.postCommand(command, target)) {
 				if(command.wip) c.wip++;
@@ -108,7 +120,7 @@ export default class InteractionManager {
 
 		c.total = commandsToPost.length;
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
-		console.log(`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted`.green);
+		console.log(`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted in ${Date.now()-start} msec`.green);
 
 		c.after = this.interactionsPosted.length;
 		return c;

@@ -102,13 +102,33 @@ class CommandBase {
 			required: this.required,
 		};
 	};
+
+	/**
+	 * Is this command match with an other command?
+	 * @param {DiscordInteractionStored} command 
+	 */
+	matchWith(command) {
+		if (!command) return false;
+		const Json = this.JSON;
+		const Json2 = Json.data || Json;
+		if (Json2.default && !command.default) return false;//si il l'est pour Discord ça veut pas dire qu'il l'est pour nous
+		return Json2.name == command.name && Json2.description == command.description && (Json2.required || undefined) == command.required;
+	}
 }
 
 
 class CommandExtendable extends CommandBase {
 	#execute;
 	#executeAttribute;
+	/**
+	 * suboptions of the option
+	 * @type {[CommandBase]}
+	 */
 	options = [];
+	/**
+	 * Alternative names
+	 * @type {[string]}
+	 */
 	alts = [];
 	/**
 	 * Get the full Help for this command
@@ -167,6 +187,19 @@ class CommandExtendable extends CommandBase {
 			...super.JSON,
 			options: Object.entries(this.options).map(([index, option]) => option.JSON),
 		};
+	}
+	/**
+	 * Is this command match with an other command?
+	 * @param {DiscordInteractionStored} command 
+	 */
+	matchWith(command) {
+		if (!super.matchWith(command)) return false;
+		if(this.options?.length != (command.options?.length || 0)) return false;
+		for (const o of this.options) {
+			const o2 = command.options.find(o2 => o2.name == o.name);
+			if (!o.matchWith(o2)) return false;
+		}
+		return true;
 	}
 
 	/**
@@ -334,6 +367,20 @@ class CommandAttribute extends CommandBase {
 			...super.JSON,
 			choices: this.choices,
 		};
+	}
+
+	/**
+	 * Is this command match with an other command?
+	 * @param {DiscordInteractionStored} command 
+	 */
+	matchWith(command) {
+		if (!super.matchWith(command)) return false;
+		if(this.choices?.length != command.choices?.length) return false;
+		for (const c1 of this.choices || []) {
+			const c2 = command.choices.find(c2 => c2.name == c1.name);
+			if (c1.name != c2.name || c1.value != c2.value) return false;
+		}
+		return true;
 	}
 
 	/**
