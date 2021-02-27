@@ -2,7 +2,8 @@ import express from 'express';
 import favicon from 'serve-favicon';
 
 const app = express();
-const __dirname = process.env.INIT_CWD;
+const __dirname = process.env.INIT_CWD || process.env.PWD;
+
 app.use(favicon(__dirname + '/favicon.ico'));
 
 /**
