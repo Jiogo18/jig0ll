@@ -10,3 +10,8 @@ const bot = new DiscordBot();//id du bot:<@!494587865775341578>
 
 
 bot.start();
+
+
+
+import web from './web/app.js';
+web.start();
