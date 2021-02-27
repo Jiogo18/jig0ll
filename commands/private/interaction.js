@@ -111,16 +111,16 @@ export default {
  */
 async function listInteraction(context, guild) {
 	var globalInte = await AppManager.getCmdFrom()
-	var localInte = await AppManager.getCmdFrom(guild.id)
+	var localInte = guild ? await AppManager.getCmdFrom(guild.id) : undefined
 	//attendre les 2 intéractions pour envoyer
 
-	const counter = globalInte.length + localInte.length;
+	const counter = globalInte.length + (localInte?.length || 0);
 	globalInte = globalInte.map(option => { return option.name; });
-	localInte = localInte.map(option => { return option.name; });
+	localInte = localInte?.map(option => { return option.name; });
 
-	const retour = new EmbedMaker('Interaction list', `${counter} interactions are available in this guild`);
+	const retour = new EmbedMaker('Interaction list', `${counter} interactions are available in ${guild?.name || 'global'}`);
 	if(globalInte.length > 0) retour.addField('Global', `${spaces}${globalInte.join(`\n${spaces}`,)}`);
-	if(localInte.length > 0) retour.addField('Local', `${spaces}${localInte.join(`\n${spaces}`)}`);
+	if(localInte?.length > 0) retour.addField('Local', `${spaces}${localInte.join(`\n${spaces}`)}`);
 	return retour;
 }
 
@@ -184,11 +184,20 @@ async function addInteraction(context, guild, command) {
  */
 function getGuild(cmdData, guild) {
 	if (!guild) return cmdData.guild;
-	if (guild == 'global' || guild == 'g') return undefined;
+	switch (guild) {
+		case undefined:
+		case 'this':
+		case 't':
+			return cmdData.guild;
+		case 'global':
+		case 'g':
+			return undefined;
+	}
 	const guild_id = guild?.id || (parseInt(guild) && guild);
 	const guilds = cmdData.bot.guilds.cache;
 	if (guild_id) return guilds.get(guild_id);
 	return guilds.find(g => g.name == guild);
+	//si la guild n'existe pas on a 'global' (undefined)
 }
 
 /**
