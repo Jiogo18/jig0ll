@@ -97,7 +97,7 @@ export class CommandContext {
 	 * @param {DiscordBot} bot
 	 */
 	static fromInteraction(interaction, bot) {
-		return new CommandContext(bot.guilds.cache.get(interaction.guild_id), bot.channels.cache.get(interaction.channel_id), interaction.member.user);
+		return new CommandContext(bot.guilds.cache.get(interaction.guild_id), bot.channels.cache.get(interaction.channel_id), interaction.user || interaction.member?.user);
 	}
 	/**
 	 * Make a CommandContent from a message
