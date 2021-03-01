@@ -1,6 +1,6 @@
 import { Collection } from 'discord.js';
 import fs from 'fs';
-import { SecurityPlace } from './security.js';
+import { SecurityPlaces } from './security.js';
 const defaultCommandsPath = './commands';//from index.js !
 import CommandStored from './commandStored.js';
 import DiscordBot from '../bot.js';
@@ -86,8 +86,8 @@ export default class CommandManager {
 			if(command.security.hidden) c.hidden++;
 			else {
 				switch(command.security.place) {
-					case SecurityPlace.PUBLIC: c.public++; break;
-					case SecurityPlace.PRIVATE: c.private++; break;
+					case SecurityPlaces.PUBLIC: c.public++; break;
+					case SecurityPlaces.PRIVATE: c.private++; break;
 				}
 			}
 		});

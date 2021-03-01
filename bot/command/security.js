@@ -11,7 +11,7 @@ const user_plenitude_privilege = [ config.jiogo18, config.rubis ];//plenitude_lo
 const user_private = [ config.jiogo18, config.jig0ll ];
 
 
-export const SecurityPlace = {
+export const SecurityPlaces = {
 	PUBLIC: 'public',
 	PRIVATE: 'private',
 	NONE: 'none'
@@ -80,11 +80,11 @@ export function isPlenitudePrivilege(user_id) { return user_plenitude_privilege.
 
 
 
-class SecurityCommand {
+export class SecurityCommand {
 	#securityPlace;
 		get place() {
-			if(this.wip && this.#securityPlace == SecurityPlace.PUBLIC) return SecurityPlace.PRIVATE;
-			return this.#securityPlace || (this.parent && this.parent.place) || SecurityPlace.NONE;
+			if(this.wip && this.#securityPlace == SecurityPlaces.PUBLIC) return SecurityPlaces.PRIVATE;
+			return this.#securityPlace || (this.parent && this.parent.place) || SecurityPlaces.NONE;
 		};
 	
 	#wip;
@@ -106,7 +106,7 @@ class SecurityCommand {
 		get inheritance() { return this.#inheritance; }
 	
 	/**
-	 * @param {{wip:boolean, place:SecurityPlace, inheritance:boolean, isAllowedToSee:Function, isAllowedToUse:Function, hidden:boolean}} security 
+	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function, isAllowedToUse:Function, hidden:boolean}} security 
 	 * @param {SecurityCommand} parent 
 	 */
 	constructor(security, parent) {
@@ -157,9 +157,9 @@ class SecurityCommand {
 	 */
 	#isAllowedToUse2 = function(context) {
 		switch(this.place) {
-			case SecurityPlace.PRIVATE: return isHightPrivilegeUser(context.author.id);
-			case SecurityPlace.PUBLIC: return true;
-			case SecurityPlace.NONE: return false;
+			case SecurityPlaces.PRIVATE: return isHightPrivilegeUser(context.author.id);
+			case SecurityPlaces.PUBLIC: return true;
+			case SecurityPlaces.NONE: return false;
 			case undefined: return false;
 			default:
 				console.warn(`isAllowedToUse place unknow for ${this.name} : ${this.place}`);
@@ -219,7 +219,7 @@ export default {
 	botIsAllowedToDo,
 
 
-	SecurityPlace,
+	SecurityPlaces,
 
 	SecurityCommand
 }

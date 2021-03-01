@@ -1,5 +1,5 @@
 import { Collection } from 'discord.js';
-import { SecurityPlace } from './security.js';
+import { SecurityPlaces } from './security.js';
 import AppManager, { DiscordRequest } from '../AppManager.js';
 import config from '../config.js';
 import DiscordBot from '../bot.js';
@@ -97,7 +97,7 @@ export default class InteractionManager {
 		};
 
 		const commandsToPost = this.commands.array().filter(command => {
-			return command.allowedPlacesToCreateInteraction != SecurityPlace.NONE;
+			return command.allowedPlacesToCreateInteraction != SecurityPlaces.NONE;
 		});
 
 		const start = Date.now();
@@ -106,8 +106,8 @@ export default class InteractionManager {
 		const commandSent = commandsToPost.map(async command => {
 			var target = undefined;
 			switch(command.allowedPlacesToCreateInteraction) {
-				case SecurityPlace.PUBLIC: target = targetGlobal; break;
-				case SecurityPlace.PRIVATE: target = targetPrivate; break;
+				case SecurityPlaces.PUBLIC: target = targetGlobal; break;
+				case SecurityPlaces.PRIVATE: target = targetPrivate; break;
 				default: return;
 			}
 			

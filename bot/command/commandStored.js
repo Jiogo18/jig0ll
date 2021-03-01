@@ -1,4 +1,4 @@
-import Security from './security.js';
+import { SecurityPlaces, SecurityCommand } from './security.js';
 import { EmbedMaker, MessageMaker } from '../../lib/messageMaker.js';
 import { CommandContext, ReceivedCommand } from './received.js';
 
@@ -58,9 +58,12 @@ class CommandBase {
 	required;
 	
 	parent;
+	/**
+	 * @type {SecurityCommand}
+	 */
 	#security;
 		get security() { return this.#security; }
-		set security(security) { this.#security = new Security.SecurityCommand(security, this.parent ? this.parent.security : undefined); }
+		set security(security) { this.#security = new SecurityCommand(security, this.parent ? this.parent.security : undefined); }
 
 	/**
 	 * @param {{name:string, description:string, type:number, default:boolean, required:boolean}} commandConfig The config of the command (like Discord format)
@@ -303,7 +306,7 @@ export default class CommandStored extends CommandExtendable {
 	}
 
 	get allowedPlacesToCreateInteraction() {
-		if(this.interaction != true) { return Security.SecurityPlace.NONE; }
+		if(this.interaction != true) { return SecurityPlaces.NONE; }
 		return this.security.place;
 	}
 
