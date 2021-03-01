@@ -142,11 +142,15 @@ export class SecurityCommand {
 	 * @returns {boolean} `true` if you are allowed to user this
 	 */
 	isAllowedToUse(context) {
-		if(this.wip && isBetaAllowed(context) != true) return false;
+		if (this.wip && isBetaAllowed(context) != true) {
+			context.NotAllowedReason = context.NotAllowedReason || `Sorry, you can't do that outside of a test server`;
+			return false;
+		}
 
-		if(this.inheritance && this.parent && this.parent.isAllowedToUse) {
-			if(this.parent.isAllowedToUse(context) != true)
+		if (this.inheritance && this.parent?.isAllowedToUse) {
+			if (this.parent.isAllowedToUse(context) != true) {
 				return false;
+			}
 		}
 
 		return this.#isAllowedToUse2(context);

@@ -231,7 +231,9 @@ class CommandExtendable extends CommandBase {
 		}
 		
 		//terminus => #execute
-		if(!this.security || this.security.isAllowedToUse(cmdData.context) == false) { return new EmbedMaker('', "Sorry you can't do that", { color: 'red' }); }
+		if (this.security?.isAllowedToUse?.(cmdData.context) != true) {
+			return new EmbedMaker('', cmdData.context.NotAllowedReason || "Sorry you can't do that", { color: 'red' });
+		}
 		
 		if(typeof levelOptions == 'object' && levelOptions.length) {
 			if(typeof this.#executeAttribute == 'function') {
