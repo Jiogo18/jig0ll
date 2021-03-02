@@ -22,7 +22,7 @@ export default class DiscordBot extends Client {
 	commandEnabled = true;
 	
 	constructor() {
-		super();
+		super({ ws: { intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'GUILD_INTEGRATIONS', 'GUILD_MEMBERS', 'GUILD_INVITES'] } });
 		this.startedTime = Date.now();
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
