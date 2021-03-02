@@ -1,23 +1,22 @@
 import { Collection } from 'discord.js';
 import fs from 'fs';
 import { SecurityPlaces } from './security.js';
-const defaultCommandsPath = './commands';//from index.js !
+const defaultCommandsPath = './commands'; //from index.js !
 import CommandStored from './commandStored.js';
 import DiscordBot from '../bot.js';
 
-
 export default class CommandManager {
 	bot;
-	#commands = new Collection(); get commands() { return this.#commands; }
-	#altCommands = new Collection(); get altCommands() { return this.#altCommands; }
+	commands = new Collection();
+	altCommands = new Collection();
 
 	/**
 	 * The command manager store every commands of the bot
-	 * @param {DiscordBot} bot 
+	 * @param {DiscordBot} bot
 	 */
 	constructor(bot) {
 		this.bot = bot;
-		if(bot.commandEnabled) this.loadCommands();
+		if (bot.commandEnabled) this.loadCommands();
 	}
 
 	/**
@@ -25,7 +24,9 @@ export default class CommandManager {
 	 * @param {string} commandName The name of the command
 	 * @returns {CommandStored} The command
 	 */
-	getCommand(commandName) { return this.commands.find(c => c.isCommand(commandName)) || this.altCommands.get(commandName); }
+	getCommand(commandName) {
+		return this.commands.find(c => c.isCommand(commandName)) || this.altCommands.get(commandName);
+	}
 
 	/**
 	 * Load and store the command
@@ -34,26 +35,33 @@ export default class CommandManager {
 	 */
 	async loadCommand(commandFilename) {
 		var file;
-		try { file = await import('../../'+commandFilename); }
-		catch(e) { console.error(`Error while loading '${commandFilename}'`.red, e); return; }
-		
+		try {
+			file = await import('../../' + commandFilename);
+		} catch (e) {
+			console.error(`Error while loading '${commandFilename}'`.red, e);
+			return;
+		}
+
 		const commandFile = file?.default;
-		if(!commandFile) { console.error(`Command not loaded : ${commandFilename}`.red); return; }
+		if (!commandFile) {
+			console.error(`Command not loaded : ${commandFilename}`.red);
+			return;
+		}
 		commandFile.setBot?.(this.bot);
 		const command = new CommandStored(commandFile, commandFilename);
-		if(this.#commands.has(command.name)) {
+		if (this.commands.has(command.name)) {
 			console.warn(`Conflict with two commands named '${command.name}', please use reloadCommand if it's not intended`.yellow);
 		}
 
-		this.#commands.set(command.name, command);
+		this.commands.set(command.name, command);
 		if (command.alts?.length) {
 			command.alts.forEach(alt => {
-				if (this.#altCommands.has(alt)) {
-					console.warn(`Conflict with alts '${alt}' of two commands named '${command.name}' and '${this.#altCommands.get(alt).name}'`.yellow);
+				if (this.altCommands.has(alt)) {
+					console.warn(`Conflict with alts '${alt}' of two commands named '${command.name}' and '${this.altCommands.get(alt).name}'`.yellow);
+				} else {
+					this.altCommands.set(alt, command);
 				}
-				else this.#altCommands.set(alt, command);
 			});
-			
 		}
 		return command;
 	}
@@ -75,25 +83,28 @@ export default class CommandManager {
 			hidden: 0,
 			interaction: 0,
 		};
-		
-		const loadedCommands = (await Promise.all(commandPaths
-			.map(c => this.loadCommand(c)))).filter(c => c != undefined);
+
+		const loadedCommands = (await Promise.all(commandPaths.map(c => this.loadCommand(c)))).filter(c => c != undefined);
 		//toutes les commandes qui ont été chargées
 
 		loadedCommands.forEach(command => {
-			if(command.security.wip) c.wip++;
-			if(command.interaction) c.interaction++;
-			if(command.security.hidden) c.hidden++;
+			if (command.security.wip) c.wip++;
+			if (command.interaction) c.interaction++;
+			if (command.security.hidden) c.hidden++;
 			else {
-				switch(command.security.place) {
-					case SecurityPlaces.PUBLIC: c.public++; break;
-					case SecurityPlaces.PRIVATE: c.private++; break;
+				switch (command.security.place) {
+					case SecurityPlaces.PUBLIC:
+						c.public++;
+						break;
+					case SecurityPlaces.PRIVATE:
+						c.private++;
+						break;
 				}
 			}
 		});
 		c.after = this.commands.length;
 		c.total = loadedCommands.length;
-		
+
 		console.log(`Loaded ${loadedCommands.length} commands in ${Date.now() - start} msec`.green);
 		console.log(`Commands : ${c.public} public, ${c.private} private, ${c.hidden} hidden, ${c.wip} wip, ${c.interaction} with interaction`.green);
 		return c;
@@ -104,7 +115,9 @@ export default class CommandManager {
 	 * @param {CommandStored} command The command to remove
 	 * @returns {boolean} `true` if the command was removed, `false` if the command does not exist.
 	 */
-	removeCommand(command) { return this.commands.delete(command.name) }
+	removeCommand(command) {
+		return this.commands.delete(command.name);
+	}
 	/**
 	 * Reload a command
 	 * @param {CommandStored} command The command to reload
@@ -116,36 +129,35 @@ export default class CommandManager {
 	}
 }
 
-
-
-
 //https://stackoverflow.com/a/24594123/12908345
 /**
  * Obtenir les dossiers dans path
- * @param {string} path 
+ * @param {string} path
  * @returns Les noms des dossiers du répertoire
  */
-const getDirectories = path => fs.readdirSync(path, { withFileTypes: true })
-	.filter(dirent => dirent.isDirectory())
-	.map(dirent => dirent.name);
+const getDirectories = path =>
+	fs
+		.readdirSync(path, { withFileTypes: true })
+		.filter(dirent => dirent.isDirectory())
+		.map(dirent => dirent.name);
 /**
  * Obtenir tous les dossiers et sous dossiers dans path
- * @param {string} path 
+ * @param {string} path
  * @returns Les chemins d'accès à tous les sous dossiers du répertoire
  */
 function getAllDir(path) {
 	const directories = getDirectories(path);
 	var allDir = [];
-	for(const dir of directories) {
+	for (const dir of directories) {
 		allDir.push(dir);
 		allDir.concat(getAllDir(path + '/' + dir).map(d => dir + '/' + d));
 	}
-	
+
 	return allDir;
 }
 /**
  * Obtenir les noms des commandes du dossier
- * @param {string} path 
+ * @param {string} path
  * @returns Les noms des fichiers de commande du répertoire
  */
 function getCommandFiles(path) {
@@ -153,14 +165,14 @@ function getCommandFiles(path) {
 }
 /**
  * Obtenir les chemins d'accès de toutes les commandes du dossier path
- * @param {string} path 
+ * @param {string} path
  * @returns Les chemins complets vers tous les fichiers de commande du répertoire
  */
 function getAllCommandFiles(path) {
-	var files = getCommandFiles(path).map(f => path+'/'+f);
-	for(const directory of getAllDir(path)) {
+	var files = getCommandFiles(path).map(f => path + '/' + f);
+	for (const directory of getAllDir(path)) {
 		const localCommandFiles = getCommandFiles(path + '/' + directory);
-		files = files.concat(localCommandFiles.map(f => path+'/'+directory+'/'+f));
+		files = files.concat(localCommandFiles.map(f => path + '/' + directory + '/' + f));
 	}
 	return files;
 }

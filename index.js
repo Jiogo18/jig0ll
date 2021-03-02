@@ -1,9 +1,6 @@
 import './setup.js';
 
-
 import DiscordBot from './bot/bot.js';
-const bot = new DiscordBot();//id du bot:<@!494587865775341578>
-
+const bot = new DiscordBot(); //id du bot:<@!494587865775341578>
 
 bot.start();
-

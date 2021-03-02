@@ -2,8 +2,7 @@ import { Message } from 'discord.js';
 import { extractPrefix } from '../lib/commandTools.js';
 import { ReceivedMessage } from './command/received.js';
 import commandHandler from './command/commandHandler.js';
-import DiscordBot from './bot.js'
-
+import DiscordBot from './bot.js';
 
 /**
  * Read every messages that the bot can read
@@ -11,23 +10,20 @@ import DiscordBot from './bot.js'
  * @param {Message} message
  */
 export default async function messageHandler(message) {
-
-	if(isCommand(message) && this.commandEnabled) {
-		onMessageCommand.call(this, message)
-		.catch(error => console.error(`Error with a command: ${error}`) );
+	if (isCommand(message) && this.commandEnabled) {
+		onMessageCommand.call(this, message).catch(error => console.error(`Error with a command: ${error}`));
 	}
 }
-
 
 /**
  * Preparer le message pour les commandes
  * @param {Message} message
  */
 function isCommand(message) {
-	if(message.isCommand) return true;
+	if (message.isCommand) return true;
 
 	const [content, prefix] = extractPrefix(message.content);
-	if(prefix == undefined) return;
+	if (prefix == undefined) return;
 
 	message.content = content;
 	message.prefix = prefix;
@@ -41,13 +37,11 @@ function isCommand(message) {
  * @param {Message} message
  */
 async function onMessageCommand(message) {
-	if(!isCommand(message)) return;
+	if (!isCommand(message)) return;
 
 	var command = new ReceivedMessage(message, this);
-	commandHandler.call(this, command)
-	.catch(error => {
+	commandHandler.call(this, command).catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-		console.error(`Error while sending an answer for '${command.commandLine}'`.red);
-		console.error(error);
+		console.error(`Error while sending an answer for '${command.commandLine}'`.red, error);
 	});
 }

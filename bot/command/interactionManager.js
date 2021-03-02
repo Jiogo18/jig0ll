@@ -7,15 +7,16 @@ import CommandStored from './commandStored.js';
 import { TemporaryList, TemporaryValue } from '../../lib/database.js';
 
 export default class InteractionManager {
-
 	bot;
-	get commands() { return this.bot.commandMgr.commands; }
-	interactionsOnline = new TemporaryList({ get: guild_id => AppManager.getCmdFrom(guild_id) }, 60000);//reset après une minute
-	interactionsOnlineGlobal = new TemporaryValue({ get: _ => AppManager.getCmdFrom() }, 60000);
-	interactionsPosted = new Collection();//commandes postées
+	get commands() {
+		return this.bot.commandMgr.commands;
+	}
+	interactionsOnline = new TemporaryList({ get: guild_id => AppManager.getCmdFrom(guild_id) }, 60000); //reset après une minute
+	interactionsOnlineGlobal = new TemporaryValue({ get: () => AppManager.getCmdFrom() }, 60000);
+	interactionsPosted = new Collection(); //commandes postées
 
 	/**
-	 * @param {DiscordBot} bot 
+	 * @param {DiscordBot} bot
 	 */
 	constructor(bot) {
 		this.bot = bot;
@@ -35,18 +36,19 @@ export default class InteractionManager {
 	 * @param {string} targetId Id of the guild, `undefined` for global
 	 * @returns {Promise<[object]>} JSON de discord TODO: plus d'info
 	 */
-	async getCommandsOnline(targetId) { return this.getGuildInteractionsRow(targetId).get(); }
+	async getCommandsOnline(targetId) {
+		return this.getGuildInteractionsRow(targetId).get();
+	}
 	/**
 	 * Get the interaction posted in the target
-	 * @param {string} commandName 
-	 * @param {string} targetId 
+	 * @param {string} commandName
+	 * @param {string} targetId
 	 * @returns {Promise<object>} JSON de discord TODO: plus d'info
 	 */
 	async getCommandOnline(commandName, targetId) {
 		const interactions = await this.getCommandsOnline(targetId);
 		return interactions?.find(c => c.name == commandName);
 	}
-
 
 	/**
 	 * Post a command to Discord
@@ -65,8 +67,7 @@ export default class InteractionManager {
 		}
 		if (online) {
 			console.debug(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
-		}
-		else {
+		} else {
 			console.debug(`L'Intéraction pour '${command.name}' n'existe pas encore dans ${targetId || 'global'}`.green);
 		}
 		const posted = await AppManager.postCommand(command, target);
@@ -74,7 +75,7 @@ export default class InteractionManager {
 		//TODO database: this.resetCacheTimer(target);
 		this.getGuildInteractionsRow(targetId).resetSoon(1000);
 
-		if(posted) {
+		if (posted) {
 			this.interactionsPosted.set(command.name, command.JSON);
 		}
 		return posted;
@@ -103,32 +104,45 @@ export default class InteractionManager {
 		const start = Date.now();
 		console.log(`Posting ${commandsToPost.length} commands...`.green);
 
-		const commandSent = commandsToPost.map(async command => {
-			var target = undefined;
-			switch(command.allowedPlacesToCreateInteraction) {
-				case SecurityPlaces.PUBLIC: target = targetGlobal; break;
-				case SecurityPlaces.PRIVATE: target = targetPrivate; break;
-				default: return;
-			}
-			
-			//if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
-			
-			if(await this.postCommand(command, target)) {
-				if(command.wip) c.wip++;
-				switch(target) {
-					case targetPrivate: c.private++; break;
-					case targetGlobal: c.public++; break;
+		const commandSent = commandsToPost
+			.map(async command => {
+				var target = undefined;
+				switch (command.allowedPlacesToCreateInteraction) {
+					case SecurityPlaces.PUBLIC:
+						target = targetGlobal;
+						break;
+					case SecurityPlaces.PRIVATE:
+						target = targetPrivate;
+						break;
+					default:
+						return;
 				}
-			}
-			else {
-				c.notposted++;
-			}
-		}).filter(c => c!=undefined);
+
+				//if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
+
+				if (await this.postCommand(command, target)) {
+					if (command.wip) c.wip++;
+					switch (target) {
+						case targetPrivate:
+							c.private++;
+							break;
+						case targetGlobal:
+							c.public++;
+							break;
+					}
+				} else {
+					c.notposted++;
+				}
+			})
+			.filter(c => c != undefined);
 		await Promise.all(commandSent);
 
 		c.total = commandsToPost.length;
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
-		console.log(`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted in ${Date.now()-start} msec`.green);
+		console.log(
+			`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted in ${Date.now() - start} msec`
+				.green
+		);
 
 		c.after = this.interactionsPosted.length;
 		return c;
@@ -155,23 +169,20 @@ export default class InteractionManager {
 	async cleanCommands(targetId) {
 		const target = AppManager.getTarget(targetId);
 
-		const commandsOnline = this.getCommandsOnline(targetId)
-		if(!commandsOnline) {
+		const commandsOnline = await this.getCommandsOnline(targetId);
+		if (!commandsOnline) {
 			console.warn(`Can't get commands for ${targetId ? targetId : 'Global'}`.yellow);
 			return;
 		}
 
-		const commandsCleaner = commandsOnline.map(async c => {
-			return this.deleteCommand(c, target) ? c : undefined;
-		}).filter(c => c != undefined);
+		const commandsCleaner = commandsOnline.map(async c => ((await this.deleteCommand(c, target)) ? c : undefined));
 
 		await Promise.all(commandsCleaner);
 
 		const commandsRemnaining = this.getCommandsOnline(targetId);
 		if (commandsRemnaining.length) {
 			console.error(`${commandsRemnaining.length} Interactions remain after cleanCommands`.red);
-		}
-		else {
+		} else {
 			console.log(`All Interactions of ${target_id ? target_id : 'Global'} have been removed.`);
 		}
 	}

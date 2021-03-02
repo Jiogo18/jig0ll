@@ -2,7 +2,6 @@ import { SecurityPlaces, SecurityCommand } from './security.js';
 import { EmbedMaker, MessageMaker } from '../../lib/messageMaker.js';
 import { CommandContext, ReceivedCommand } from './received.js';
 
-
 const ApplicationCommandOptionType = {
 	NONE: -1,
 	INTERACTION: 0,
@@ -22,18 +21,32 @@ const ApplicationCommandOptionType = {
  * @returns {string} The flat string
  */
 function strToFlatStr(str) {
-	if(typeof str != 'string') return '';
-	return str.toLowerCase().replace(/[àâä]/g,'a').replace(/[éèêë]/g,'e').replace(/[ìîï]/g,'i').replace(/[òôö]/g,'o').replace(/[ùûü]/g,'u').replace('ÿ','y').replace('ñ','n');
+	if (typeof str != 'string') return '';
+	return str
+		.toLowerCase()
+		.replace(/[àâä]/g, 'a')
+		.replace(/[éèêë]/g, 'e')
+		.replace(/[ìîï]/g, 'i')
+		.replace(/[òôö]/g, 'o')
+		.replace(/[ùûü]/g, 'u')
+		.replace(/ÿ/g, 'y')
+		.replace(/ñ/g, 'n');
 }
-
 
 class CommandBase {
 	//https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoption
 	name;
-	setName(name) { this.name = name; this.#flatName = strToFlatStr(name); }
-	#flatName; get flatName() { return this.#flatName; }
-	get type() { return ApplicationCommandOptionType.NONE; }
-	isAllowedOptionType() { return false; }
+	setName(name) {
+		this.name = name;
+		this.flatName = strToFlatStr(name);
+	}
+	flatName;
+	get type() {
+		return ApplicationCommandOptionType.NONE;
+	}
+	isAllowedOptionType() {
+		return false;
+	}
 	description;
 	/**
 	 * Get the full Help for this command
@@ -41,29 +54,33 @@ class CommandBase {
 	 * @returns {string} The description
 	 */
 	getHelpDescription(context) {
-		if(!this.security.isAllowedToSee(context)) return;
+		if (!this.security.isAllowedToSee(context)) return;
 		return new EmbedMaker(`Help ${this.commandLine}`, this.description);
 	}
 	/**
 	 * Get the description of this command
-	 * @param {CommandContext} context 
+	 * @param {CommandContext} context
 	 * @returns {string} The description in one (or two) line
 	 */
 	getHelpSmallDescription(context) {
-		if(!this.security.isAllowedToSee(context) || this.security.hidden) return;
+		if (!this.security.isAllowedToSee(context) || this.security.hidden) return;
 		return this.commandLine + (this.description ? ` : ${this.description}` : '');
 	}
 
 	default;
 	required;
-	
+
 	parent;
 	/**
 	 * @type {SecurityCommand}
 	 */
 	#security;
-		get security() { return this.#security; }
-		set security(security) { this.#security = new SecurityCommand(security, this.parent ? this.parent.security : undefined); }
+	get security() {
+		return this.#security;
+	}
+	set security(security) {
+		this.#security = new SecurityCommand(security, this.parent ? this.parent.security : undefined);
+	}
 
 	/**
 	 * @param {{name:string, description:string, type:number, default:boolean, required:boolean}} commandConfig The config of the command (like Discord format)
@@ -79,20 +96,19 @@ class CommandBase {
 		this.security = commandConfig.security;
 	}
 
-
 	/**
 	 * Test if this command is the command you are looking for
 	 * @param {string} name The name of the command
 	 */
 	isCommand(name) {
-		if(typeof name == 'object') name == name.name;
+		if (typeof name == 'object') name == name.name;
 		return this.name == name || this.flatName == strToFlatStr(name);
 	}
 
 	get commandLine() {
 		const parentLine = this.parent ? this.parent.commandLine : undefined;
-		return (parentLine ? parentLine+' ':'') + this.name;
-	};
+		return (parentLine ? parentLine + ' ' : '') + this.name;
+	}
 
 	get JSON() {
 		return {
@@ -104,21 +120,20 @@ class CommandBase {
 			default: this.default,
 			required: this.required,
 		};
-	};
+	}
 
 	/**
 	 * Is this command match with an other command?
-	 * @param {DiscordInteractionStored} command 
+	 * @param {DiscordInteractionStored} command
 	 */
 	matchWith(command) {
 		if (!command) return false;
 		const Json = this.JSON;
 		const Json2 = Json.data || Json;
-		if (Json2.default && !command.default) return false;//si il l'est pour Discord ça veut pas dire qu'il l'est pour nous
+		if (Json2.default && !command.default) return false; //si il l'est pour Discord ça veut pas dire qu'il l'est pour nous
 		return Json2.name == command.name && Json2.description == command.description && (Json2.required || undefined) == command.required;
 	}
 }
-
 
 class CommandExtendable extends CommandBase {
 	#execute;
@@ -141,7 +156,7 @@ class CommandExtendable extends CommandBase {
 	 */
 	getHelpDescription(context, spaces = '\xa0 \xa0 ') {
 		if (!this.security.isAllowedToSee(context)) return;
-		
+
 		const descriptionStr = [this.description, ...this.options.map(o => o.getHelpSmallDescription(context)).filter(o => o != undefined)];
 		const retour = new EmbedMaker(`Help ${this.commandLine}`, descriptionStr.join('\n' + spaces));
 
@@ -158,24 +173,23 @@ class CommandExtendable extends CommandBase {
 		this.#execute = commandConfig.execute;
 		this.#executeAttribute = commandConfig.executeAttribute;
 
-		for(const subCommandConfig of commandConfig.options || []) {
+		for (const subCommandConfig of commandConfig.options || []) {
 			const subType = subCommandConfig.type;
-			if( !this.isAllowedOptionType(subType) ) {
-				console.warn(`Option ${subCommandConfig.name} (type: ${subCommandConfig.type}) not allowed under '${this.commandLine}' (type: ${this.type}) :`);
+			if (!this.isAllowedOptionType(subType)) {
+				console.warn(
+					`Option ${subCommandConfig.name} (type: ${subCommandConfig.type}) not allowed under '${this.commandLine}' (type: ${this.type}) :`
+				);
 				continue;
 			}
-			
+
 			var subCommand;
-			if(subType == ApplicationCommandOptionType.SUB_COMMAND) {
+			if (subType == ApplicationCommandOptionType.SUB_COMMAND) {
 				subCommand = new CommandSub(subCommandConfig, this);
-			}
-			else if(subType == ApplicationCommandOptionType.SUB_COMMAND_GROUP) {
+			} else if (subType == ApplicationCommandOptionType.SUB_COMMAND_GROUP) {
 				subCommand = new CommandGroup(subCommandConfig, this);
-			}
-			else if(CommandAttribute.Types.includes(subType)) {
+			} else if (CommandAttribute.Types.includes(subType)) {
 				subCommand = new CommandAttribute(subCommandConfig, this);
-			}
-			else {
+			} else {
 				console.error(`Type unknow for option ${subCommandConfig.name} : ${subType}`.red);
 				continue;
 			}
@@ -186,18 +200,18 @@ class CommandExtendable extends CommandBase {
 	}
 
 	get JSON() {
-		return { 
+		return {
 			...super.JSON,
 			options: Object.entries(this.options).map(([index, option]) => option.JSON),
 		};
 	}
 	/**
 	 * Is this command match with an other command?
-	 * @param {DiscordInteractionStored} command 
+	 * @param {DiscordInteractionStored} command
 	 */
 	matchWith(command) {
 		if (!super.matchWith(command)) return false;
-		if(this.options?.length != (command.options?.length || 0)) return false;
+		if (this.options?.length != (command.options?.length || 0)) return false;
 		for (const o of this.options) {
 			const o2 = command.options.find(o2 => o2.name == o.name);
 			if (!o.matchWith(o2)) return false;
@@ -211,37 +225,38 @@ class CommandExtendable extends CommandBase {
 	 * @returns {boolean} `true` if this is the command, `false` if it's not
 	 */
 	isCommand(option) {
-		if(typeof option == 'object') {
+		if (typeof option == 'object') {
 			return super.isCommand(option.name || option.value);
 			//avec les interactions c'est name, avec les messages on connait que value
 		}
 		return super.isCommand(option);
-	};
+	}
 
 	/**
 	 * Execute the command or the subcommand
-	 * @param {ReceivedCommand} cmdData 
+	 * @param {ReceivedCommand} cmdData
 	 * @param {[{name:string, value:string}]} levelOptions Options
 	 * @returns {MessageMaker} The answer of the command
 	 */
 	execute(cmdData, levelOptions) {
-		if(levelOptions && levelOptions.length) {//find the suboption
+		if (levelOptions && levelOptions.length) {
+			//find the suboption
 			const [subCommand, subOptionsLevel] = this.getSubCommand(levelOptions);
-			if(subCommand != this) return subCommand.execute(cmdData, subOptionsLevel);
+			if (subCommand != this) return subCommand.execute(cmdData, subOptionsLevel);
 		}
-		
+
 		//terminus => #execute
 		if (this.security?.isAllowedToUse?.(cmdData.context) != true) {
 			return new EmbedMaker('', cmdData.context.NotAllowedReason || "Sorry you can't do that", { color: 'red' });
 		}
-		
-		if(typeof levelOptions == 'object' && levelOptions.length) {
-			if(typeof this.#executeAttribute == 'function') {
-				return this.#executeAttribute(cmdData, levelOptions);//on est sur d'avoir des arguments
+
+		if (typeof levelOptions == 'object' && levelOptions.length) {
+			if (typeof this.#executeAttribute == 'function') {
+				return this.#executeAttribute(cmdData, levelOptions); //on est sur d'avoir des arguments
 			}
 		}
-		
-		if(typeof this.#execute == 'function') {
+
+		if (typeof this.#execute == 'function') {
 			return this.#execute(cmdData, levelOptions);
 		}
 		return this.getHelpDescription(cmdData.context);
@@ -256,38 +271,43 @@ class CommandExtendable extends CommandBase {
 		//TODO: if(this.constructor == CommandSub) return this;//un SUB_COMMAND n'a que des CommandAttribute qui peuvent pas s'executer
 		const subOptions = [...levelOptions];
 		const subOption = subOptions.shift();
-		if(!subOption) return [this, levelOptions];
-		for(const subCommand of (this.options || [])) {
-			if(subCommand.isCommand(subOption)) {
-				if(CommandAttribute.Types.includes(subCommand.type)) {
+		if (!subOption) return [this, levelOptions];
+		for (const subCommand of this.options || []) {
+			if (subCommand.isCommand(subOption)) {
+				if (CommandAttribute.Types.includes(subCommand.type)) {
 					//seul les type = 0 et 1 qui doivent s'executer !
 					return [this, levelOptions];
 				}
 				return subCommand.getSubCommand(subOptions);
 			}
 		}
-		if(process.env.WIPOnly) {
+		if (process.env.WIPOnly) {
 			console.warn(`Option '${subOption.name || subOption.value}' not found in '/${this.commandLine}'`);
 		}
 		return [this, levelOptions];
 	}
 }
 
-
-
 export default class CommandStored extends CommandExtendable {
-	get type() { return ApplicationCommandOptionType.INTERACTION; }
+	get type() {
+		return ApplicationCommandOptionType.INTERACTION;
+	}
 	/**
 	 * @param {number} type ApplicationCommandOptionType
 	 */
 	isAllowedOptionType(type) {
-		return [ ApplicationCommandOptionType.SUB_COMMAND, ApplicationCommandOptionType.SUB_COMMAND_GROUP, ...CommandAttribute.Types ].includes(type);
+		return [ApplicationCommandOptionType.SUB_COMMAND, ApplicationCommandOptionType.SUB_COMMAND_GROUP, ...CommandAttribute.Types].includes(type);
 	}
 	#interactionInterface;
-		get interaction() { return this.#interactionInterface; };
-		enableInteraction(enabled = true) { this.#interactionInterface = enabled; return this; };
-	
-	#filename; get filename() { return this.#filename; }
+	get interaction() {
+		return this.#interactionInterface;
+	}
+	enableInteraction(enabled = true) {
+		this.#interactionInterface = enabled;
+		return this;
+	}
+
+	filename;
 
 	/**
 	 * @param {{name:string, description:string, type:number, default:boolean, required:boolean, options:*[]}} commandConfig The config of the command (like Discord format)
@@ -295,52 +315,61 @@ export default class CommandStored extends CommandExtendable {
 	 */
 	constructor(commandConfig, filename) {
 		super(commandConfig);
-		this.#interactionInterface = commandConfig.interaction;//enable interactions
-		
-		if(!commandConfig.security) {
+		this.#interactionInterface = commandConfig.interaction; //enable interactions
+
+		if (!commandConfig.security) {
 			console.warn(`Command '${this.commandLine}' has no security`.yellow);
 		}
-		if(this.security.wip) {
-			console.warn(`Command /${this.name} is WIP`.yellow)
+		if (this.security.wip) {
+			console.warn(`Command /${this.name} is WIP`.yellow);
 		}
 
-		this.#filename = filename;
+		this.filename = filename;
 	}
 
 	get allowedPlacesToCreateInteraction() {
-		if(this.interaction != true) { return SecurityPlaces.NONE; }
+		if (this.interaction != true) return SecurityPlaces.NONE;
 		return this.security.place;
 	}
 
 	get JSON() {
 		//the JSON Param used by the Discord API
-		return { data: super.JSON }
+		return { data: super.JSON };
 	}
 }
 
 class CommandGroup extends CommandExtendable {
-	get type() { return ApplicationCommandOptionType.SUB_COMMAND_GROUP; }
+	get type() {
+		return ApplicationCommandOptionType.SUB_COMMAND_GROUP;
+	}
 	/**
 	 * @param {number} commandOptionType ApplicationCommandOptionType
 	 */
-	isAllowedOptionType(commandOptionType) { return commandOptionType == ApplicationCommandOptionType.SUB_COMMAND; }
+	isAllowedOptionType(commandOptionType) {
+		return commandOptionType == ApplicationCommandOptionType.SUB_COMMAND;
+	}
 }
 
 class CommandSub extends CommandExtendable {
-	get type() { return ApplicationCommandOptionType.SUB_COMMAND; }
+	get type() {
+		return ApplicationCommandOptionType.SUB_COMMAND;
+	}
 	/**
 	 * @param {number} commandOptionType ApplicationCommandOptionType
 	 */
-	isAllowedOptionType(commandOptionType) { return CommandAttribute.Types.includes(commandOptionType); }
+	isAllowedOptionType(commandOptionType) {
+		return CommandAttribute.Types.includes(commandOptionType);
+	}
 }
 
-
-
-
 class CommandAttribute extends CommandBase {
-	#type;//type: 3-8
-	get type() { return this.#type; }
-	isAllowedOptionType() { return false; }//aucun autorisé en option
+	#type; //type: 3-8
+	get type() {
+		return this.#type;
+	}
+	isAllowedOptionType() {
+		return false;
+	} //aucun autorisé en option
 	static Types = [
 		ApplicationCommandOptionType.STRING,
 		ApplicationCommandOptionType.INTEGER,
@@ -349,7 +378,7 @@ class CommandAttribute extends CommandBase {
 		ApplicationCommandOptionType.CHANNEL,
 		ApplicationCommandOptionType.ROLE,
 	];
-	choices;//only for String and Integer
+	choices; //only for String and Integer
 
 	/**
 	 * @param {{name:string, description:string, type:number, default:boolean, required:boolean, choices:*[]}} commandConfig The config of the command (like Discord format)
@@ -358,17 +387,17 @@ class CommandAttribute extends CommandBase {
 	constructor(commandConfig, parent) {
 		super(commandConfig, parent);
 		this.#type = commandConfig.type;
-		if(commandConfig.options) console.warn(`CommandAttribute shouldn't have options (in '${this.commandLine}')`.yellow);
+		if (commandConfig.options) console.warn(`CommandAttribute shouldn't have options (in '${this.commandLine}')`.yellow);
 
 		this.choices = commandConfig.choices;
 	}
 	get commandLine() {
 		const parentLine = this.parent ? this.parent.commandLine : undefined;
-		return (parentLine ? parentLine+' ':'') + `[${this.name}]`;
-	};
+		return (parentLine ? parentLine + ' ' : '') + `[${this.name}]`;
+	}
 
 	get JSON() {
-		return { 
+		return {
 			...super.JSON,
 			choices: this.choices,
 		};
@@ -376,11 +405,11 @@ class CommandAttribute extends CommandBase {
 
 	/**
 	 * Is this command match with an other command?
-	 * @param {DiscordInteractionStored} command 
+	 * @param {DiscordInteractionStored} command
 	 */
 	matchWith(command) {
 		if (!super.matchWith(command)) return false;
-		if(this.choices?.length != command.choices?.length) return false;
+		if (this.choices?.length != command.choices?.length) return false;
 		for (const c1 of this.choices || []) {
 			const c2 = command.choices.find(c2 => c2.name == c1.name);
 			if (c1.name != c2.name || c1.value != c2.value) return false;
@@ -397,23 +426,29 @@ class CommandAttribute extends CommandBase {
 	isCommand(option) {
 		//TODO: deprecated, CommandAttribute ne devrait pas pouvoir être executé
 		//or keep it for to be sure for messages...?
-		if(typeof option == 'object' && option.name != undefined) {
-			return super.isCommand(option.name);//avec les interactions
+		if (typeof option == 'object' && option.name != undefined) {
+			return super.isCommand(option.name); //avec les interactions
 		}
 		const value = typeof option == 'object' ? option.value : option;
 		//avec un message on connait que value
-		if(super.isCommand(value)) return true;
+		if (super.isCommand(value)) return true;
 
-		if(!option.possibleTypes) option.possibleTypes = possibleTypesOfValue(value);
-		switch(this.type) {
-			case ApplicationCommandOptionType.USER: return option.possibleTypes.includes('USER');
-			case ApplicationCommandOptionType.CHANNEL: return option.possibleTypes.includes('USER');
-			case ApplicationCommandOptionType.INTEGER: return option.possibleTypes.includes('number');
-			case ApplicationCommandOptionType.BOOLEAN: return option.possibleTypes.includes('boolean');
-			case ApplicationCommandOptionType.STRING: return option.possibleTypes.includes('string');
-			default: return false;//normalement tout le monde passe par 'string' sauf si c'est un type différent !
+		if (!option.possibleTypes) option.possibleTypes = possibleTypesOfValue(value);
+		switch (this.type) {
+			case ApplicationCommandOptionType.USER:
+				return option.possibleTypes.includes('USER');
+			case ApplicationCommandOptionType.CHANNEL:
+				return option.possibleTypes.includes('USER');
+			case ApplicationCommandOptionType.INTEGER:
+				return option.possibleTypes.includes('number');
+			case ApplicationCommandOptionType.BOOLEAN:
+				return option.possibleTypes.includes('boolean');
+			case ApplicationCommandOptionType.STRING:
+				return option.possibleTypes.includes('string');
+			default:
+				return false; //normalement tout le monde passe par 'string' sauf si c'est un type différent !
 		}
-	};
+	}
 }
 
 /**
@@ -422,23 +457,24 @@ class CommandAttribute extends CommandBase {
  * @returns {string[]} Possible Types
  */
 function possibleTypesOfValue(value) {
-	if(typeof value != 'string') return [ typeof value ];
+	if (typeof value != 'string') return [typeof value];
 
-	const types = ['string'];//string est forcément accepté
+	const types = ['string']; //string est forcément accepté
 
-	if(value.match(/^<..?\d{10,20}>$/)) {
+	if (value.match(/^<..?\d{10,20}>$/)) {
 		//format: <.NOMBRE> ou <..NOMBRE> (. pour n'importe quoi), NOMBRE: snowflake avec min: 2015, max: 2154
-		if(value.startsWith('<@')) types.push('USER');
-		else if(value.startsWith('<#')) types.push('CHANNEL');
+		if (value.startsWith('<@')) types.push('USER');
+		else if (value.startsWith('<#')) types.push('CHANNEL');
 		else console.warn(`Target unknow : ${value}`.yellow);
 		//rien pour ApplicationCommandOptionType.ROLE (pour l'instant)
 	}
-	const regexNumber = value.replace('.','').match(/\-?\d+/) || [''];
-	if(typeof value == 'number' || regexNumber[0] == value.replace('.','')) {//nombres : -4.5
+	const regexNumber = value.replace('.', '').match(/\-?\d+/) || [''];
+	if (typeof value == 'number' || regexNumber[0] == value.replace('.', '')) {
+		//nombres : -4.5
 		//TODO future: séparer avec une catégorie double : https://github.com/discord/discord-api-docs/issues/2512
 		types.push('number');
 	}
-	if(['true', 'false', 'vrai', 'faux', 'oui', 'non'].includes(value)) {
+	if (['true', 'false', 'vrai', 'faux', 'oui', 'non'].includes(value)) {
 		types.push('boolean');
 	}
 	return types;
