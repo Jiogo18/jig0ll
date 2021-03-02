@@ -44,19 +44,21 @@ function rollDices(dices = 1, max = 6) {
 }
 
 const specialCalc = [
-	[diceMatch+'>(\\d*)', (match) => rollDices(match).map(v => v > match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+'>=(\\d*)', (match) => rollDices(match).map(v => v >= match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+'=(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+'==(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+'<=(\\d*)', (match) => rollDices(match).map(v => v <= match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+'<(\\d*)', (match) => rollDices(match).map(v => v < match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?>(\\d*)', (match) => rollDices(match).map(v => v > match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?>=(\\d*)', (match) => rollDices(match).map(v => v >= match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?=(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?==(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?<=(\\d*)', (match) => rollDices(match).map(v => v <= match[3] ? v : `~~${v}~~`).join('+')],
+	[diceMatch+' ?<(\\d*)', (match) => rollDices(match).map(v => v < match[3] ? v : `~~${v}~~`).join('+')],
 	[diceMatch, (match) => rollDices(match[1], match[2]).join('+')],
 ]
 
 const basicCalc = [
-	[/~~\d*~~/, _ => ''],
+	[/~~\d*~~/, _ => ''],//deleted number
 	[/(\d*)\*(\d*)/, (match) => parseInt(match[1] || 0) * parseInt(match[2] || 0)],
+	[/(\d*)\/(\d*)/, (match) => parseInt(match[1] || 0) / parseInt(match[2] || 0)],
 	[/(\d*)\+(\d*)/, (match) => parseInt(match[1] || 0) + parseInt(match[2] || 0)],
+	[/(\d*)\-(\d*)/, (match) => parseInt(match[1] || 0) - parseInt(match[2] || 0)],
 ]
 
 
