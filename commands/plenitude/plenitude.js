@@ -5,11 +5,13 @@ import { sendWeatherRequest } from '../meteo.js';
 import { countInvitesPerUserSorted, embedInvitesList, getInvites } from '../miscellaneous/invit.js';
 import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
 import { Guild, User } from 'discord.js';
+import { guild_plenitude } from '../../bot/command/security.js';
 var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { createTable: true, insertIfNotExist: true }, 10000);
 var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { createTable: true, insertIfNotExist: true }, 10000);
 
 const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
-const PlenMonths=["Pluviôse","Ventôse","Germinal","Floréal","Prairial","Messidor","Thermidor","Fructidor","Vendémiaire","Brumaire","Frimaire","Nivôse"];
+const PlenMonths = ["Pluviôse", "Ventôse", "Germinal", "Floréal", "Prairial", "Messidor", "Thermidor", "Fructidor", "Vendémiaire", "Brumaire", "Frimaire", "Nivôse"];
+const plenitudeGuildId = '626121178163183628';
 
 
 const PlenCity = {
@@ -66,22 +68,27 @@ export default {
 		name: 'invite_score',
 		description: "Affiche le score des invitations",
 		type: 1,
+		security: {
+			/** @param {CommandContext} context */
+			isAllowedToUse(context) { return guild_plenitude.includes(context.guild_id); }
+		},
 		execute: getInviteScore
 	}, {
 		name: 'invite_end',
 		description: "Affiche le score des invitations",
 		type: 1,
-			security: {
+		security: {
 			/**
-			 * @param {CommandContext} context The context where you want to use this
+			 * @param {CommandContext} context
 			 */
 			isAllowedToUse(context) {
-					const user = context.guild?.members?.cache.get(context.author?.id);//si on veut passer en fetch il faut TOUT passer en async...
-					//donc dans cette situation là il faut que l'user envoie au un message avant
-					if (!user) return false;
-					const userRole = user.roles?.cache;
-					//Maître du Jeu || admin || Jiogo
-					return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
+				if(!guild_plenitude.includes(context.guild_id)) return false;
+				const user = context.guild?.members?.cache.get(context.author?.id);//si on veut passer en fetch il faut TOUT passer en async...
+				//donc dans cette situation là il faut que l'user envoie au un message avant
+				if (!user) return false;
+				const userRole = user.roles?.cache;
+				//Maître du Jeu || admin || Jiogo
+				return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
 			}
 		},
 		execute: closeInvitesCompetition
@@ -170,8 +177,7 @@ function countInvitedMembers(invites) {
  * @param {ReceivedCommand} cmdData
  */
 async function getInviteScore(cmdData) {
-	//const guild = cmdData.guild;
-	const guild = cmdData.bot.guilds.cache.get('626121178163183628');
+	const guild = cmdData.bot.guilds.cache.get(plenitudeGuildId);
 
 	/**
 	 * Number of uses of invites created by an user since the copetition has started
@@ -210,8 +216,7 @@ function isInvitesAllowedUser(user) {
  * @param {ReceivedCommand} cmdData
  */
 async function closeInvitesCompetition(cmdData) {
-	//const guild = cmdData.guild;
-	const guild = cmdData.bot.guilds.cache.get('626121178163183628');
+	const guild = cmdData.bot.guilds.cache.get(plenitudeGuildId);
 
 	/**
 	 * Number of uses of invites created by an user since the copetition has started

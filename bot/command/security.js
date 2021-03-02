@@ -2,13 +2,14 @@ import config from '../config.js';
 import { CommandContext } from './received.js';
 
 
-const guild_beta_tester = [ config.guild_test ];
-const channel_beta_only = [ '541315862016032788' ];
+export const guild_beta_tester = [ config.guild_test, '815995510178447422' ];
+export const channel_beta_only = [ '541315862016032788' ];
+export const guild_plenitude = [ config.guild_test, '815995510178447422', '626121178163183628' ];//plenitude invite_score
 
-const user_beta_tester = [ config.jiogo18 ];
-const user_high_privilege = [ config.jiogo18 ];// cut command
-const user_plenitude_privilege = [ config.jiogo18, config.rubis ];//plenitude_location
-const user_private = [ config.jiogo18, config.jig0ll ];
+export const user_beta_tester = [ config.jiogo18 ];
+export const user_high_privilege = [ config.jiogo18 ];// cut command
+export const user_plenitude_privilege = [ config.jiogo18, config.rubis ];//plenitude_location
+export const user_private = [ config.jiogo18, config.jig0ll ];
 
 
 export const SecurityPlaces = {
