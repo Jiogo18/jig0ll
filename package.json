@@ -1,27 +1,27 @@
 {
-  "name": "bot_jig0ll",
-  "version": "1.2.3",
-  "description": "Bot à tout faire",
-  "main": "index.js",
-  "scripts": {
-    "test": "node index.js WIP",
-    "start": "node index.js",
-    "web": "node web.js"
-  },
-  "author": "Jiogo18",
-  "license": "ISC",
-  "dependencies": {
-    "colors": "^1.4.0",
-    "discord.js": "^12.5.1",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "pg": "^8.5.1",
-    "serve-favicon": "^2.5.0"
-  },
-  "homepage": "https://github.com/Jiogo18/jig0ll",
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Jiogo18/jig0ll"
-  }
+	"name": "bot_jig0ll",
+	"version": "1.2.3",
+	"description": "Bot à tout faire",
+	"main": "index.js",
+	"scripts": {
+		"test": "node index.js WIP",
+		"start": "node index.js",
+		"web": "node web.js"
+	},
+	"author": "Jiogo18",
+	"license": "ISC",
+	"dependencies": {
+		"colors": "^1.4.0",
+		"discord.js": "^12.5.1",
+		"dotenv": "^8.2.0",
+		"express": "^4.17.1",
+		"pg": "^8.5.1",
+		"serve-favicon": "^2.5.0"
+	},
+	"homepage": "https://github.com/Jiogo18/jig0ll",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Jiogo18/jig0ll"
+	}
 }

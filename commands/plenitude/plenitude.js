@@ -9,10 +9,9 @@ import { guild_plenitude } from '../../bot/command/security.js';
 var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { createTable: true, insertIfNotExist: true }, 10000);
 var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { createTable: true, insertIfNotExist: true }, 10000);
 
-const PlenWeekdays=["Primidi","Duodi","Tridi","Quartidi","Quintidi","Sextidi","Septidi"];
-const PlenMonths = ["Pluviôse", "Ventôse", "Germinal", "Floréal", "Prairial", "Messidor", "Thermidor", "Fructidor", "Vendémiaire", "Brumaire", "Frimaire", "Nivôse"];
+const PlenWeekdays = ['Primidi', 'Duodi', 'Tridi', 'Quartidi', 'Quintidi', 'Sextidi', 'Septidi'];
+const PlenMonths = ['Pluviôse', 'Ventôse', 'Germinal', 'Floréal', 'Prairial', 'Messidor', 'Thermidor', 'Fructidor', 'Vendémiaire', 'Brumaire', 'Frimaire', 'Nivôse'];
 const plenitudeGuildId = '626121178163183628';
-
 
 const PlenCity = {
 	value: kvPlenitude.getRow('PlenCity'),
@@ -21,78 +20,83 @@ const PlenCity = {
 	 * Get the location of Plénitude
 	 * @returns {Promise<string>} The current location
 	 */
-	get: async function () { return await this.value.get() || 'Chamonix-Mont-Blanc'; },
+	get: async _ => (await PlenCity.value.get()) || 'Chamonix-Mont-Blanc',
 	/**
 	 * Change the location of Plénitude
 	 * @param {string} location Where you want to move
 	 * @returns {Promise<string>} The new location
 	 */
 	set: async function (location) {
-		await this.value.set(location);
-		const answer = await this.get();
+		await PlenCity.value.set(location);
+		const answer = await PlenCity.get();
 		console.log(`La ville de Plénitude est maintenant ${answer}`);
 		return answer;
-	}
-}
+	},
+};
 
 /**
  * Get the location of Plénitude
  */
-export async function getLocation() { return PlenCity.get(); }
+export const getLocation = PlenCity.get;
 /**
  * Change the location of Plénitude
  * @param {string} l The new location
  */
-export async function setLocation(l) { return PlenCity.set(l); }
+export const setLocation = PlenCity.set;
 
 export default {
 	name: 'plénitude',
-	description: "Commandes de Plénitude",
+	description: 'Commandes de Plénitude',
 	interaction: true,
 
 	security: {
 		place: 'public',
 	},
 
-	options: [{
-		name: 'météo',
-		description: 'La météo actuelle de Plénitude',
-		type: 1,
-		execute: getMeteo
-	},{
-		name: 'info',
-		description: 'Informations sur Plénitude',
-		type: 1,
-		execute: getInfo
-	}, {
-		name: 'invite_score',
-		description: "Affiche le score des invitations",
-		type: 1,
-		security: {
-			/** @param {CommandContext} context */
-			isAllowedToUse(context) { return guild_plenitude.includes(context.guild_id); }
+	options: [
+		{
+			name: 'météo',
+			description: 'La météo actuelle de Plénitude',
+			type: 1,
+			execute: getMeteo,
 		},
-		execute: getInviteScore
-	}, {
-		name: 'invite_end',
-		description: "Affiche le score des invitations",
-		type: 1,
-		security: {
-			/**
-			 * @param {CommandContext} context
-			 */
-			isAllowedToUse(context) {
-				if(!guild_plenitude.includes(context.guild_id)) return false;
-				const user = context.guild?.members?.cache.get(context.author?.id);//si on veut passer en fetch il faut TOUT passer en async...
-				//donc dans cette situation là il faut que l'user envoie au un message avant
-				if (!user) return false;
-				const userRole = user.roles?.cache;
-				//Maître du Jeu || admin || Jiogo
-				return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
-			}
+		{
+			name: 'info',
+			description: 'Informations sur Plénitude',
+			type: 1,
+			execute: getInfo,
 		},
-		execute: closeInvitesCompetition
-	}],
+		{
+			name: 'invite_score',
+			description: 'Affiche le score des invitations',
+			type: 1,
+			security: {
+				/** @param {CommandContext} context */
+				isAllowedToUse: context => guild_plenitude.includes(context.guild_id),
+			},
+			execute: getInviteScore,
+		},
+		{
+			name: 'invite_end',
+			description: 'Affiche le score des invitations',
+			type: 1,
+			security: {
+				/**
+				 * @param {CommandContext} context
+				 */
+				isAllowedToUse(context) {
+					if (!guild_plenitude.includes(context.guild_id)) return false;
+					const user = context.guild?.members?.cache.get(context.author?.id); //si on veut passer en fetch il faut TOUT passer en async...
+					//donc dans cette situation là il faut que l'user envoie au un message avant
+					if (!user) return false;
+					const userRole = user.roles?.cache;
+					//Maître du Jeu || admin || Jiogo
+					return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
+				},
+			},
+			execute: closeInvitesCompetition,
+		},
+	],
 
 	execute: getInfo,
 
@@ -103,19 +107,14 @@ export default {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
 	},
-}
-
-
+};
 
 function makeMessage(description) {
 	return new EmbedMaker('Plénitude', description);
 }
 function makeError(description) {
-	return new EmbedMaker('Plénitude', description,  { color: 'red' });
+	return new EmbedMaker('Plénitude', description, { color: 'red' });
 }
-
-
-
 
 /**
  * Get the meteo at Plénitude
@@ -130,8 +129,8 @@ export async function getMeteo() {
  */
 function onWeatherPlenitude(data) {
 	console.log(`onWeatherPlenitude : PlenCity is "${data.name}"`);
-	data.name = "Plénitude";
-	data.date = getFrenchDate(data.dt*1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
+	data.name = 'Plénitude';
+	data.date = getFrenchDate(data.dt * 1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
 }
 /**
  * Get the generic info of Plénitude
@@ -142,9 +141,6 @@ function getInfo() {
 	L'île en elle-même présente un climat tempéré.`);
 }
 
-
-
-
 /**
  * Get the invites of the mounth per user
  * @param {Guild} guild The guild with the invites
@@ -154,8 +150,8 @@ async function getCurrentInviteList(guild, maxInvits = -1) {
 	var invites = await getInvites(guild);
 	if (!invites) return;
 	//remove the old count from the invite (uses since the competition has started)
-	await Promise.all(invites.map(async i => i.uses -= (await kvInvite.get(i.code)) || 0));
-	
+	await Promise.all(invites.map(async i => (i.uses -= (await kvInvite.get(i.code)) || 0)));
+
 	const invitesSorted = countInvitesPerUserSorted(invites);
 	if (maxInvits > -1) invitesSorted = invitesSorted.slice(0, maxInvits);
 	return invitesSorted;
@@ -167,10 +163,9 @@ async function getCurrentInviteList(guild, maxInvits = -1) {
  */
 function countInvitedMembers(invites) {
 	var count = 0;
-	invites.forEach(i => count += i.uses);
+	invites.forEach(i => (count += i.uses));
 	return count;
 }
-
 
 /**
  * Get the number of invites of the month per user
@@ -189,16 +184,14 @@ async function getInviteScore(cmdData) {
 		if (!invitesSorted?.length) {
 			return makeMessage(`Il n'y a pas d'invitations dans ${guild.name}`);
 		}
-	}
-	catch (err) {
+	} catch (err) {
 		console.error(`Error with getCurrentInviteList`.red, err);
 		return makeError(err);
 	}
-	
 
 	var countNewInvit = countInvitedMembers(invitesSorted);
 	const countDesc = await embedInvitesList(invitesSorted, cmdData.guild);
-	const dateResetmsec = parseInt(await kvPlenitude.get('InvitResetTime') || 0) || 0;
+	const dateResetmsec = parseInt(await kvPlenitude.get('InvitResetTime')) || 0;
 	const dateReset = getFrenchDate(new Date(dateResetmsec));
 	return makeMessage([`Il y a ${countNewInvit} nouveaux membres depuis ${dateReset} :`, ...countDesc].join('\n'));
 }
@@ -208,7 +201,7 @@ async function getInviteScore(cmdData) {
  * @param {User} user
  */
 function isInvitesAllowedUser(user) {
-	return ! ['344183028366442497', '302050872383242240'].includes(user?.id);
+	return !['344183028366442497', '302050872383242240'].includes(user?.id);
 }
 
 /**
@@ -228,24 +221,21 @@ async function closeInvitesCompetition(cmdData) {
 		if (!invitesSorted?.length) {
 			return makeMessage(`Il n'y a pas d'invitations sur ce serveur`);
 		}
-	}
-	catch (err) {
+	} catch (err) {
 		return makeError(err);
 	}
 
-	const dateResetmsec = parseInt(await kvPlenitude.get('InvitResetTime') || 0) || 0;
+	const dateResetmsec = parseInt((await kvPlenitude.get('InvitResetTime')) || 0) || 0;
 	const dateReset = getFrenchDate(new Date(dateResetmsec));
 
-
-
 	var winners = invitesSorted.filter(i => isInvitesAllowedUser(i.user));
-	
+
 	const bestScore = winners?.[0]?.uses;
-	if (bestScore == 0) {// si le meilleur score est 0 alors personne n'a gagné
+	if (bestScore == 0) {
+		// si le meilleur score est 0 alors personne n'a gagné
 		return makeMessage(`Il n'y a pas de gagnant ce mois-ci, il n'y a pas eu de nouveau membre depuis ${dateReset}.`);
 	}
 	winners = winners.filter(i => i.uses == bestScore);
-
 
 	var winnerStr;
 	switch (winners?.length) {
@@ -260,15 +250,13 @@ async function closeInvitesCompetition(cmdData) {
 			winnerStr = `Ce mois-ci nous avons ${winners.length} gagnants : ${winners.join(', ')} !`;
 			break;
 	}
-	
-	
+
 	//and set the current uses in the database
 	const invites = await getInvites(guild);
 	await Promise.all(invites.map(async i => await kvInvite.set(i.code, i.uses)));
-	
+
 	kvPlenitude.set('InvitResetTime', Date.now());
-	
-	
+
 	const countDesc = await embedInvitesList(invitesSorted.splice(0, 5), cmdData.guild);
 	return makeMessage([`${winnerStr}\n${countInvitedMembers(invitesSorted)} nouveaux membres ont rejoints le serveur\n\nLes 5 premiers sont :`, ...countDesc].join('\n'));
 }
