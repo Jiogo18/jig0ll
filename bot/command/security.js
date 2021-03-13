@@ -80,7 +80,7 @@ export class SecurityCommand {
 	#securityPlace;
 	get place() {
 		if (this.wip && this.#securityPlace == SecurityPlaces.PUBLIC) return SecurityPlaces.PRIVATE;
-		return this.#securityPlace || (this.parent && this.parent.place) || SecurityPlaces.NONE;
+		return this.#securityPlace;
 	}
 
 	#wip;
@@ -150,7 +150,7 @@ export class SecurityCommand {
 				return false;
 			}
 		}
-
+		
 		return this.#isAllowedToUse2(context);
 	}
 	/**
@@ -166,7 +166,7 @@ export class SecurityCommand {
 			case SecurityPlaces.NONE:
 				return false;
 			case undefined:
-				return false;
+				return this.parent != undefined;//undefined = parent place
 			default:
 				console.warn(`isAllowedToUse place unknow for ${this.name} : ${this.place}`);
 				return false;
