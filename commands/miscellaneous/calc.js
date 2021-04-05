@@ -82,7 +82,7 @@ const transfoCalc = [
 		[/ +/, () => ' '],
 	],
 	[
-		[/[\-\+\*\/]*~~.*~~/, () => '', 'before'], //deleted number
+		[`[${op}]*~~[\\d\\. ${op}]*~~`, () => '', 'before'], //deleted number
 	],
 	[
 		[`\\(n: [\\d \\.${op}]*\\)`, match => match[0].match(new RegExp(`${n}+`, 'g'))?.length || 0], //deleted number
