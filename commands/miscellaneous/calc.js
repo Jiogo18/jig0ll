@@ -35,40 +35,125 @@ export default {
 
 const getRandomInt = max => Math.floor(Math.random() * Math.floor(max));
 
-const diceMatch = '(\\d*)d(\\d*)';
+const n = '[\\d\\.]';
+const op = '\\+\\-\\*\\/';
 function rollDices(dices = 1, max = 6) {
-	return new Array(parseInt(dices || 1)).fill(0).map(() => getRandomInt(parseInt(max || 6)) + 1);
+	return new Array(parseFloat(dices || 1)).fill(0).map(() => getRandomInt(parseFloat(max || 6)) + 1);
+}
+function listCompare(strOperator, funcOperator) {
+	// 10d6 >= 3 = (n: 5 6 4 ~~1~~ ~~1~~ 3 6 3 4 6) = 8
+	return [
+		`(\\d[\\d \\.${op}]+) *${strOperator} *(${n}+)`,
+		match => {
+			return (
+				'(n: ' +
+				match[1]
+					.replace(/ +/, ' ')
+					.replace(/^ /, '')
+					.replace(/ $/, '')
+					.split(' ')
+					.map(v => parseFloat(v) || 0)
+					.map(v => (funcOperator(v, match[2]) ? v : `~~${v}~~`))
+					.join(' ') +
+				')'
+			);
+		},
+	];
+}
+function pairOperation(strOperator, funcOperator) {
+	return [
+		`(\\-?${n}+) *\\${strOperator} *([\\+\\-]?${n}*)`,
+		match => funcOperator(parseFloat(match[1]) || undefined, parseFloat(match[2]) || undefined),
+	];
 }
 
-// prettier-ignore
-const specialCalc = [
-	[diceMatch+' ?>(\\d*)', (match) => rollDices(match).map(v => v > match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+' ?>=(\\d*)', (match) => rollDices(match).map(v => v >= match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+' ?=(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+' ?==(\\d*)', (match) => rollDices(match).map(v => v == match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+' ?<=(\\d*)', (match) => rollDices(match).map(v => v <= match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch+' ?<(\\d*)', (match) => rollDices(match).map(v => v < match[3] ? v : `~~${v}~~`).join('+')],
-	[diceMatch, (match) => rollDices(match[1], match[2]).join('+')],
-]
-// prettier-ignore
-const basicCalc = [
-	[/~~\d*~~/, _ => ''],//deleted number
-	[/(\d*)\*(\d*)/, (match) => parseInt(match[1] || 0) * parseInt(match[2] || 0)],
-	[/(\d*)\/(\d*)/, (match) => parseInt(match[1] || 0) / parseInt(match[2] || 0)],
-	[/(\d*)\+(\d*)/, (match) => parseInt(match[1] || 0) + parseInt(match[2] || 0)],
-	[/(\d*)\-(\d*)/, (match) => parseInt(match[1] || 0) - parseInt(match[2] || 0)],
-]
+const transfoCalc = [
+	[[`(${n}*)d(${n}*)`, match => rollDices(match[1], match[2]).join(' ')]],
+	[
+		// transfo sign
+		[/\+\+/, () => '+'],
+		[/\-\-/, () => '+'],
+		[/\+\-/, () => '-)'],
+		[/\-\+/, () => '-'],
+		[/\+ +/, () => '+'],
+		[/\- +/, () => '-'],
+		[/\* +/, () => '*'],
+		[/\/ +/, () => '/'],
+		[/ +/, () => ' '],
+	],
+	[
+		[/[\-\+\*\/]*~~.*~~/, () => '', 'before'], //deleted number
+	],
+	[
+		[`\\(n: [\\d \\.${op}]*\\)`, match => match[0].match(new RegExp(`${n}+`, 'g'))?.length || 0], //deleted number
+	],
+	[
+		// specialCalc
+		[...listCompare('>', (a = 0, b = 0) => a > b), 'after'],
+		listCompare('>=', (a = 0, b = 0) => a >= b),
+		listCompare('==?', (a = 0, b = 0) => a == b),
+		listCompare('<=', (a = 0, b = 0) => a <= b),
+		listCompare('<', (a = 0, b = 0) => a < b),
+	],
+	[
+		// transfoMult
+		pairOperation('/', (a = 0, b = 0) => a / b), // 1 / 2 * 3
+		pairOperation('*', (a = 0, b = 0) => a * b),
+	],
+	[
+		// transfoAddition
+		pairOperation('+', (a = 0, b = 0) => a + b),
+		pairOperation('-', (a = 0, b = 0) => a - b),
+		pairOperation(' ', (a = 0, b = 0) => a + b),
+	],
+	[
+		// transfoAddition
+		[/\( *\+? *(\d+) *\)/, match => match[1]],
+		[/\( *\- *(\d+) *\)/, match => -match[1]],
+		//[/\([ \+\-\*\/]*\)/, () => 0],
+	],
+];
 
 function calculate(line) {
-	line = line.replace(/(\d) +(\d)/g, '$1+$2').replace(/ /g, '');
+	line = line.replace(/^ */, '').replace('&gt;', '>').replace('&lt;', '<');
+	var lineBeforeTransfo = line; // = line.replace(/(\d) +(\d)/g, '$1+$2').replace(/ /g, '');
 	//`!r 1++2 * 5` donne `1+2*5`
+	//console.log('');
+	var previousLine;
+	var i = 0;
+	do {
+		if (i == 1) {
+			// déjà un tour de fait
+			lineBeforeTransfo = line;
+		}
+		//console.log('lineBeforeTransfo', lineBeforeTransfo);
+		previousLine = line;
+		for (const transfoGrp of transfoCalc) {
+			const lineTransformed = applyTransfo(line, transfoGrp);
+			if (lineTransformed != line) {
+				//console.log('transfo done', lineTransformed, transfoGrp);
+				if (transfoGrp.filter(t => t[2] === 'after').length != 0) {
+					// l'une des transfos demande l'update avec la nouvelle version
+					lineBeforeTransfo = lineTransformed;
+				} else if (transfoGrp.filter(t => t[2] === 'before').length != 0) {
+					// l'une des transfos demande l'update avec la version précédente
+					lineBeforeTransfo = line;
+				}
+				line = lineTransformed;
+				break;
+			}
+		}
+		i++;
+	} while (line != previousLine && line.length < 100000);
 
-	line = applyTransfo(line, specialCalc);
-	var result = applyTransfo(line, basicCalc);
+	var result = line;
+	if (result == '') result = 0;
 
 	//console.log('result:', { line, result});
-
-	return `(${line}) = ${result}`;
+	if (i > 1) {
+		return `${lineBeforeTransfo} = ${result}`;
+	}
+	return `${result}`;
 }
 
 function applyTransfo(line, rules) {
