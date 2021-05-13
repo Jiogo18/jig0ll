@@ -3,6 +3,8 @@ const meteoColor = 3447003;
 import { getMeteo as getMeteoPlenitude } from './plenitude/plenitude.js';
 import { EmbedMaker } from '../lib/messageMaker.js';
 import { getFrenchDate, getFrenchTime } from '../lib/date.js';
+const lunarDuration = (((29 * 24 + 12) * 60 + 44) * 60 + 2.9) * 1000;
+const lunarPhaseRef = 1623276000000; // nouvelle lune Le 10/06/2021 à  12:54:05
 
 export default {
 	name: 'météo',
@@ -136,5 +138,47 @@ function getDescription(embed, data) {
 		embed.addField('Présence du soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
 	}
 
+	embed.addField('Phase de la lune', getMoonState(), true);
+
 	return embed;
+}
+
+/**
+ * Get the current moon phase
+ * @returns {String}
+ */
+function getMoonState() {
+	const time = Date.now();
+	const lunarRel = time - lunarPhaseRef;
+	const lunarTime = lunarRel - Math.floor(lunarRel / lunarDuration) * lunarDuration;
+
+	const lunarProgress = lunarTime / lunarDuration;
+	const croissant = lunarProgress < 0.5;
+	const partVisible = croissant ? lunarProgress * 2 : (1 - lunarProgress) * 2;
+	//console.log({ lunarProgress, croissant, partVisible, lunarDay: lunarTime / 86400000 });
+	if (croissant) {
+		if (partVisible < 0.03) {
+			return '🌑 Nouvelle lune';
+		} else if (partVisible < 0.35) {
+			return '🌒 Premier croissant';
+		} else if (partVisible < 0.66) {
+			return '🌓 Premier quartier';
+		} else if (partVisible < 0.97) {
+			return '🌔 Lune gibbeuse';
+		} else {
+			return '🌕 Pleine lune';
+		}
+	} else {
+		if (0.97 <= partVisible) {
+			return '🌕 Pleine lune';
+		} else if (0.66 <= partVisible) {
+			return '🌖 Lune gibbeuse';
+		} else if (0.35 <= partVisible) {
+			return '🌗 Dernier quartier';
+		} else if (0.03 <= partVisible) {
+			return '🌘 Dernier croissant';
+		} else {
+			return '🌑 Nouvelle lune';
+		}
+	}
 }
