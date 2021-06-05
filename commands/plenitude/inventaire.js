@@ -71,6 +71,7 @@ const invo = {
 export default {
 	name: 'inventaire',
 	description: 'Un inventaire',
+	alts: ['inv'],
 
 	interaction: true,
 	security: {
@@ -107,21 +108,6 @@ export default {
 			options: [{ ...invo.id_target, required: false }],
 			execute: cmdData => executeOpen(cmdData, cmdData.author.toString()),
 			executeAttribute: createExecuteLink(executeOpen),
-		},
-		{
-			name: 'edit',
-			description: "Modifier l'inventaire",
-			type: 1,
-			options: [
-				invo.id_target,
-				{
-					name: 'data',
-					description: '[DEBUG] Changer le nom du premier item',
-					type: 3,
-					required: true,
-				},
-			],
-			executeAttribute: createExecuteLink(executeEdit),
 		},
 		{
 			name: 'give',
@@ -381,25 +367,6 @@ async function executeOpen(cmdData, id_prop) {
 						.map(i => `${i.count || 1}x ${i.name}`)
 						.join('\n'))
 	);
-}
-
-/**
- * @param {ReceivedCommand} cmdData
- * @param {string} id
- * @param {string} item_name
- */
-async function executeEdit(cmdData, id, item_name) {
-	const md = await getMessageData(id, true);
-
-	if (!invMgr.isPorp(md, cmdData.author)) return messages.cantEdit(md);
-	if (!item_name) return messages.badName(item_name);
-
-	const inventory_source = md.data.inventaire;
-
-	inventory_source[0] = { name: item_name, count: 1 };
-
-	md.save();
-	return makeMessage('Message modifié !');
 }
 
 /**
