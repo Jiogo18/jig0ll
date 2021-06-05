@@ -7,7 +7,13 @@ import DiscordBot from '../bot.js';
 
 export default class CommandManager {
 	bot;
+	/**
+	 * @type {Collection<string,CommandStored>}
+	 */
 	commands = new Collection();
+	/**
+	 * @type {Collection<string,CommandStored>}
+	 */
 	altCommands = new Collection();
 
 	/**

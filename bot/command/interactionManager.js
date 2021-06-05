@@ -61,9 +61,10 @@ export default class InteractionManager {
 		const targetId = target.path.match(/\d+/)?.[0];
 		const online = await this.getCommandOnline(command.name, targetId);
 		const matchWithOnline = online ? command.matchWith(online) : false;
+
 		if (matchWithOnline) {
 			// console.log(`Interaction '${command.name}' existe déjà => pas postée`.gray);
-			return true;
+			return 'match';
 		}
 		if (online) {
 			console.debug(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
@@ -95,6 +96,8 @@ export default class InteractionManager {
 			private: 0,
 			wip: 0,
 			notposted: 0,
+			matched: 0,
+			posted: 0,
 		};
 
 		const commandsToPost = this.commands.array().filter(command => {
@@ -120,7 +123,8 @@ export default class InteractionManager {
 
 				//if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
 
-				if (await this.postCommand(command, target)) {
+				const result = await this.postCommand(command, target);
+				if (result) {
 					if (command.wip) c.wip++;
 					switch (target) {
 						case targetPrivate:
@@ -130,6 +134,8 @@ export default class InteractionManager {
 							c.public++;
 							break;
 					}
+					if (result === 'match') c.match++;
+					else c.posted++;
 				} else {
 					c.notposted++;
 				}
@@ -140,7 +146,7 @@ export default class InteractionManager {
 		c.total = commandsToPost.length;
 		//pas de différence de vitesse : 1246/1277/1369/1694/2502 ms (avec Promise) contre 1237/1267/1676/1752/2239 ms (avec await)
 		console.log(
-			`Posted ${c.total} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted in ${Date.now() - start} msec`
+			`Posted ${c.posted} commands : ${c.public} public, ${c.private} private, ${c.wip} wip, ${c.notposted} not posted in ${Date.now() - start} msec`
 				.green
 		);
 
