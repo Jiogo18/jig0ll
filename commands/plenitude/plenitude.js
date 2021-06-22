@@ -121,7 +121,7 @@ export default {
 	/**
 	 * @param {DiscordBot} bot
 	 */
-	setBot: bot => {
+	setBot: async bot => {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
 
