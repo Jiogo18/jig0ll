@@ -182,9 +182,14 @@ const messages = {
 	cantOpen: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas voir son contenu`),
 	cantEdit: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas modifier son contenu`),
 	badName: name => makeError(`Nom invalide : ${name}`),
-	itemInfo: (item, inv_id) => makeMessage(`Il y a maintenant ${item.count}x ${item.name} dans l'inventaire de ${inv_id}`),
-	itemSmartInfo: (item, inv_id) => `Il y a maintenant ${item.count}x ${item.name} dans l'inventaire de ${inv_id}`,
-	noItem: (item, inv_id) => makeError(`Il n'y a pas pas ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
+	itemInfo: (item, inv_id) => makeMessage(`Il y a maintenant ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
+	itemSmartInfo: (item_name, item_count = 0, inv_id) => {
+		if (item_count === 0) {
+			return `Il n'y a plus aucun ${item_name} dans l'inventaire de ${inv_id}`;
+		}
+		return `Il y a maintenant ${item_count}x ${item_name} dans l'inventaire de ${inv_id}`;
+	},
+	noItem: (item, inv_id) => makeError(`Il n'y a pas ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
 	cantAddItem: (item, inv_id) => makeError(`Vous ne pouvez pas ajouter ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
 };
 
@@ -465,8 +470,8 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 	const item_target = invMgr.getItemByName(inventory_target, item_name);
 	return makeMessage(
 		`Vous avez déplacé ${count}x ${item_name} de ${id_source} vers ${id_target}.\n` +
-			messages.itemSmartInfo(item_source, id_source) +
+			messages.itemSmartInfo(item_name, item_source?.count, id_source) +
 			'\n' +
-			messages.itemSmartInfo(item_target, id_target)
+			messages.itemSmartInfo(item_name, item_target?.count, id_target)
 	);
 }
