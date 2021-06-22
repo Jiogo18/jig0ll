@@ -352,7 +352,7 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 
 	md.data.proprietaire = cmdData.author.toString();
 	await md.save();
-	return makeMessage(`Un bâtiment a été créé pour ${id_prop} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`);
+	return makeMessage(`Un bâtiment a été créé pour ${md.data.proprietaire} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`);
 }
 
 /**
