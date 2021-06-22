@@ -90,16 +90,15 @@ export default {
 			description: 'Créer un bâtiment',
 			type: 1,
 			options: [
-				invo.id_target,
 				{
-					name: 'name_create',
+					name: 'name',
 					description: 'Nom du nouveau bâtiment',
 					type: 3,
 					required: true,
 				},
 			],
 			executeAttribute: (cmdData, levelOptions) =>
-				executeCreateBatiment(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+				executeCreateBatiment(cmdData, levelOptions[0]?.value),
 		},
 		{
 			name: 'open',
@@ -238,6 +237,7 @@ const invMgr = {
 	 * @param {User} user
 	 */
 	isPorp: (md, user) => {
+		return true; // prop is disabled
 		if (!md || !user) return false;
 		if (md.id === user.toString()) return true;
 		if (md.data?.proprietaire === user.toString()) return true;
@@ -335,19 +335,22 @@ async function executeReload(cmdData) {
 
 /**
  * @param {ReceivedCommand} cmdData
- * @param {string} id_prop
  * @param {string} name_batiment
  */
-async function executeCreateBatiment(cmdData, id_prop, name_batiment) {
+async function executeCreateBatiment(cmdData, name_batiment) {
 	if (!name_batiment) {
 		return makeError(`Nom invalide du bâtiment : ${name_batiment}`);
 	}
 	const name = '$' + name_batiment;
 
 	const md = await getMessageData(name, true);
+	if (!md) {
+		console.error(`Impossible de créer le bâtiment ${name}`);
+		return makeError('Impossible de créer le bâtiment, réessayez');
+	}
 	if (md.data.proprietaire) return makeError(`Ce bâtiment existe déjà : ${name}`);
 
-	md.data.proprietaire = id_prop;
+	md.data.proprietaire = cmdData.author.toString();
 	await md.save();
 	return makeMessage(`Un bâtiment a été créé pour ${id_prop} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`);
 }
