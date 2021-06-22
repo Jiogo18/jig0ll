@@ -26,7 +26,7 @@ const PlenMonths = [
 	'Nivôse',
 ];
 const plenitudeGuildId = '626121178163183628';
-var dailyNewsTimer = nullptr;
+var dailyNewsTimer = undefined;
 
 const PlenCity = {
 	value: kvPlenitude.getRow('PlenCity'),
