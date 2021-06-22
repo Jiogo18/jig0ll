@@ -342,14 +342,14 @@ async function executeCreateBatiment(cmdData, id_prop, name_batiment) {
 	if (!name_batiment) {
 		return makeError(`Nom invalide du bâtiment : ${name_batiment}`);
 	}
-	const name = 'b' + name_batiment;
+	const name = '*' + name_batiment;
 
 	const md = await getMessageData(name, true);
 	if (md.data.proprietaire) return makeError(`Ce bâtiment existe déjà : ${name}`);
 
 	md.data.proprietaire = id_prop;
 	await md.save();
-	return makeMessage(`Un bâtiment a été créé pour ${id_prop} : ${name}`);
+	return makeMessage(`Un bâtiment a été créé pour ${id_prop} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`);
 }
 
 /**
