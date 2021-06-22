@@ -121,10 +121,11 @@ export default {
 	/**
 	 * @param {DiscordBot} bot
 	 */
-	setBot: async bot => {
+	setBot: bot => {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
 
+		const channelDailyWeather = await bot.channels.fetch('849614508040519700'); // farundir-salé-du-marais
 		// timer for the weather
 		const time = Date.now();
 		// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
@@ -132,8 +133,8 @@ export default {
 		const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
 		const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
 		setTimeout(() => {
-			updateDailyWeather();
-			dailyNewsTimer = setInterval(updateDailyWeather, 7200000);
+			updateDailyWeather(channelDailyWeather);
+			dailyNewsTimer = setInterval(() => updateDailyWeather(channelDailyWeather), 7200000);
 		}, timeForInterval - time);
 	},
 };
@@ -164,16 +165,15 @@ function onWeatherPlenitude(data) {
 
 /**
  * Update the news in a channel every 2 hours
+ * @param {TextChannel} channel
  */
-async function updateDailyWeather() {
+async function updateDailyWeather(channelDailyWeather) {
 	const hour = new Date().getHours();
 	if (hour < 7 || 17 < hour) return; // hours : 8, 10, 12, 14, 16
-
-	var channel = bot.channels.fetch('849614508040519700'); // farundir-salé-du-marais
+	
 	var answer = getMeteo();
-	channel = await channel;
 	answer = await answer;
-	channel.send(answer.getForMessage());
+	channelDailyWeather.send(answer.getForMessage());
 }
 
 /**
