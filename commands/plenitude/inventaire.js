@@ -75,7 +75,7 @@ export default {
 
 	interaction: true,
 	security: {
-		place: 'private',
+		place: 'public',
 	},
 
 	options: [
