@@ -31,6 +31,7 @@ function getPropId(id_prop, author) {
 	}
 	const snowflake2Match = id_prop.match(/<@&(\d+)>/);
 	if (snowflake2Match) throw `Ce type de tag n'est pas valide : <@& ${snowflake2Match[1]} >.\nEvitez de copier/coller les tags`;
+	if (id_prop.includes(' ')) throw `Les espaces ne sont pas autorisés dans le nom de bâtiment`;
 	return id_prop;
 }
 
@@ -97,8 +98,7 @@ export default {
 					required: true,
 				},
 			],
-			executeAttribute: (cmdData, levelOptions) =>
-				executeCreateBatiment(cmdData, levelOptions[0]?.value),
+			executeAttribute: (cmdData, levelOptions) => executeCreateBatiment(cmdData, levelOptions[0]?.value),
 		},
 		{
 			name: 'open',
@@ -140,14 +140,18 @@ export default {
 			name: 'description',
 			description: "Changer la déscription de l'inventaire",
 			type: 1,
-			options: [invo.id_target, {
-				name: 'description',
-				description: 'La déscription',
-				type: 3,
-				required: true
-			}],
-			executeAttribute: (cmdData, levelOptions) => executeDescription(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value)
-		}
+			options: [
+				invo.id_target,
+				{
+					name: 'description',
+					description: 'La déscription',
+					type: 3,
+					required: true,
+				},
+			],
+			executeAttribute: (cmdData, levelOptions) =>
+				executeDescription(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+		},
 	],
 
 	/**
@@ -385,8 +389,7 @@ async function executeOpen(cmdData, id_prop) {
 	retour += '\n';
 	if (!inventory_source?.length) {
 		retour += 'Vide';
-	}
-	else {
+	} else {
 		retour += Object.values(inventory_source)
 			.map(i => `${i.count || 1}x ${i.name}`)
 			.join('\n');
