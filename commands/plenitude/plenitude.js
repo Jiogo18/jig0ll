@@ -6,12 +6,27 @@ import { countInvitesPerUserSorted, embedInvitesList, getInvites } from '../misc
 import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
 import { Guild, User } from 'discord.js';
 import { guild_plenitude } from '../../bot/command/security.js';
+import DiscordBot from '../../bot/bot.js';
 var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { createTable: true, insertIfNotExist: true }, 10000);
 var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { createTable: true, insertIfNotExist: true }, 10000);
 
 const PlenWeekdays = ['Primidi', 'Duodi', 'Tridi', 'Quartidi', 'Quintidi', 'Sextidi', 'Septidi'];
-const PlenMonths = ['Pluviôse', 'Ventôse', 'Germinal', 'Floréal', 'Prairial', 'Messidor', 'Thermidor', 'Fructidor', 'Vendémiaire', 'Brumaire', 'Frimaire', 'Nivôse'];
+const PlenMonths = [
+	'Pluviôse',
+	'Ventôse',
+	'Germinal',
+	'Floréal',
+	'Prairial',
+	'Messidor',
+	'Thermidor',
+	'Fructidor',
+	'Vendémiaire',
+	'Brumaire',
+	'Frimaire',
+	'Nivôse',
+];
 const plenitudeGuildId = '626121178163183628';
+var dailyNewsTimer = nullptr;
 
 const PlenCity = {
 	value: kvPlenitude.getRow('PlenCity'),
@@ -103,9 +118,23 @@ export default {
 	getMeteo,
 	getLocation,
 	setLocation,
-	setBot: bot => {
+	/**
+	 * @param {DiscordBot} bot
+	 */
+	setBot: async bot => {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
+
+		// timer for the weather
+		const time = Date.now();
+		// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
+		const twoHoursSinceEpoch = Math.floor(time / 1000 / 3600 / 2); // 2 hours
+		const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
+		const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
+		setTimeout(() => {
+			updateDailyWeather();
+			dailyNewsTimer = setInterval(updateDailyWeather, 7200000);
+		}, timeForInterval - time);
 	},
 };
 
@@ -132,6 +161,21 @@ function onWeatherPlenitude(data) {
 	data.name = 'Plénitude';
 	data.date = getFrenchDate(data.dt * 1000, { listWeekday: PlenWeekdays, listMonth: PlenMonths });
 }
+
+/**
+ * Update the news in a channel every 2 hours
+ */
+async function updateDailyWeather() {
+	const hour = new Date().getHours();
+	if (hour < 7 || 17 < hour) return; // hours : 8, 10, 12, 14, 16
+
+	var channel = bot.channels.fetch('849614508040519700'); // farundir-salé-du-marais
+	var answer = getMeteo();
+	channel = await channel;
+	answer = await answer;
+	channel.send(answer.getForMessage());
+}
+
 /**
  * Get the generic info of Plénitude
  */
@@ -258,5 +302,7 @@ async function closeInvitesCompetition(cmdData) {
 	kvPlenitude.set('InvitResetTime', Date.now());
 
 	const countDesc = await embedInvitesList(invitesSorted.splice(0, 5), cmdData.guild);
-	return makeMessage([`${winnerStr}\n${countInvitedMembers(invitesSorted)} nouveaux membres ont rejoints le serveur\n\nLes 5 premiers sont :`, ...countDesc].join('\n'));
+	return makeMessage(
+		[`${winnerStr}\n${countInvitedMembers(invitesSorted)} nouveaux membres ont rejoints le serveur\n\nLes 5 premiers sont :`, ...countDesc].join('\n')
+	);
 }
