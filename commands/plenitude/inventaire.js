@@ -136,6 +136,18 @@ export default {
 					levelOptions[3]?.value
 				),
 		},
+		{
+			name: 'description',
+			description: "Changer la déscription de l'inventaire",
+			type: 1,
+			options: [invo.id_target, {
+				name: 'description',
+				description: 'La déscription',
+				type: 3,
+				required: true
+			}],
+			executeAttribute: (cmdData, levelOptions) => executeDescription(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value)
+		}
 	],
 
 	/**
@@ -181,12 +193,12 @@ const messages = {
 	cantOpen: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas voir son contenu`),
 	cantEdit: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas modifier son contenu`),
 	badName: name => makeError(`Nom invalide : ${name}`),
-	itemInfo: (item, inv_id) => makeMessage(`Il y a maintenant ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
+	itemInfo: (item, inv_id) => makeMessage(`Il y a désormais ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
 	itemSmartInfo: (item_name, item_count = 0, inv_id) => {
 		if (item_count === 0) {
 			return `Il n'y a plus aucun ${item_name} dans l'inventaire de ${inv_id}`;
 		}
-		return `Il y a maintenant ${item_count}x ${item_name} dans l'inventaire de ${inv_id}`;
+		return `Il y a désormais ${item_count}x ${item_name} dans l'inventaire de ${inv_id}`;
 	},
 	noItem: (item, inv_id) => makeError(`Il n'y a pas ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
 	cantAddItem: (item, inv_id) => makeError(`Vous ne pouvez pas ajouter ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
@@ -366,15 +378,21 @@ async function executeOpen(cmdData, id_prop) {
 
 	const inventory_source = md?.data?.inventaire;
 
-	return new EmbedMaker(
-		'',
-		`**Inventaire de ${id_prop}**\n` +
-			(!inventory_source?.length
-				? 'Vide'
-				: Object.values(inventory_source)
-						.map(i => `${i.count || 1}x ${i.name}`)
-						.join('\n'))
-	);
+	var retour = `**Inventaire de ${id_prop}**\n`;
+	if (md.data.description) {
+		retour += md.data.description + '\n';
+	}
+	retour += '\n';
+	if (!inventory_source?.length) {
+		retour += 'Vide';
+	}
+	else {
+		retour += Object.values(inventory_source)
+			.map(i => `${i.count || 1}x ${i.name}`)
+			.join('\n');
+	}
+
+	return new EmbedMaker('', retour);
 }
 
 /**
@@ -477,4 +495,20 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 			'\n' +
 			messages.itemSmartInfo(item_name, item_target?.count, id_target)
 	);
+}
+
+/**
+ * @param {ReceivedCommand} cmdData
+ * @param {string} id
+ * @param {string} description
+ */
+async function executeDescription(cmdData, id_target, description) {
+	const md = await getMessageData(id_target, false);
+	if (!md) return makeMessage(`Le bâtiment ${id_target} n'existe pas`);
+
+	if (!invMgr.isPorp(md, cmdData.author)) return messages.cantEdit(md);
+
+	md.data.description = description;
+	md.save();
+	return makeMessage(`La description de ${id_target} est désormais : ${description}`);
 }
