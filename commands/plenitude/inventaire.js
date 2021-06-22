@@ -22,7 +22,7 @@ async function setChannelDatabase() {
  * @param {User} author
  */
 function getPropId(id_prop, author) {
-	if (!id_prop || id_prop == '*' || id_prop == '') {
+	if (!id_prop || id_prop == '*' || id_prop == '$' || id_prop == '') {
 		return author.toString();
 	}
 	const snowflakeMatch = id_prop.match(/<@!(\d+)>/);
@@ -342,7 +342,7 @@ async function executeCreateBatiment(cmdData, id_prop, name_batiment) {
 	if (!name_batiment) {
 		return makeError(`Nom invalide du bâtiment : ${name_batiment}`);
 	}
-	const name = '*' + name_batiment;
+	const name = '$' + name_batiment;
 
 	const md = await getMessageData(name, true);
 	if (md.data.proprietaire) return makeError(`Ce bâtiment existe déjà : ${name}`);
@@ -443,8 +443,8 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 	const count = parseInt(item_count) || 1;
 	if (count < 0) return executeMove(cmdData, id_target, id_source, item_name, -count);
 
-	const md_source = await getMessageData(id_source, true);
-	const md_target = await getMessageData(id_target, true);
+	const md_source = await getMessageData(id_source, false);
+	const md_target = await getMessageData(id_target, false);
 
 	if (!invMgr.isPorp(md_source, cmdData.author) && !invMgr.isPorp(md_target, cmdData.author))
 		return makeMessage(`Vous n'etes le propriétaire d'aucun de ces inventaire donc vous ne pouvez pas déplacer les objets`);
