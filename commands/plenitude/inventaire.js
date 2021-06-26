@@ -1,8 +1,9 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { ReceivedCommand } from '../../bot/command/received.js';
-import { DiscordChannelDatabase } from '../../lib/discordDatabase.js';
+import { DiscordChannelDatabase, MessageData } from '../../lib/discordDatabase.js';
 import DiscordBot from '../../bot/bot.js';
 import { User } from 'discord.js';
+import colorLib from '../../lib/color.js';
 
 /**
  * @type {DiscordChannelDatabase}
@@ -13,7 +14,7 @@ var channelDatabase;
  */
 var bot;
 async function setChannelDatabase() {
-	const channel = await bot.channels.fetch('850812437258043412');
+	const channel = await bot.channels.fetch('850137517344686122');
 	channelDatabase = new DiscordChannelDatabase(channel);
 }
 
@@ -30,7 +31,7 @@ function getPropId(id_prop, author) {
 		return `<@${snowflakeMatch[1]}>`;
 	}
 	const snowflake2Match = id_prop.match(/<@&(\d+)>/);
-	if (snowflake2Match) throw `Ce type de tag n'est pas valide : <@& ${snowflake2Match[1]} >.\nEvitez de copier/coller les tags`;
+	if (snowflake2Match) throw `Ce type de tag n'est pas valide : \`<@&${snowflake2Match[1]}>\`.\nEvitez de copier/coller les tags`;
 	if (id_prop.includes(' ')) throw `Les espaces ne sont pas autorisés dans le nom de bâtiment`;
 	return id_prop;
 }
@@ -138,19 +139,26 @@ export default {
 		},
 		{
 			name: 'description',
-			description: "Changer la déscription de l'inventaire",
+			description: "Changer la description de l'inventaire",
 			type: 1,
 			options: [
 				invo.id_target,
 				{
 					name: 'description',
-					description: 'La déscription',
+					description: 'La description',
 					type: 3,
 					required: true,
 				},
 			],
 			executeAttribute: (cmdData, levelOptions) =>
 				executeDescription(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+		},
+		{
+			name: 'couleur',
+			description: 'Changer la couleur du bâtiment',
+			type: 1,
+			options: [invo.id_target, colorLib.commandOptions],
+			executeAttribute: (cmdData, levelOptions) => executeCouleur(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
 		},
 	],
 
@@ -172,18 +180,41 @@ class Item {
 	 * @type {number}
 	 */
 	count;
-	constructor(name, count) {
+	/**
+	 * @param {string} name
+	 * @param {number} count
+	 */
+	constructor(name, count = 0) {
 		this.name = name;
 		this.count = count;
+	}
+
+	/**
+	 * Copy this item
+	 */
+	copy() {
+		return new Item(this.name, this.count);
+	}
+
+	/**
+	 * @param {Item} item
+	 */
+	isEqual(item) {
+		return this.name == item.name;
+	}
+
+	toSmallText() {
+		return `${this.count}x ${this.name}`;
 	}
 }
 
 /**
  * Make an embed message
  * @param {string} description The content
+ * @param {number} color
  */
-function makeMessage(description) {
-	return new EmbedMaker('Inventaire', description);
+function makeMessage(description, color) {
+	return new EmbedMaker('Inventaire', description, { color });
 }
 /**
  * Make an embed message with a red color
@@ -194,145 +225,265 @@ function makeError(description) {
 }
 
 const messages = {
-	cantOpen: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas voir son contenu`),
-	cantEdit: md => makeError(`Cet inventaire appartient à ${md?.data?.proprietaire || md?.id} et vous ne pouvez pas modifier son contenu`),
+	/**
+	 * @param {Inventory} inv
+	 */
+	cantOpen: inv => makeError(`Cet inventaire appartient à ${inv?.proprietaire} et vous ne pouvez pas voir son contenu`),
+	/**
+	 * @param {Inventory} inv
+	 */
+	cantEdit: inv => makeError(`Cet inventaire appartient à ${inv?.proprietaire} et vous ne pouvez pas modifier son contenu`),
+	/**
+	 * @param {Inventory} inv
+	 */
+	doesntExist: inv => makeError(`Cet inventaire n'existe pas.\nPour créer un inventaire de bâtiment utilisez \`create <nom_batiment>\``),
+	/**
+	 * @param {string} name
+	 */
 	badName: name => makeError(`Nom invalide : ${name}`),
-	itemInfo: (item, inv_id) => makeMessage(`Il y a désormais ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
-	itemSmartInfo: (item_name, item_count = 0, inv_id) => {
-		if (item_count === 0) {
-			return `Il n'y a plus aucun ${item_name} dans l'inventaire de ${inv_id}`;
+	/**
+	 * @param {Item} item
+	 * @param {string} inv_id
+	 */
+	itemInfo: (item, inv_id) => makeMessage(`Il y a désormais ${item.toSmallText()} dans l'inventaire de ${inv_id}`),
+	/**
+	 * @param {Item} item
+	 * @param {string} inv_id
+	 */
+	itemSmartInfo: (item, inv_id) => {
+		if (!item?.count) {
+			return `Il n'y a plus de ${item?.name} dans l'inventaire de ${inv_id}`;
 		}
-		return `Il y a désormais ${item_count}x ${item_name} dans l'inventaire de ${inv_id}`;
+		return `Il y a désormais ${item.toSmallText()} dans l'inventaire de ${inv_id}`;
 	},
-	noItem: (item, inv_id) => makeError(`Il n'y a pas ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
-	cantAddItem: (item, inv_id) => makeError(`Vous ne pouvez pas ajouter ${item?.count}x ${item?.name} dans l'inventaire de ${inv_id}`),
+	/**
+	 * @param {Item} item
+	 * @param {string} inv_id
+	 */
+	noItem: (item, inv_id) => makeError(`Il n'y a pas ${item.toSmallText()} dans l'inventaire de ${inv_id}`),
+	/**
+	 * @param {Item} item
+	 * @param {string} inv_id
+	 */
+	cantAddItem: (item, inv_id) => makeError(`Vous ne pouvez pas ajouter ${item.toSmallText()} dans l'inventaire de ${inv_id}`),
 };
 
 ////////////////////////// inventory_source tools //////////////////////////
 
+class Inventory {
+	/**
+	 * The name/id of the inventory
+	 * @type {string}
+	 */
+	noms;
+	/**
+	 * The owner of the inventory (the first user)
+	 * @type {string}
+	 */
+	proprietaire;
+	/**
+	 * Items in the inventory
+	 * @type {Item[]}
+	 */
+	items = [];
+	/**
+	 * The MessageData where the inventory is stored
+	 * @type {MessageData}
+	 */
+	messageData;
+	/**
+	 * Description of the inventory
+	 * @type {string}
+	 */
+	description;
+
+	get color() {
+		return this.messageData?.color;
+	}
+	set color(color) {
+		if (typeof color != 'number') {
+			color = colorLib.hexToDiscordColor(color);
+		}
+		this.messageData.color = color;
+	}
+
+	/**
+	 * @param {MessageData} messageData
+	 */
+	constructor(messageData) {
+		this.messageData = messageData;
+		this.noms = messageData.id;
+		this.proprietaire = messageData.proprietaire || messageData.id;
+		/**
+		 * @type {Item[]}
+		 */
+		const inv = messageData.data.inventaire;
+		this.items = inv?.map(item => new Item(item.name, item.count)) || [];
+		this.description = messageData.data.description;
+	}
+
+	/**
+	 * Save the inventory
+	 */
+	save() {
+		this.messageData.data.id = this.noms;
+		if (this.proprietaire != this.noms) {
+			this.messageData.data.proprietaire = this.proprietaire;
+		} else {
+			delete this.messageData.data.proprietaire;
+		}
+		if (this.description) {
+			this.messageData.data.description = this.description;
+		} else {
+			delete this.messageData.data.description;
+		}
+		this.messageData.data.inventaire = this.items;
+
+		return this.messageData.save();
+	}
+
+	/**
+	 * Does the inventory exist
+	 */
+	get exist() {
+		return this.messageData.exist;
+	}
+
+	/**
+	 * Does the inventory belong to a user or a building
+	 */
+	isPlayerInventory() {
+		return !!this.noms.match(/<@.+>/);
+	}
+
+	/**
+	 * Is the Owner / propriétaire
+	 * @param {User} user
+	 */
+	isProp(user) {
+		if (!user) return false;
+		if (this.noms === user.toString()) return true;
+		if (this.proprietaire === user.toString()) return true;
+		return false;
+	}
+
+	/**
+	 * @param {User} user
+	 */
+	canOpen(user) {
+		return true;
+	}
+
+	/**
+	 * @param {User} user
+	 */
+	canEdit(user) {
+		return true; // prop is disabled
+		return this.isProp(user);
+	}
+
+	/**
+	 * Get an item with the same name
+	 * @param {string} item_name Name of the item in this inventory
+	 */
+	getItemByName(item_name) {
+		return this.items.find(item => item.name == item_name);
+	}
+	/**
+	 * Get the exact item in this inventory
+	 * @param {Item} item Item witch match with an item of this inventory
+	 */
+	getItem(item) {
+		return this.items.find(i => i.isEqual(item));
+	}
+	/**
+	 * Does this inventory contain this item
+	 * @param {Item} item Item witch match with an item of this inventory
+	 */
+	hasItem(item) {
+		return !!this.getItem(item);
+	}
+	/**
+	 * Removed an item from the items list
+	 * @param {Item} item Item from this inventory
+	 */
+	deleteItem(item) {
+		const i = this.items.indexOf(item);
+		return this.items.splice(i, 1);
+	}
+	/**
+	 * Removed an item from the items list if count == 0
+	 * @param {Item} item Item from this inventory we have modified
+	 */
+	deleteItemIfNoLongerExists(item) {
+		if (item.count == 0) {
+			this.deleteItem(item);
+		} else if (item.count < 0) {
+			throw `Item a un count négatif : ${item}`;
+		}
+	}
+
+	/**
+	 * @param {Item} item
+	 */
+	canAddItem(item) {
+		const item_here = this.getItem(item);
+		const count = (item_here?.count || 0) + item.count;
+		if (count < 0) return false; // si l'item n'existe pas on peut le rajouter
+		return true;
+	}
+
+	/**
+	 * @param {Item} item
+	 */
+	canRemoveItem(item) {
+		const item_here = this.getItem(item);
+		const count = (item_here?.count || 0) - item.count;
+		if (count < 0) return false;
+		return true;
+	}
+
+	/**
+	 * Add an item to this inventory
+	 * @param {Item} item Item(s) to add to this inventory
+	 */
+	addItem(item) {
+		if (!this.canAddItem(item)) throw "Can't add item";
+
+		if (!item?.constructor?.name != 'Item') {
+			item = new Item(item?.name, item?.count);
+		}
+
+		var item_here = this.getItem(item);
+		if (item_here) {
+			item_here.count += item.count;
+		} else {
+			item_here = item.copy();
+			this.items.push(item);
+		}
+
+		this.deleteItemIfNoLongerExists(item_here);
+		return item_here;
+	}
+	/**
+	 * Remove an item to this inventory
+	 * @param {Item} item Item(s) to remove to this inventory
+	 */
+	removeItem(item) {
+		if (!this.canRemoveItem(item)) throw "Can't remove item";
+		const item_copy = item.copy();
+		item_copy.count = -item_copy.count;
+		return this.addItem(item_copy);
+	}
+}
+
 /**
  * Open / Edit the inventory_source
  * @param {string} id
- * @return {Promise<{data:{inventaire:Item[],proprietaire:string}, save:function}>}
  */
-async function getMessageData(id, createIfDoesntExists = false) {
-	const md = await channelDatabase.getMessageData(id);
-	if (!md) return;
-	if (!md.data.inventaire && createIfDoesntExists) {
-		md.data.inventaire = [];
-	}
-	return md;
+async function getInventory(id) {
+	return new Inventory(await channelDatabase.getMessageData(id));
 }
-
-const invMgr = {
-	/**
-	 * @param {Item[]} inv
-	 * @param {Function} itemFilter
-	 */
-	getItems: (inv, itemFilter) => {
-		return inv.filter(i => itemFilter(i));
-	},
-	/**
-	 * @param {Item[]} inv
-	 * @param {string} name
-	 */
-	getItemByName: (inv, name) => {
-		return invMgr.getItems(inv, i => i.name == name)?.[0];
-	},
-
-	/**
-	 * @param {{data:{proprietaire:string}, id:string}} md messageData
-	 * @param {User} user
-	 */
-	canOpen: (md, user) => {
-		return true;
-	},
-
-	/**
-	 * @param {{data:{proprietaire:string}, id:string}} md messageData
-	 * @param {User} user
-	 */
-	isPorp: (md, user) => {
-		return true; // prop is disabled
-		if (!md || !user) return false;
-		if (md.id === user.toString()) return true;
-		if (md.data?.proprietaire === user.toString()) return true;
-		return false;
-	},
-
-	/**
-	 * @param {Item[]} inv
-	 * @param {Item} item
-	 */
-	removeIfDoesntExist: (inv, item) => {
-		if (item.count <= 0) {
-			item.count = 0;
-			const index = inv.indexOf(item);
-			if (index > -1) inv.splice(index, 1);
-		}
-	},
-
-	/**
-	 * @param {Item[]} inv
-	 * @param {string} name
-	 * @param {number} count
-	 */
-	canAddItem(inv, name, count) {
-		const item = invMgr.getItemByName(inv, name);
-		if ((item ? item.count : 0) + count < 0) return false; // si l'item n'existe pas on peut le rajouter
-		return true;
-	},
-
-	/**
-	 * @param {Item[]} inv
-	 * @param {string} name
-	 * @param {number} count
-	 */
-	canRemoveItem(inv, name, count) {
-		const item = invMgr.getItemByName(inv, name);
-		if ((item ? item.count : 0) - count < 0) return false;
-		return true;
-	},
-
-	/**
-	 * @param {Item[]} inv
-	 * @param {string} name
-	 * @param {number} count
-	 */
-	addItem(inv, name, count) {
-		if (!invMgr.canAddItem(inv, name, count)) return false;
-
-		var item = invMgr.getItemByName(inv, name);
-		if (item) {
-			item.count += count;
-		} else {
-			item = { name, count };
-			inv.push(item);
-		}
-		invMgr.removeIfDoesntExist(inv, item);
-		return true;
-	},
-
-	/**
-	 * @param {Item[]} inv
-	 * @param {string} name
-	 * @param {number} count
-	 */
-	removeItem(inv, name, count) {
-		if (!invMgr.canRemoveItem(inv, name, count)) return false;
-
-		var item = invMgr.getItemByName(inv, name);
-		if (item) {
-			item.count -= count;
-		} else {
-			item = { name, count: -count };
-			inv.push(item);
-		}
-
-		invMgr.removeIfDoesntExist(inv, item);
-		return true;
-	},
-};
 
 ////////////////////////// execute commands //////////////////////////
 
@@ -359,16 +510,16 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 	}
 	const name = '$' + name_batiment;
 
-	const md = await getMessageData(name, true);
-	if (!md) {
+	const inv = await getInventory(name);
+	if (!inv) {
 		console.error(`Impossible de créer le bâtiment ${name}`);
 		return makeError('Impossible de créer le bâtiment, réessayez');
 	}
-	if (md.data.proprietaire) return makeError(`Ce bâtiment existe déjà : ${name}`);
+	if (inv.exist) return makeError(`Ce bâtiment existe déjà : ${name}`);
 
-	md.data.proprietaire = cmdData.author.toString();
-	await md.save();
-	return makeMessage(`Un bâtiment a été créé pour ${md.data.proprietaire} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`);
+	inv.proprietaire = cmdData.author.toString();
+	await inv.save();
+	return makeMessage(`Un bâtiment a été créé pour ${inv.proprietaire} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`, inv.color);
 }
 
 /**
@@ -376,58 +527,49 @@ async function executeCreateBatiment(cmdData, name_batiment) {
  * @param {string} id_prop
  */
 async function executeOpen(cmdData, id_prop) {
-	const md = await getMessageData(id_prop);
+	const inv = await getInventory(id_prop);
 
-	if (!invMgr.canOpen(md, cmdData.author)) return messages.cantOpen(md);
+	if (!inv.canOpen(cmdData.author)) return messages.cantOpen(inv);
 
-	const inventory_source = md?.data?.inventaire;
+	const inventory_source = inv.items;
 
 	var retour = `**Inventaire de ${id_prop}**\n`;
-	if (md.data.description) {
-		retour += md.data.description + '\n';
+	if (inv.description) {
+		retour += inv.description + '\n';
 	}
 	retour += '\n';
-	if (!inventory_source?.length) {
+	if (!inventory_source.length) {
 		retour += 'Vide';
 	} else {
-		retour += Object.values(inventory_source)
-			.map(i => `${i.count || 1}x ${i.name}`)
-			.join('\n');
+		retour += inventory_source.map(i => i.toSmallText()).join('\n');
 	}
 
-	return new EmbedMaker('', retour);
+	return new EmbedMaker('', retour, { color: inv.color });
 }
 
 /**
  * @param {ReceivedCommand} cmdData
- * @param {string} id
+ * @param {string} inv_id
  * @param {string} item_name
  * @param {string} item_count
  */
-async function executeGive(cmdData, id, item_name, item_count) {
-	const count = parseInt(item_count) || 1;
-	if (count < 0) return executeRemove(cmdData, id, item_name, -count);
+async function executeGive(cmdData, inv_id, item_name, item_count) {
+	item_count = parseInt(item_count) || 1;
+	if (item_count < 0) return executeRemove(cmdData, inv_id, item_name, -item_count);
 
-	const md = await getMessageData(id, true);
+	const inv = await getInventory(inv_id);
 
-	if (!invMgr.isPorp(md, cmdData.author)) return messages.cantEdit(md);
+	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 	if (!item_name) return messages.badName(item_name);
 
-	const inventory_source = md.data.inventaire;
-	var item = invMgr.getItemByName(inventory_source, item_name);
+	const item = new Item(item_name, item_count);
 
-	if (item) {
-		if (!invMgr.canAddItem(inventory_source, item_name, count)) return messages.cantAddItem({ name: item_name, count }, id);
-		item.count += count;
-		// TODO: count = -1 ?
-		invMgr.removeIfDoesntExist(inventory_source, item);
-	} else {
-		item = { name: item_name, count };
-		inventory_source.push(item);
-	}
+	if (!inv.canAddItem(item)) return messages.cantAddItem(item, inv_id);
+	const item_inv = inv.addItem(item);
 
-	md.save();
-	return messages.itemInfo(item, id);
+	await inv.save();
+	return messages.itemInfo(item_inv, inv_id);
 }
 
 /**
@@ -437,23 +579,22 @@ async function executeGive(cmdData, id, item_name, item_count) {
  * @param {string} item_count
  */
 async function executeRemove(cmdData, id, item_name, item_count) {
-	const count = parseInt(item_count) || 1;
-	if (count < 0) return executeGive(cmdData, id, item_name, -count);
+	item_count = parseInt(item_count) || 1;
+	if (item_count < 0) return executeGive(cmdData, id, item_name, -item_count);
 
-	const md = await getMessageData(id, true);
+	const inv = await getInventory(id, true);
 
-	if (!invMgr.isPorp(md, cmdData.author)) return messages.cantEdit(md);
+	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 	if (!item_name) return messages.badName(item_name);
 
-	const inventory_source = md.data.inventaire;
-	const item = invMgr.getItemByName(inventory_source, item_name);
+	const item = new Item(item_name, item_count);
 
-	if (!invMgr.canRemoveItem(inventory_source, item_name, count)) return messages.noItem({ name: item_name, count }, id);
-	item.count -= count;
-	invMgr.removeIfDoesntExist(inventory_source, item);
+	if (!inv.canRemoveItem(item)) return messages.noItem(item, id);
+	const item_inv = inv.removeItem(item);
 
-	md.save();
-	return messages.itemInfo(item, id);
+	await inv.save();
+	return messages.itemInfo(item_inv, id);
 }
 
 /**
@@ -464,54 +605,85 @@ async function executeRemove(cmdData, id, item_name, item_count) {
  * @param {string} item_count
  */
 async function executeMove(cmdData, id_source, id_target, item_name, item_count) {
-	const count = parseInt(item_count) || 1;
-	if (count < 0) return executeMove(cmdData, id_target, id_source, item_name, -count);
+	item_count = parseInt(item_count) || 1;
+	if (item_count < 0) return executeMove(cmdData, id_target, id_source, item_name, -item_count);
 
-	const md_source = await getMessageData(id_source, false);
-	const md_target = await getMessageData(id_target, false);
+	const inv_source = await getInventory(id_source, false);
+	const inv_target = await getInventory(id_target, false);
 
-	if (!invMgr.isPorp(md_source, cmdData.author) && !invMgr.isPorp(md_target, cmdData.author))
+	if (!inv_source.isPlayerInventory() && !inv_source.exist) return messages.doesntExist(inv_source); // bâtiment et n'existe pas
+	if (!inv_target.isPlayerInventory() && !inv_target.exist) return messages.doesntExist(inv_target); // bâtiment et n'existe pas
+	if (!inv_source.canEdit(cmdData.author) && !inv_target.canEdit(cmdData.author))
 		return makeMessage(`Vous n'etes le propriétaire d'aucun de ces inventaire donc vous ne pouvez pas déplacer les objets`);
 	if (!item_name) return messages.badName(item_name);
 
-	const inventory_source = md_source.data.inventaire;
-	const inventory_target = md_target.data.inventaire;
+	const item = new Item(item_name, item_count);
 
-	if (!invMgr.canRemoveItem(inventory_source, item_name, count)) {
-		return messages.noItem({ name: item_name, count }, id_source);
+	if (!inv_source.canRemoveItem(item)) {
+		return messages.noItem(item, id_source);
 	}
-	if (!invMgr.canAddItem(inventory_target, item_name, count)) {
-		return messages.cantAddItem({ name: item_name, count }, id_target);
+	if (!inv_target.canAddItem(item)) {
+		return messages.cantAddItem(item, id_target);
 	}
 
-	invMgr.removeItem(inventory_source, item_name, count);
-	invMgr.addItem(inventory_target, item_name, count);
+	var item_source, item_target;
+	try {
+		item_source = inv_source.removeItem(item);
+		item_target = inv_target.addItem(item);
+	} catch (e) {
+		return makeError(`Erreur en déplaçant ${item.name} de ${inv_source} vers ${inv_target} (${e})`);
+	}
 
-	md_source.save();
-	md_target.save();
+	try {
+		await Promise.all(inv_source.save(), inv_target.save());
+	} catch (e) {
+		return makeError(`Erreur lors de la sauvegarde en déplaçant ${item.name} de ${inv_source} vers ${inv_target} (${e})`);
+	}
 
-	const item_source = invMgr.getItemByName(inventory_source, item_name);
-	const item_target = invMgr.getItemByName(inventory_target, item_name);
 	return makeMessage(
-		`Vous avez déplacé ${count}x ${item_name} de ${id_source} vers ${id_target}.\n` +
-			messages.itemSmartInfo(item_name, item_source?.count, id_source) +
+		`Vous avez déplacé ${item.toSmallText()} de ${id_source} vers ${id_target}.\n` +
+			messages.itemSmartInfo(item_source, id_source) +
 			'\n' +
-			messages.itemSmartInfo(item_name, item_target?.count, id_target)
+			messages.itemSmartInfo(item_target, id_target)
 	);
 }
 
 /**
  * @param {ReceivedCommand} cmdData
- * @param {string} id
+ * @param {string} inv_id
  * @param {string} description
  */
-async function executeDescription(cmdData, id_target, description) {
-	const md = await getMessageData(id_target, false);
-	if (!md) return makeMessage(`Le bâtiment ${id_target} n'existe pas`);
+async function executeDescription(cmdData, inv_id, description) {
+	const inv = await getInventory(inv_id, false);
 
-	if (!invMgr.isPorp(md, cmdData.author)) return messages.cantEdit(md);
+	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 
-	md.data.description = description;
-	md.save();
-	return makeMessage(`La description de ${id_target} est désormais : ${description}`);
+	inv.description = description;
+	await inv.save();
+	return makeMessage(`La description de ${inv_id} est désormais : ${description}`, inv.color);
+}
+
+/**
+ * @param {ReceivedCommand} cmdData
+ * @param {string} inv_id
+ * @param {string} couleur
+ */
+async function executeCouleur(cmdData, inv_id, couleur) {
+	const inv = await getInventory(inv_id, false);
+
+	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
+
+	if (!couleur.match(colorLib.hexRegex)) {
+		const couleurHex = colorLib.colorNameToHex(couleur);
+		if (!couleurHex) {
+			return makeError(`La couleur ${couleur} n'est pas valide, utilisez le format #000000`);
+		}
+		couleur = couleurHex;
+	}
+
+	inv.color = couleur;
+	await inv.save();
+	return makeMessage(`La couleur de ${inv_id} est désormais : ${couleur}`, inv.color);
 }
