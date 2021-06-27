@@ -175,7 +175,7 @@ export default {
 	 */
 	setBot(b) {
 		bot = b;
-		setTimeout(setChannelDatabase, 200);
+		bot.onReady.then(setChannelDatabase);
 	},
 };
 

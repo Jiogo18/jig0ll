@@ -19,6 +19,10 @@ export default class DiscordBot extends Client {
 	commandMgr;
 	interactionMgr;
 	commandEnabled = true;
+	/**
+	 * @type {Promise<boolean>}
+	 */
+	onReady;
 
 	constructor() {
 		super({ ws: { intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'GUILD_INTEGRATIONS', 'GUILD_MEMBERS', 'GUILD_INVITES'] } });
@@ -26,6 +30,11 @@ export default class DiscordBot extends Client {
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
 		this.interactionMgr = new InteractionManager(this);
+
+		this.onReady = new Promise(res => {
+			this.on(Constants.Events.CLIENT_READY, () => res(true));
+			this.on(Constants.Events.DISCONNECT, () => res(false));
+		});
 
 		this.on(Constants.Events.CLIENT_READY, this.onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);

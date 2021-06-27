@@ -125,25 +125,27 @@ export default {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
 
-		bot.channels
-			.fetch('849614508040519700')
-			.then(channel => {
-				// farundir-salé-du-marais
+		bot.onReady.then(() => {
+			bot.channels
+				.fetch('849614508040519700')
+				.then(channel => {
+					// farundir-salé-du-marais
 
-				// timer for the weather
-				// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
-				const twoHoursSinceEpoch = Math.floor(Date.now() / 1000 / 3600 / 2); // 2 hours
-				const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
-				const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
+					// timer for the weather
+					// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
+					const twoHoursSinceEpoch = Math.floor(Date.now() / 1000 / 3600 / 2); // 2 hours
+					const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
+					const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
 
-				setTimeout(() => {
-					updateDailyWeather(channel);
-					dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 7200000);
-				}, timeForInterval - Date.now());
-			})
-			.catch(err => {
-				process.consoleLogger.internalError('plenitude daily weather', err);
-			});
+					setTimeout(() => {
+						updateDailyWeather(channel);
+						dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 7200000);
+					}, timeForInterval - Date.now());
+				})
+				.catch(err => {
+					process.consoleLogger.internalError('plenitude daily weather', err);
+				});
+		});
 	},
 };
 
