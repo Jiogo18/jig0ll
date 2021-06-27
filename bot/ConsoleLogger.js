@@ -17,7 +17,7 @@ async function internalError(name, description, ..._) {
 	if (!log_channel) return false;
 
 	console.error(`Error with ${name}`.red + ` : ${description}`, ..._);
-	return !!log_channel.send(new Error(`${name} : ${description}\n`).stack);
+	return !!log_channel.send(`Error with ${name} :\n${description}`);
 }
 
 /**
