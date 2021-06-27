@@ -11,7 +11,7 @@ import DiscordBot from './bot.js';
  */
 export default async function messageHandler(message) {
 	if (isCommand(message) && this.commandEnabled) {
-		onMessageCommand.call(this, message).catch(error => console.error(`Error with a command: ${error}`));
+		onMessageCommand.call(this, message).catch(error => process.consoleLogger.commandError('messageHandler', message.content + '\n\n' + error));
 	}
 }
 
@@ -42,6 +42,6 @@ async function onMessageCommand(message) {
 	var command = new ReceivedMessage(message, this);
 	commandHandler.call(this, command).catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-		console.error(`Error while sending an answer for '${command.commandLine}'`.red, error);
+		process.consoleLogger.error(`Error while sending an answer for '${command.commandLine}'`.red, error);
 	});
 }

@@ -59,7 +59,7 @@ export default class DiscordBot extends Client {
 				const presenceName = presence.activities?.[0]?.name || 'none';
 				console.log(`Activitée de ${this.user.username} mis à "${presenceName}"`.cyan);
 			})
-			.catch(console.error);
+			.catch(process.consoleLogger.error);
 
 		if (process.env.WIPOnly) {
 			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`.cyan);
@@ -90,7 +90,7 @@ function onMessage(message) {
 
 		messageHandler.call(this, message);
 	} catch (error) {
-		console.error(error);
+		process.consoleLogger.internalError('onMessage', error);
 	}
 }
 
@@ -108,6 +108,6 @@ function onInteraction(interaction) {
 
 		interactionHandler.call(this, cmdData);
 	} catch (error) {
-		console.error(error);
+		process.consoleLogger.internalError('onInteraction', error);
 	}
 }

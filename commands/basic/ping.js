@@ -1,4 +1,5 @@
 import { Message } from 'discord.js';
+import { ReceivedCommand } from '../../bot/command/received.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { Snowflake } from '../../lib/snowflake.js';
 
@@ -29,7 +30,7 @@ export default {
 			.then(([[id, message]]) => catchPrePingMessage(cmdData, time, message))
 			.catch(e => {
 				if (e && e.size != undefined) console.error(`Couldn't catch the ping after 10s.`.red);
-				else console.error(`Error with /ping : `.red, e);
+				else process.consoleLogger.commandError(cmdData.commandLine, e);
 			});
 
 		//Temps perdu : Date.now() - cmdData.receivedAt = 0 msec
@@ -53,7 +54,8 @@ function makePrePingMessage(time, author_id) {
 function matchPrePingMessage(embed, time) {
 	return embed.title == 'Ping' && embed.description.match(new RegExp(`@Jig0ll:${time}\nfor:\\\d+`));
 }
-if (!matchPrePingMessage(makePrePingMessage(0, 0).content, 0)) console.error(`Ping format error: can't match a simple message`.red);
+if (!matchPrePingMessage(makePrePingMessage(0, 0).content, 0))
+	process.consoleLogger.internalError('Ping format error', `can't match a simple message`);
 
 /**
  * @param {ReceivedCommand} cmdData - Original message

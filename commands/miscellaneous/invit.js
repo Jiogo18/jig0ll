@@ -103,11 +103,14 @@ async function list(guild) {
 	try {
 		invites = await guild.fetchInvites();
 	} catch (err) {
-		console.error(`Error while getting invites of the guild ${guild.id}`.red, err);
+		process.consoleLogger.commandError('/invit list ${guild.id}', err);
 		return makeError('Impossible de récupérer les invitations du serveur, la permission `Ggérer le serveur` doit être activée');
 	}
 
-	var invitesDesc = invites.map(i => `code:${i.code}, memberCount:${i.memberCount}, uses:${i.uses}, maxUses:${i.maxUses}, inviter:${i.inviter?.username}, createTimestamp:${i.createdTimestamp}`);
+	var invitesDesc = invites.map(
+		i =>
+			`code:${i.code}, memberCount:${i.memberCount}, uses:${i.uses}, maxUses:${i.maxUses}, inviter:${i.inviter?.username}, createTimestamp:${i.createdTimestamp}`
+	);
 
 	if (invites.size == 0) {
 		return makeMessage(`No invits in ${guild.name}`);
@@ -125,7 +128,7 @@ export async function getInvites(guild) {
 	try {
 		return await guild.fetchInvites();
 	} catch (err) {
-		console.error(`Error while getting invites of the guild ${guild.id}`.red, err);
+		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, err);
 		throw 'Impossible de récupérer les invitations du serveur, la permission `Gérer le serveur` doit être activée';
 	}
 }
@@ -166,7 +169,7 @@ export async function embedInvitesList(invites, currentGuild) {
 	/**
 	 * @type {Collection<string,GiuldMember>}
 	 */
-	const membersInGuild = await currentGuild?.members.fetch(invites.map(({ user }) => user)).catch(console.error);
+	const membersInGuild = await currentGuild?.members.fetch(invites.map(({ user }) => user)).catch(process.consoleLogger.error);
 
 	return invites.map(({ user, uses }) => {
 		var userInGuild = user?.id && (membersInGuild?.has(user?.id) || currentGuild?.members.cache.get(user?.id));
@@ -190,7 +193,7 @@ async function displayCountPerUser(guild, currentGuild) {
 			return makeMessage(`Il n'y a pas d'invitations dans ${guild.name}`);
 		}
 	} catch (err) {
-		console.error(`Error with countInvitesPerUserSorted`.red, err);
+		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, err);
 		return makeError(err);
 	}
 

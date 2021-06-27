@@ -29,7 +29,7 @@ export default async function interactionHandler(interaction) {
 	try {
 		await commandHandler.call(this, interaction);
 	} catch (err) {
-		console.error(`Error with an interaction`.red, err);
+		process.consoleLogger.internalError(`an interaction`, err);
 	}
 	clearTimeout(safeTimeout);
 }

@@ -44,19 +44,19 @@ export default class CommandManager {
 		try {
 			file = await import('../../' + commandFilename);
 		} catch (e) {
-			console.error(`Error while loading '${commandFilename}'`.red, e);
+			process.consoleLogger.internalError('loadCommand', `While loading '${commandFilename}'`.red, e);
 			return;
 		}
 
 		const commandFile = file?.default;
 		if (!commandFile) {
-			console.error(`Command not loaded : ${commandFilename}`.red);
+			process.consoleLogger.error('loadCommand', `Command not loaded : ${commandFilename}`.red);
 			return;
 		}
 		commandFile.setBot?.(this.bot);
 		const command = new CommandStored(commandFile, commandFilename);
 		if (this.commands.has(command.name)) {
-			console.warn(`Conflict with two commands named '${command.name}', please use reloadCommand if it's not intended`.yellow);
+			process.consoleLogger.internalError('conflict with two commands', `'${command.name}', please use reloadCommand if it's not intended`.yellow);
 		}
 
 		this.commands.set(command.name, command);

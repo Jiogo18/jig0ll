@@ -147,11 +147,11 @@ async function cleanInteraction(context) {
 	var localInte = await AppManager.getCmdFrom(context.guild_id);
 	const counterBefore = globalInte.length + localInte.length;
 
-	await slashCmd.cleanCommands().catch(e => console.error('error: cleanCommands global'.red, e)); //global
-	await slashCmd.cleanCommands(context.guild_id).catch(e => console.error('error: cleanCommands guild'.red, e));
+	await slashCmd.cleanCommands().catch(e => process.consoleLogger.commandError('interaction clean global', e)); //global
+	await slashCmd.cleanCommands(context.guild_id).catch(e => process.consoleLogger.commandError('interaction clean guild', e));
 	await slashCmd.loadCommands();
-	globalInte = await AppManager.getCmdFrom().catch(e => console.error('error: getCmdFrom 1'.red, e));
-	localInte = await AppManager.getCmdFrom(context.guild_id).catch(e => console.error('error: getCmdFrom 2'.red, e));
+	globalInte = await AppManager.getCmdFrom().catch(e => process.consoleLogger.commandError('interaction getCmdFrom 1', e));
+	localInte = await AppManager.getCmdFrom(context.guild_id).catch(e => process.consoleLogger.commandError('interaction getCmdFrom 2', e));
 	const counterAfter = globalInte.length + localInte.length;
 
 	return new MessageMaker(`There were ${counterBefore} interactions, there are ${counterAfter}.`);

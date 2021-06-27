@@ -1,4 +1,5 @@
 import DiscordBot from './bot.js';
+
 /**
  * @type {DiscordBot}
  */
@@ -109,16 +110,16 @@ export async function postCommand(command, target, force) {
 			.catch(e => {
 				if (!canPostCommands) return resolve(false); //on sait déjà qu'on peut pas poster
 
-				console.error(`Error while posting command '${command.name}' code: ${e.httpStatus}`.red);
+				process.consoleLogger.internalError('posting command', `'${command.name}' code: ${e.httpStatus}`.red);
 
 				switch (e.code) {
 					case 0:
-						console.error(e.message);
+						process.consoleLogger.error(e.message);
 						canPostCommands = false; //on a dépassé le quota des 200 messages
 						setTimeout(() => (canPostCommands = true), 10000); //peut être dans 10s
 						break;
 					default:
-						console.error(e);
+						process.consoleLogger.internalError('posting command', e);
 						break;
 				}
 
@@ -142,7 +143,7 @@ export async function deleteCommand(command, target) {
 			.delete()
 			.then(() => resolve(true))
 			.catch(e => {
-				console.error(`Error while removing command '${command.name || command.id || command}'`.red, e);
+				process.consoleLogger.internalError('deleteCommand', `removing command '${command.name || command.id || command}'`.red, e);
 				resolve(false);
 			});
 	});

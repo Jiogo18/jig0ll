@@ -190,7 +190,7 @@ class CommandExtendable extends CommandBase {
 			} else if (CommandAttribute.Types.includes(subType)) {
 				subCommand = new CommandAttribute(subCommandConfig, this);
 			} else {
-				console.error(`Type unknow for option ${subCommandConfig.name} : ${subType}`.red);
+				process.consoleLogger.error(`Type unknow for option ${subCommandConfig.name} : ${subType}`.red);
 				continue;
 			}
 			this.options.push(subCommand);

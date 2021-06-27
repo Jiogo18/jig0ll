@@ -170,7 +170,7 @@ function onWeatherPlenitude(data) {
 async function updateDailyWeather(channelDailyWeather) {
 	const hour = new Date().getHours();
 	if (hour < 7 || 17 < hour) return; // hours : 8, 10, 12, 14, 16
-	
+
 	var answer = getMeteo();
 	answer = await answer;
 	channelDailyWeather.send(answer.getForMessage());
@@ -229,7 +229,7 @@ async function getInviteScore(cmdData) {
 			return makeMessage(`Il n'y a pas d'invitations dans ${guild.name}`);
 		}
 	} catch (err) {
-		console.error(`Error with getCurrentInviteList`.red, err);
+		process.consoleLogger.commandError(cmdData.commandLine, err);
 		return makeError(err);
 	}
 

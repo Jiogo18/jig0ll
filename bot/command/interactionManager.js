@@ -187,7 +187,7 @@ export default class InteractionManager {
 
 		const commandsRemnaining = this.getCommandsOnline(targetId);
 		if (commandsRemnaining.length) {
-			console.error(`${commandsRemnaining.length} Interactions remain after cleanCommands`.red);
+			process.consoleLogger.commandError(`interaction clean "${targetId}"`, `${commandsRemnaining.length} Interactions remains`);
 		} else {
 			console.log(`All Interactions of ${target_id ? target_id : 'Global'} have been removed.`);
 		}

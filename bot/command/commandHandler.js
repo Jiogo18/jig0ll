@@ -39,7 +39,7 @@ async function executeCommand(cmdData) {
 
 		return retour;
 	} catch (error) {
-		console.error(`An error occured will executing "${cmdData.commandLine}"`.red, error);
+		process.consoleLogger.commandError(cmdData.commandLine, error);
 		return new MessageMaker(`Sorry I've had an error (${error})`);
 	}
 }
