@@ -125,17 +125,25 @@ export default {
 		kvPlenitude.setDatabase(bot.database);
 		kvInvite.setDatabase(bot.database);
 
-		const channelDailyWeather = await bot.channels.fetch('849614508040519700'); // farundir-salé-du-marais
-		// timer for the weather
-		const time = Date.now();
-		// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
-		const twoHoursSinceEpoch = Math.floor(time / 1000 / 3600 / 2); // 2 hours
-		const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
-		const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
-		setTimeout(() => {
-			updateDailyWeather(channelDailyWeather);
-			dailyNewsTimer = setInterval(() => updateDailyWeather(channelDailyWeather), 7200000);
-		}, timeForInterval - time);
+		bot.channels
+			.fetch('849614508040519700')
+			.then(channel => {
+				// farundir-salé-du-marais
+
+				// timer for the weather
+				// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
+				const twoHoursSinceEpoch = Math.floor(Date.now() / 1000 / 3600 / 2); // 2 hours
+				const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
+				const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
+
+				setTimeout(() => {
+					updateDailyWeather(channel);
+					dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 7200000);
+				}, timeForInterval - Date.now());
+			})
+			.catch(err => {
+				process.consoleLogger.internalError('plenitude daily weather', err);
+			});
 	},
 };
 
@@ -165,7 +173,7 @@ function onWeatherPlenitude(data) {
 
 /**
  * Update the news in a channel every 2 hours
- * @param {TextChannel} channel
+ * @param {TextChannel} channelDailyWeather
  */
 async function updateDailyWeather(channelDailyWeather) {
 	const hour = new Date().getHours();
