@@ -15,7 +15,7 @@ var channelDatabase;
 var bot;
 var channel_tries = 0;
 async function setChannelDatabase() {
-	const channel = await bot.channels.fetch('850137517344686122');
+	const channel = await bot.channels.fetch(process.env.WIPOnly ? '850137517344686122' : '850812437258043412');
 	if (!channel) {
 		if (channel_tries++ >= 10) {
 			throw 'No channel for inventaire';
