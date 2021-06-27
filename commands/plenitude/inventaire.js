@@ -13,8 +13,16 @@ var channelDatabase;
  * @type {DiscordBot}
  */
 var bot;
+var channel_tries = 0;
 async function setChannelDatabase() {
 	const channel = await bot.channels.fetch('850137517344686122');
+	if (!channel) {
+		if (channel_tries++ >= 10) {
+			throw 'No channel for inventaire';
+		}
+		setTimeout(setChannelDatabase, channel_tries * 500);
+		return;
+	}
 	channelDatabase = new DiscordChannelDatabase(channel);
 }
 
@@ -155,7 +163,7 @@ export default {
 		},
 		{
 			name: 'couleur',
-			description: 'Changer la couleur du bâtiment',
+			description: `'Changer la couleur de l'inventaire`,
 			type: 1,
 			options: [invo.id_target, colorLib.commandOptions],
 			executeAttribute: (cmdData, levelOptions) => executeCouleur(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
@@ -167,7 +175,7 @@ export default {
 	 */
 	setBot(b) {
 		bot = b;
-		setTimeout(setChannelDatabase, 1000);
+		setTimeout(setChannelDatabase, 200);
 	},
 };
 
@@ -298,7 +306,7 @@ class Inventory {
 	description;
 
 	get color() {
-		return this.messageData?.color;
+		return colorLib.DiscordColorToHex(this.messageData?.color);
 	}
 	set color(color) {
 		if (typeof color != 'number') {
@@ -512,7 +520,7 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 
 	const inv = await getInventory(name);
 	if (!inv) {
-		console.error(`Impossible de créer le bâtiment ${name}`);
+		process.consoleLogger.commandError(cmdData.commandLine, `Impossible de créer le bâtiment ${name}`);
 		return makeError('Impossible de créer le bâtiment, réessayez');
 	}
 	if (inv.exist) return makeError(`Ce bâtiment existe déjà : ${name}`);
@@ -673,6 +681,11 @@ async function executeCouleur(cmdData, inv_id, couleur) {
 	const inv = await getInventory(inv_id, false);
 
 	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+
+	if (!couleur) {
+		return makeMessage(`La couleur de ${inv_id} est actuellement ${inv.color}`, inv.color);
+	}
+
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 
 	if (!couleur.match(colorLib.hexRegex)) {
@@ -685,5 +698,5 @@ async function executeCouleur(cmdData, inv_id, couleur) {
 
 	inv.color = couleur;
 	await inv.save();
-	return makeMessage(`La couleur de ${inv_id} est désormais : ${couleur}`, inv.color);
+	return makeMessage(`La couleur de ${inv_id} est désormais ${inv.color}`, inv.color);
 }
