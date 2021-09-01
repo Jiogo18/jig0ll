@@ -148,11 +148,14 @@ export default {
 		var retour = new EmbedMaker('SpaceX-Starship', `${data.total} Space Operation are allowed in Texas`, {
 			suffix: 'Source: https://sua.faa.gov/sua/siteFrame.app',
 		});
+		const tfr_short_max_length = 800 / data.total;
 		for (const tfr of data.schedule) {
 			var tfr_short = tfr.tfr_short;
 			if (tfr_short.indexOf('AIRCRAFT OPERATIONS ARE PROHIBITED') > -1)
 				tfr_short = tfr_short.substring(0, tfr_short.indexOf('AIRCRAFT OPERATIONS ARE PROHIBITED') - 1);
 			if (tfr_short.indexOf('ACFT OPS ARE PROHIBITED') > -1) tfr_short = tfr_short.substring(0, tfr_short.indexOf('ACFT OPS ARE PROHIBITED') - 1);
+			if (tfr_short.indexOf('END PART') > -1) tfr_short = tfr_short.substring(0, tfr_short.indexOf('END PART') - 1);
+			if (tfr_short.length > tfr_short_max_length) tfr_short = tfr_short.substring(0, tfr_short_max_length);
 			while (tfr_short.endsWith(' ') || tfr_short.endsWith(',')) tfr_short = tfr_short.substr(0, tfr_short.length - 1);
 
 			tfr_short = tfr_short.replace('\n', '');
