@@ -1,6 +1,6 @@
 import { TemporaryKVDatabase } from '../../lib/database.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { getFrenchDate } from '../../lib/date.js';
+import { dateTimeFormat, getFrenchDate } from '../../lib/date.js';
 import { sendWeatherRequest } from '../meteo.js';
 import { countInvitesPerUserSorted, embedInvitesList, getInvites } from '../miscellaneous/invit.js';
 import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
@@ -133,13 +133,12 @@ export default {
 
 					// timer for the weather
 					// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
-					const twoHoursSinceEpoch = Math.floor(Date.now() / 1000 / 3600 / 2); // 2 hours
-					const twoHoursTimeForInterval = twoHoursSinceEpoch + 1;
-					const timeForInterval = twoHoursTimeForInterval * 1000 * 3600 * 2;
+					const nextHourSinceEpoch = Math.ceil(Date.now() / 1000 / 3600);
+					const timeForInterval = nextHourSinceEpoch * 1000 * 3600;
 
 					setTimeout(() => {
 						updateDailyWeather(channel);
-						dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 7200000);
+						dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 3600000);
 					}, timeForInterval - Date.now());
 				})
 				.catch(err => {
@@ -178,9 +177,11 @@ function onWeatherPlenitude(data) {
  * @param {TextChannel} channelDailyWeather
  */
 async function updateDailyWeather(channelDailyWeather) {
-	const date = new Date();
-	const hour = date.getHours() + date.getMinutes() > 55; // l'heure ou bientôt l'heure
-	if (hour == 10 || hour == 14 || hour == 18) {
+	const [{ value: hour }, , { value: minute }, ,] = dateTimeFormat.formatToParts(new Date());
+
+	const updateHour = Number(hour) + (Number(minute) > 55); // l'heure ou bientôt l'heure
+
+	if (updateHour == 10 || updateHour == 14 || updateHour == 18) {
 		const answer = await getMeteo();
 		channelDailyWeather.send(answer.getForMessage());
 	}
