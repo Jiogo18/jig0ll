@@ -168,6 +168,12 @@ export default {
 			options: [invo.id_target, colorLib.commandOptions],
 			executeAttribute: (cmdData, levelOptions) => executeCouleur(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
 		},
+		// {
+		// 	name: 'liste',
+		// 	description: 'Lister vos inventaires',
+		// 	type: 1,
+		// 	execute: executeListUserInventory,
+		// },
 	],
 
 	/**
@@ -375,6 +381,10 @@ class Inventory {
 		return false;
 	}
 
+	isCreated() {
+		return this.messageData?.exist;
+	}
+
 	/**
 	 * @param {User} user
 	 */
@@ -537,6 +547,7 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 async function executeOpen(cmdData, id_prop) {
 	const inv = await getInventory(id_prop);
 
+	if (!inv.isCreated()) return messages.doesntExist(inv);
 	if (!inv.canOpen(cmdData.author)) return messages.cantOpen(inv);
 
 	const inventory_source = inv.items;
@@ -700,3 +711,10 @@ async function executeCouleur(cmdData, inv_id, couleur) {
 	await inv.save();
 	return makeMessage(`La couleur de ${inv_id} est désormais ${inv.color}`, inv.color);
 }
+
+// /**
+//  * @param {ReceivedCommand} cmdData
+//  */
+// async function executeListUserInventory(cmdData) {
+// 	return makeMessage(`WIP, not implemented`);
+// }
