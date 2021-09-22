@@ -1,10 +1,10 @@
 Interaction de discord.js
 
 
-https://discord.com/developers/docs/interactions/slash-commands
+https://discord.com/developers/docs/interactions/application-commands
 
 
-type ApplicationCommandOptionType https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoptiontype
+type ApplicationCommandOptionType https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
 	1: SUB_COMMAND
 	2: SUB_COMMAND_GROUP : groupe de SUB_COMMAND, exemple : l'interaction reçue a un type SUB_COMMAND_GROUP
 	3: STRING
@@ -13,7 +13,7 @@ type ApplicationCommandOptionType https://discord.com/developers/docs/interactio
 	6: USER
 	7: CHANNEL
 	8: ROLE
-	peut se faire en choix multiple (https://discord.com/developers/docs/interactions/slash-commands#authorizing-your-application)
+	peut se faire en choix multiple (https://discord.com/developers/docs/interactions/application-commands#authorizing-your-application)
 ID			Nom					Enfants		Peut Executer
 			Interaction			1, 2		oui
 2			SUB_COMMAND_GROUP	1			non
@@ -43,15 +43,16 @@ exemple :
 
 
 
-type InteractionResponseType https://discord.com/developers/docs/interactions/slash-commands#interaction-response-interactionresponsetype
+type InteractionResponseType https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-interaction-callback-type
+		Constants.InteractionResponseTypes
 	1: Pong
 	4: utilisé pour les retours
 	5: acknowledgement (on renvoie rien mais on affiche l'interaction)
 
-Application Command: https://discord.com/developers/docs/interactions/slash-commands#create-global-application-command-json-params
+Application Command: https://discord.com/developers/docs/interactions/application-commands#create-global-application-command
 	name: entrée de la commande
 	description: petit texte de description (pas visible si la commande peut pas se faire toute seule)
-	options: [] facultatif, les arguments qui suivent https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoption
+	options: [] facultatif, les arguments qui suivent https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
 
 
 N.B. Lorsqu'une interaction affiche la commande utilisateur, cette dernière est un message avec le préfix '</COMMAND:BOT_ID> '

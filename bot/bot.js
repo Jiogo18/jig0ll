@@ -1,4 +1,4 @@
-import { Client, Constants, Message } from 'discord.js';
+import { Client, Constants, Message, Intents } from 'discord.js';
 
 import AppManager from './AppManager.js';
 import CommandManager from './command/commandManager.js';
@@ -25,7 +25,16 @@ export default class DiscordBot extends Client {
 	onReady;
 
 	constructor() {
-		super({ ws: { intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'GUILD_INTEGRATIONS', 'GUILD_MEMBERS', 'GUILD_INVITES'] } });
+		super({
+			intents: [
+				Intents.FLAGS.GUILDS,
+				Intents.FLAGS.GUILD_MESSAGES,
+				Intents.FLAGS.DIRECT_MESSAGES,
+				Intents.FLAGS.GUILD_INTEGRATIONS,
+				Intents.FLAGS.GUILD_MEMBERS,
+				Intents.FLAGS.GUILD_INVITES,
+			],
+		});
 		this.startedTime = Date.now();
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
@@ -62,13 +71,14 @@ export default class DiscordBot extends Client {
 	onBotConnected() {
 		process.env.BOT_ID = this.user.id;
 
-		this.user
-			.setActivity(`/help || @${this.user.username} help`, { type: 'WATCHING' })
-			.then(presence => {
-				const presenceName = presence.activities?.[0]?.name || 'none';
-				console.log(`Activitée de ${this.user.username} mis à "${presenceName}"`.cyan);
-			})
-			.catch(process.consoleLogger.error);
+		try {
+			const presence = this.user.setActivity(`/help || @${this.user.username} help`, { type: 'WATCHING' });
+
+			const presenceName = presence.activities?.[0]?.name || 'none';
+			console.log(`Activitée de ${this.user.username} mis à "${presenceName}"`.cyan);
+		} catch (error) {
+			process.consoleLogger.error(error);
+		}
 
 		if (process.env.WIPOnly) {
 			console.warn(`You are in WIP mode, @${this.user.username} will only answer on Jiogo18's serv`.cyan);

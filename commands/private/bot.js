@@ -85,7 +85,7 @@ function getInfo(bot) {
 	const idLocal = `Id local du bot : ${getLocalId()}`;
 	const retour = new EmbedMaker('Informations sur bot', idLocal);
 
-	retour.addField('Guilds', `Connecté sur ${bot.guilds.cache.array().length} serveurs`, true);
+	retour.addField('Guilds', `Connecté sur ${bot.guilds.cache.size} serveurs`, true);
 	retour.addField('Session', `Démarré sur ${getBotLocation()}\ndepuis ${getSessionTime(bot.startedTime)}`, true);
 
 	return retour;

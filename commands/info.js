@@ -176,14 +176,17 @@ async function executeInfoUser(cmdData, levelOptions) {
  * @returns informations about the channel targeted or the channel where this command is executed
  */
 async function executeInfoChannel(cmdData, levelOptions) {
+	/**
+	 * @type {string}
+	 */
 	const channelId = levelOptions ? levelOptions.channel || (levelOptions[0] && levelOptions[0].value) : undefined;
 
-	const channel = await cmdData.guild.channels.resolve(channelId || cmdData.channel.id);
+	const channel = await cmdData.guild.channels.fetch(channelId || cmdData.channel.id);
 	if (!channel) {
 		return makeMessage(`Le channel ${channelId} est introuvable`);
 	}
 
-	return getBasicInfo('du channel', channel).addField('', `Membres (minimum) : ${channel.members.array().length}`);
+	return getBasicInfo('du channel', channel).addField('', `Membres (minimum) : ${channel.members.size}`);
 }
 /**
  * `info role` was called
@@ -199,7 +202,7 @@ async function executeInfoRole(cmdData, levelOptions) {
 		return makeMessage(`Le role ${roleId} est introuvable`);
 	}
 
-	return getBasicInfo('du role', role).addField('', `Membres (minimum) : ${role.members.array().length}`);
+	return getBasicInfo('du role', role).addField('', `Membres (minimum) : ${role.members.size}`);
 }
 /**
  * `info guild` was called

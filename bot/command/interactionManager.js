@@ -100,7 +100,7 @@ export default class InteractionManager {
 			posted: 0,
 		};
 
-		const commandsToPost = this.commands.array().filter(command => {
+		const commandsToPost = Array.from(this.commands.values()).filter(command => {
 			return command.allowedPlacesToCreateInteraction != SecurityPlaces.NONE;
 		});
 
