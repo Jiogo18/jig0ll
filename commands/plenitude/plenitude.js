@@ -127,7 +127,7 @@ export default {
 
 		bot.onReady.then(() => {
 			bot.channels
-				.fetch('849614508040519700')
+				.fetch('661991986039095316')
 				.then(channel => {
 					// farundir-salé-du-marais
 
@@ -178,12 +178,12 @@ function onWeatherPlenitude(data) {
  * @param {TextChannel} channelDailyWeather
  */
 async function updateDailyWeather(channelDailyWeather) {
-	const hour = new Date().getHours();
-	if (hour < 7 || 17 < hour) return; // hours : 8, 10, 12, 14, 16
-
-	var answer = getMeteo();
-	answer = await answer;
-	channelDailyWeather.send(answer.getForMessage());
+	const date = new Date();
+	const hour = date.getHours() + date.getMinutes() > 55; // l'heure ou bientôt l'heure
+	if (hour == 10 || hour == 14 || hour == 18) {
+		const answer = await getMeteo();
+		channelDailyWeather.send(answer.getForMessage());
+	}
 }
 
 /**
