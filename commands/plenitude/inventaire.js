@@ -549,7 +549,7 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 async function executeOpen(cmdData, id_prop) {
 	const inv = await getInventory(id_prop);
 
-	if (!inv.isCreated()) return messages.doesntExist(inv);
+	if (!inv.exist) return messages.doesntExist(inv);
 	if (!inv.canOpen(cmdData.author)) return messages.cantOpen(inv);
 
 	const inventory_source = inv.items;
@@ -723,13 +723,14 @@ async function executeListUserInventory(cmdData, levelOptions) {
 	// const channel = await cmdData.bot.channels.fetch('858620313117917184');
 	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());
 
-	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0].description)));
+	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0]?.description || '')));
 
 	const userInventories = messagesSnowflake.filter(m => {
 		/**
 		 * @type {Inventory}
 		 */
 		const inv = m.data;
+		if (!inv) return false;
 		const proprietaireId = inv.proprietaire?.match?.(/<@!?(\d+)>/)?.[1] || inv.id?.match?.(/<@!?(\d+)>/)?.[1];
 		return proprietaireId == userId;
 	});
