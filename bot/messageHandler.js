@@ -42,6 +42,6 @@ async function onMessageCommand(message) {
 	var command = new ReceivedMessage(message, this);
 	commandHandler.call(this, command).catch(error => {
 		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-		process.consoleLogger.error(`Error while sending an answer for '${command.commandLine}'`.red, error);
+		process.consoleLogger.error(`Error while sending an answer for '${command.commandLine}' ${error}`.red);
 	});
 }

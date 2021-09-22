@@ -29,10 +29,10 @@ async function commandError(command, description) {
 }
 
 export default process.consoleLogger = {
-	debug: (t = '') => console.debug(t.red),
-	log: (t = '') => console.log(t),
-	warn: (t = '') => console.warn(t.yellow),
-	error: (t = '') => internalError('error', t),
+	debug: (t = '', ..._) => console.debug(t.red, ..._),
+	log: (t = '', ..._) => console.log(t, ..._),
+	warn: (t = '', ..._) => console.warn(t.yellow, ..._),
+	error: (t = '', ..._) => internalError('error', t, ..._),
 	internalError,
 	commandError,
 };
