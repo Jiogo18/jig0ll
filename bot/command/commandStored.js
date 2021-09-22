@@ -111,15 +111,15 @@ class CommandBase {
 	}
 
 	get JSON() {
-		return {
+		const JSON = {
 			name: this.name,
 			description: this.description || this.name,
-
-			//pour CommandStored c'est pas utile mais ça l'est pour toutes les options
-			type: this.type,
-			default: this.default,
-			required: this.required,
 		};
+		if (this.type) JSON.type = this.type;
+		//pour CommandStored c'est pas utile mais ça l'est pour toutes les options
+		if (this.default) JSON.default = this.default;
+		if (this.required) JSON.required = this.required;
+		return JSON;
 	}
 
 	/**
