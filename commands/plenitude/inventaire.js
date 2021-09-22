@@ -1,9 +1,10 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
 import { ReceivedCommand } from '../../bot/command/received.js';
-import { DiscordChannelDatabase, MessageData } from '../../lib/discordDatabase.js';
+import { DiscordChannelDatabase, getEveryMessageSnowflake, MessageData } from '../../lib/discordDatabase.js';
 import DiscordBot from '../../bot/bot.js';
 import { User } from 'discord.js';
 import colorLib from '../../lib/color.js';
+import YAML from 'yaml';
 
 /**
  * @type {DiscordChannelDatabase}
@@ -86,6 +87,7 @@ export default {
 	interaction: true,
 	security: {
 		place: 'public',
+		wip: true,
 	},
 
 	options: [
@@ -168,12 +170,12 @@ export default {
 			options: [invo.id_target, colorLib.commandOptions],
 			executeAttribute: (cmdData, levelOptions) => executeCouleur(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
 		},
-		// {
-		// 	name: 'liste',
-		// 	description: 'Lister vos inventaires',
-		// 	type: 1,
-		// 	execute: executeListUserInventory,
-		// },
+		{
+			name: 'liste',
+			description: 'Lister vos inventaires',
+			type: 1,
+			execute: executeListUserInventory,
+		},
 	],
 
 	/**
@@ -712,9 +714,30 @@ async function executeCouleur(cmdData, inv_id, couleur) {
 	return makeMessage(`La couleur de ${inv_id} est désormais ${inv.color}`, inv.color);
 }
 
-// /**
-//  * @param {ReceivedCommand} cmdData
-//  */
-// async function executeListUserInventory(cmdData) {
-// 	return makeMessage(`WIP, not implemented`);
-// }
+/**
+ * @param {ReceivedCommand} cmdData
+ */
+async function executeListUserInventory(cmdData, levelOptions) {
+	const userId = levelOptions[0].value || cmdData.author.id;
+	const channel = channelDatabase.channel;
+	// const channel = await cmdData.bot.channels.fetch('858620313117917184');
+	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());
+
+	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0].description)));
+
+	const userInventories = messagesSnowflake.filter(m => {
+		/**
+		 * @type {Inventory}
+		 */
+		const inv = m.data;
+		const proprietaireId = inv.proprietaire?.match?.(/<@!?(\d+)>/)?.[1] || inv.id?.match?.(/<@!?(\d+)>/)?.[1];
+		return proprietaireId == userId;
+	});
+
+	const user = await cmdData.bot.users.fetch(userId);
+	const msg = makeMessage(
+		`${userInventories.length} inventaires appartiennent à ${user.toString()} :\n${userInventories.map(m => m.data.id).join(', ')}`
+	);
+
+	return msg;
+}
