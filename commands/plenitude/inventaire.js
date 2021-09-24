@@ -87,7 +87,6 @@ export default {
 	interaction: true,
 	security: {
 		place: 'public',
-		wip: true,
 	},
 
 	options: [
