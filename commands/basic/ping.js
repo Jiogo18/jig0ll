@@ -92,14 +92,16 @@ function catchPrePingMessage(cmdData, timePrePingSentLocal, message) {
 	const decalagePrePingServ = server.prePingServ - local.prePingServ; // décalage PrePing
 	const decalage = (decalagePrePingSent + decalagePrePingServ) / 2;
 
-	message.edit(
-		new EmbedMaker(
-			'Ping',
-			`Pong en ${Math.round(pingSinceMessageCreated)} msec
-			Ping du bot : ${Math.round(pingBot)} msec
-			Décalage avec le serveur : ${Math.round(decalage)} msec`
-		).content
-	);
+	message.edit({
+		embeds: [
+			new EmbedMaker(
+				'Ping',
+				`Pong en ${Math.round(pingSinceMessageCreated)} msec\n` +
+					`Ping du bot : ${Math.round(pingBot)} msec\n` +
+					`Décalage avec le serveur : ${Math.round(decalage)} msec`
+			).content,
+		],
+	});
 
 	console.log(`Ping du bot : ${pingBot} msec`);
 	//Durée du calcul : Date.now() - local.prePingCatched ~= 1 msec
