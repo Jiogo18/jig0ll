@@ -173,7 +173,17 @@ export default {
 			name: 'liste',
 			description: 'Lister vos inventaires',
 			type: 1,
-			execute: executeListUserInventory,
+			options: [
+				{
+					name: 'user',
+					description: "Lister les inventaires d'un joueur",
+					type: 6,
+					required: false,
+				},
+			],
+			execute: cmdData => executeListUserInventory(cmdData, cmdData.author.toString()),
+			executeAttribute: (cmdData, levelOptions) =>
+				executeListUserInventory(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
 		},
 	],
 
@@ -715,9 +725,11 @@ async function executeCouleur(cmdData, inv_id, couleur) {
 
 /**
  * @param {ReceivedCommand} cmdData
+ * @param {string} user_mention
  */
-async function executeListUserInventory(cmdData, levelOptions) {
-	const userId = levelOptions[0].value || cmdData.author.id;
+async function executeListUserInventory(cmdData, user_mention) {
+	const userId = user_mention.match(/<@!?(\d+)>/)?.[1] || user_mention.match(/^\d+$/)?.[0] || cmdData.author.id;
+	console.log(user_mention, userId);
 	const channel = channelDatabase.channel;
 	// const channel = await cmdData.bot.channels.fetch('858620313117917184');
 	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());
