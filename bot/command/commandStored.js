@@ -89,35 +89,6 @@ class AbstractCommandOption {
 	}
 }
 
-/**
- * Get the possible/best types for value
- * @param {any} value The value to test
- * @returns {string[]} Possible Types
- */
-function possibleTypesOfValue(value) {
-	if (typeof value != 'string') return [typeof value];
-
-	const types = ['string'];
-
-	if (value.match(/^<..?\d{10,20}>$/)) {
-		//format: <.NOMBRE> ou <..NOMBRE> (. pour n'importe quoi), NOMBRE: snowflake avec min: 2015, max: 2154
-		if (value.startsWith('<@')) types.push('USER');
-		else if (value.startsWith('<#')) types.push('CHANNEL');
-		else console.warn(`Target unknow : ${value}`.yellow);
-		//rien pour ApplicationCommandOptionType.ROLE (pour l'instant)
-	}
-	const regexNumber = value.replace('.', '').match(/\-?\d+/) || [''];
-	if (typeof value == 'number' || regexNumber[0] == value.replace('.', '')) {
-		//nombres : -4.5
-		//TODO future: séparer avec une catégorie double : https://github.com/discord/discord-api-docs/issues/2512
-		types.push('number');
-	}
-	if (['true', 'false', 'vrai', 'faux', 'oui', 'non'].includes(value)) {
-		types.push('boolean');
-	}
-	return types;
-}
-
 class CommandParameter extends AbstractCommandOption {
 	type; //type: 3-8
 	isOptionParameter = true;
@@ -223,39 +194,6 @@ class CommandParameter extends AbstractCommandOption {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Test if this command is the command you are looking for
-	 * @deprecated CommandParameter ne devrait pas pouvoir être executé
-	 * @param {string|{name: string, value: string, possibleTypes:string[]}} option The option
-	 * @returns {boolean} `true` if this is the command, `false` if it's not
-	 */
-	isParameterName(option) {
-		//TODO: deprecated, CommandParameter ne devrait pas pouvoir être executé
-		//or keep it for to be sure for messages...?
-		if (typeof option == 'object' && option.name != undefined) {
-			return super.isOptionName(option.name); //avec les interactions
-		}
-		const value = typeof option == 'object' ? option.value : option;
-		//avec un message on connait que value
-		if (super.isOptionName(value)) return true;
-
-		if (!option.possibleTypes) option.possibleTypes = possibleTypesOfValue(value);
-		switch (this.type) {
-			case ApplicationCommandOptionTypes.USER:
-				return option.possibleTypes.includes('USER');
-			case ApplicationCommandOptionTypes.CHANNEL:
-				return option.possibleTypes.includes('USER');
-			case ApplicationCommandOptionTypes.INTEGER:
-				return option.possibleTypes.includes('number');
-			case ApplicationCommandOptionTypes.BOOLEAN:
-				return option.possibleTypes.includes('boolean');
-			case ApplicationCommandOptionTypes.STRING:
-				return option.possibleTypes.includes('string');
-			default:
-				return false; //normalement tout le monde passe par 'string' sauf si c'est un type différent !
-		}
 	}
 }
 
