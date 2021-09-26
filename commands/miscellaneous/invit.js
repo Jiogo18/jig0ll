@@ -1,14 +1,14 @@
 import { Collection, Guild, User } from 'discord.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 
 export default {
 	name: 'invit',
-	description: 'Actions sur les invitations',
-	interaction: true,
+	description: 'Tests sur les invitations',
 
 	security: {
 		place: 'public',
+		interaction: true,
 		wip: true,
 	},
 
@@ -29,10 +29,10 @@ export default {
 			/**
 			 * '!invit list <guildid|guildname>'
 			 * @param {ReceivedCommand} cmdData
-			 * @param {[]} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
 			async executeAttribute(cmdData, levelOptions) {
-				const guild_id = levelOptions.guild || levelOptions[0]?.value;
+				const guild_id = levelOptions.getArgumentValue('guild', 0);
 				if (!guild_id) return this.execute(cmdData);
 
 				const guilds = cmdData.bot.guilds.cache;
@@ -63,24 +63,23 @@ export default {
 			/**
 			 * '!invit per_user <guildid|guildname>'
 			 * @param {ReceivedCommand} cmdData
-			 * @param {[*]} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
 			async executeAttribute(cmdData, levelOptions) {
-				const guild_id = levelOptions.guild || levelOptions[0]?.value;
+				const guild_id = levelOptions.getArgumentValue('guild', 0);
 				if (!guild_id) return this.execute(cmdData);
 
-				const guilds = cmdData.bot.guilds.cache;
-				const guild = guilds.get(guild_id) || guilds.find(guild => guild.name == guild_id);
+				const guild = await cmdData.bot.guilds.fetch(guild_id);
 				if (!guild) return makeError(`Impossible de trouver le serveur '${guild_id}'`);
 
-				return displayCountPerUser(guild, cmdData.guild);
+				return displayCountPerUser(guild);
 			},
 
 			/**
 			 * !invit per_user
 			 * @param {ReceivedCommand} cmdData
 			 */
-			execute: cmdData => displayCountPerUser(cmdData.guild),
+			execute: async cmdData => displayCountPerUser(await cmdData.context.getGuild()),
 		},
 	],
 };
@@ -89,7 +88,7 @@ function makeMessage(description) {
 	return new EmbedMaker('Invitations', description);
 }
 function makeError(description) {
-	return new EmbedMaker('Invitations', description, { color: 'red' });
+	return EmbedMaker.Error('Invitations', description);
 }
 
 /**
@@ -101,9 +100,9 @@ async function list(guild) {
 	var invites;
 
 	try {
-		invites = await guild.fetchInvites();
-	} catch (err) {
-		process.consoleLogger.commandError('/invit list ${guild.id}', err);
+		invites = await guild.invites.fetch();
+	} catch (error) {
+		process.consoleLogger.commandError('/invit list ${guild.id}', error);
 		return makeError('Impossible de récupérer les invitations du serveur, la permission `Ggérer le serveur` doit être activée');
 	}
 
@@ -126,9 +125,9 @@ export async function getInvites(guild) {
 	if (!guild) throw 'Vous devez être dans un serveur pour exécuter ceci';
 
 	try {
-		return await guild.fetchInvites();
-	} catch (err) {
-		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, err);
+		return await guild.invites.fetch();
+	} catch (error) {
+		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, error);
 		throw 'Impossible de récupérer les invitations du serveur, la permission `Gérer le serveur` doit être activée';
 	}
 }
@@ -156,7 +155,7 @@ export async function countInvitesPerUserSorted(invites) {
 	 */
 	var invitesSorted = [];
 	per_user.filter((v, k) => k != null).forEach((uses, user) => invitesSorted.push({ user, uses }));
-	invitesSorted = invitesSorted.sort((a, b) => (a.uses > b.uses ? -1 : a.uses < b.uses));
+	invitesSorted = invitesSorted.sort((a, b) => a.uses - b.uses);
 
 	return invitesSorted;
 }
@@ -164,6 +163,7 @@ export async function countInvitesPerUserSorted(invites) {
 /**
  * Create a readable array of invites infos
  * @param {[{user: User, uses: number}]} invites The invites to display
+ * @param {Guild} currentGuild
  */
 export async function embedInvitesList(invites, currentGuild) {
 	/**
@@ -182,9 +182,8 @@ export async function embedInvitesList(invites, currentGuild) {
 /**
  * Display a list with the number of uses of invitations for each user
  * @param {Guild} guild
- * @param {Guild} currentGuild
  */
-async function displayCountPerUser(guild, currentGuild) {
+async function displayCountPerUser(guild) {
 	var invitesSorted;
 	try {
 		const invites = await getInvites(guild);
@@ -192,11 +191,11 @@ async function displayCountPerUser(guild, currentGuild) {
 		if (!invitesSorted?.length) {
 			return makeMessage(`Il n'y a pas d'invitations dans ${guild.name}`);
 		}
-	} catch (err) {
-		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, err);
-		return makeError(err);
+	} catch (error) {
+		process.consoleLogger.commandError(`/invit per_user ${guild.id}`, error);
+		return makeError(error);
 	}
 
-	const countDesc = await embedInvitesList(invitesSorted, currentGuild);
+	const countDesc = await embedInvitesList(invitesSorted, guild);
 	return makeMessage([`Il y a ${invitesSorted.length} invitations dans ${guild.name} : `, ...countDesc].join('\n'));
 }

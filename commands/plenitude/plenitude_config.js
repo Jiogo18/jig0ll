@@ -1,17 +1,21 @@
 import { getLocation, setLocation } from './plenitude.js';
 import { isPlenitudePrivilege } from '../../bot/command/security.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandContext, CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 
 const vars = [
 	{
 		name: 'PlenCity',
+		description: 'Emplacement de Plénitude',
 		get: getLocation,
 		set: setLocation,
 
 		textGet: async function () {
 			return `La ville de Plénitude se trouve à ${await this.get()}`;
 		},
+		/**
+		 * @param {string} value
+		 */
 		textSet: async function (value) {
 			const optionsValue = value.map(e => e.value);
 			const newValue = await this.set(optionsValue.join(','));
@@ -20,46 +24,46 @@ const vars = [
 	},
 ];
 const optionVariable = {
-	name: 'variable',
+	name: 'var',
 	type: 3,
 	required: true,
-	choices: vars.map(e => ({ name: e.name, value: e.name })),
+	choices: vars.map(e => ({ name: e.name, value: e.name, description: e.description })),
 };
 
 export default {
-	name: 'plenitude_location', //TODO: renomme en PlenConfig
+	name: 'plenitude_config',
 	description: 'Commandes avancées pour Plénitude',
-	interaction: true, //private donc sera ok juste sur mon serv
 
 	security: {
 		place: 'private',
+		interaction: true, //private donc sera ok juste sur mon serv
 		/**
 		 * Custom isAllowedToUse
-		 * @param {ReceivedCommand} cmdData
+		 * @param {CommandContext} context
 		 */
-		isAllowedToUse: cmdData => isPlenitudePrivilege(cmdData.author.id),
+		isAllowedToUse: context => isPlenitudePrivilege(context.author_id),
 	},
 
-	//format: get [variable], set [variable] [value]
+	//format: get [var], set [var] [value]
 	options: [
 		{
 			name: 'get',
-			description: 'Donne la ville actuelle de Plénitude',
+			description: 'Récupérer une variable',
 			type: 1,
 			options: [
 				{
 					...optionVariable,
-					description: 'Donne la valeur actuelle de la variable',
+					description: 'Nom de la variable à récupérer',
 				},
 			],
 
 			/**
 			 * Executed with option(s)
 			 * @param {ReceivedCommand} cmdData
-			 * @param {{variable:string}} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
 			async executeAttribute(cmdData, levelOptions) {
-				const name = levelOptions.variable || (levelOptions[0] && levelOptions[0].value);
+				const name = levelOptions.getArgumentValue('var', 0);
 				return await onGetCommand(name);
 			},
 			/**
@@ -70,16 +74,16 @@ export default {
 		},
 		{
 			name: 'set',
-			description: 'Change la ville actuelle de Plénitude',
+			description: 'Changer une variable',
 			type: 1,
 			options: [
 				{
 					...optionVariable,
-					desciption: 'Affecter la valeur à la variable',
-					required: true,
+					description: 'Nom de la variable à modifier',
 				},
 				{
-					name: 'location',
+					name: 'value',
+					description: 'Valeur de la variable',
 					type: 3,
 					required: true,
 				},
@@ -87,17 +91,20 @@ export default {
 			/**
 			 * Executed with option(s)
 			 * @param {ReceivedCommand} cmdData
-			 * @param {{variable:string, location:string}} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
 			async executeAttribute(cmdData, levelOptions) {
-				const name = levelOptions.variable || levelOptions[0]?.value;
-				if (levelOptions[0]) {
-					if (levelOptions[0] == name || levelOptions[0].value == name) {
-						levelOptions.shift();
-					}
+				const name = levelOptions.getArgumentValue('var', 0);
+				var value;
+				if (cmdData.isMessage && levelOptions.length > 2) {
+					value = levelOptions.options
+						.filter((o, i) => i > 0)
+						.map(o => o.getValueOrName())
+						.join(', ');
+				} else {
+					value = levelOptions.getArgumentValue('value', 1);
 				}
-				if (levelOptions.variable) levelOptions.variable = undefined;
-				return await onSetCommand(name, levelOptions);
+				return await onSetCommand(name, value);
 			},
 			/**
 			 * Executed when there is no valid option
@@ -128,7 +135,7 @@ function makeMessage(text) {
  * @param {string} text The reason or the message for the error
  */
 function makeError(text) {
-	return new EmbedMaker('Plénitude', text || 'Une erreur est survenue', { color: 'red' });
+	return EmbedMaker.Error('Plénitude', text || 'Une erreur est survenue');
 }
 function makeVariablesAvailable() {
 	return makeMessage('Variables disponibles : ' + optionVariable.choices.map(e => e.name).join(', '));
@@ -158,8 +165,8 @@ async function onGetCommand(name) {
 /**
  * When `plenitude_location set` was called
  * @param {string} name The name of the variable
- * @param {[*]} values The data with the new value
+ * @param {string} value The data with the new value
  */
-async function onSetCommand(name, values) {
-	return await onACommand(name, variable => variable.textSet(values));
+async function onSetCommand(name, value) {
+	return await onACommand(name, variable => variable.textSet(value));
 }

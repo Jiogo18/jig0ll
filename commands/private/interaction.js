@@ -1,7 +1,7 @@
 import { Guild } from 'discord.js';
 import AppManager, { DiscordInteractionStored } from '../../bot/AppManager.js';
 import CommandStored from '../../bot/command/commandStored.js';
-import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
+import { CommandContext, CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 const spaces = '\u200b \u200b \u200b \u200b ';
 
@@ -21,7 +21,7 @@ const commands = [
 	{
 		name: 'clean',
 		description: 'Nettoyer toutes les intéractions du bot',
-		execute: (cmdData, guild) => cleanInteraction(cmdData.context, guild),
+		execute: (cmdData, guild) => cleanInteraction(cmdData, guild),
 	},
 	{
 		name: 'remove',
@@ -46,10 +46,10 @@ const commands = [
 export default {
 	name: 'interaction',
 	description: 'Informations sur les intéractions du bot',
-	interaction: true,
 
 	security: {
 		place: 'private',
+		interaction: true,
 		wip: true,
 	},
 
@@ -77,18 +77,18 @@ export default {
 	/**
 	 * !interaction <sub command> <guild id>
 	 * @param {ReceivedCommand} cmdData
-	 * @param {[*]} levelOptions
+	 * @param {CommandLevelOptions} levelOptions
 	 */
 	async executeAttribute(cmdData, levelOptions) {
-		const commandName = levelOptions.subcommand || levelOptions[0]?.value;
+		const commandName = levelOptions.getArgumentValue('subcommand', 0);
 		if (!commandName) return makeError('You must put the name of the command');
 		const subcommand = commands.find(c => c.name === commandName);
 		if (!commandName) return makeError(`Sub Command not found : ${commandName}`);
 
-		const guild_id = levelOptions.guild || levelOptions[1]?.value;
+		const guild_id = levelOptions.getArgumentValue('guild', 1);
 		const guild = getGuild(cmdData, guild_id);
 
-		const commandTargetName = levelOptions.command || levelOptions[2]?.value;
+		const commandTargetName = levelOptions.getArgumentValue('command', 2);
 		if (!commandTargetName && (subcommand.needCommand || subcommand.needInteraction))
 			return makeError("Donnez un nom de commande ou son id (vous devez préciser l'id du serveur aussi)");
 		const commandTarget =
@@ -111,7 +111,7 @@ function makeMessage(description) {
 	return new EmbedMaker('Interaciton', description);
 }
 function makeError(description) {
-	return new EmbedMaker('Interaction', description, { color: 'red' });
+	return EmbedMaker.Error('Interaction', description);
 }
 
 /**
@@ -138,20 +138,20 @@ async function listInteraction(context, guild) {
  * Clean ALL interactions of the bot
  * `interaction clean` was called
  * @deprecated
- * @param {CommandContext} context
+ * @param {ReceivedCommand} cmdData
  */
-async function cleanInteraction(context) {
-	var slashCmd = context.interactionMgr;
+async function cleanInteraction(cmdData) {
+	var slashCmd = cmdData.bot.interactionMgr;
 
 	var globalInte = await AppManager.getCmdFrom();
 	var localInte = await AppManager.getCmdFrom(context.guild_id);
 	const counterBefore = globalInte.length + localInte.length;
 
-	await slashCmd.cleanCommands().catch(e => process.consoleLogger.commandError('interaction clean global', e)); //global
-	await slashCmd.cleanCommands(context.guild_id).catch(e => process.consoleLogger.commandError('interaction clean guild', e));
+	await slashCmd.cleanCommands().catch(error => process.consoleLogger.commandError('interaction clean global', error)); //global
+	await slashCmd.cleanCommands(context.guild_id).catch(error => process.consoleLogger.commandError('interaction clean guild', error));
 	await slashCmd.loadCommands();
-	globalInte = await AppManager.getCmdFrom().catch(e => process.consoleLogger.commandError('interaction getCmdFrom 1', e));
-	localInte = await AppManager.getCmdFrom(context.guild_id).catch(e => process.consoleLogger.commandError('interaction getCmdFrom 2', e));
+	globalInte = await AppManager.getCmdFrom().catch(error => process.consoleLogger.commandError('interaction getCmdFrom 1', error));
+	localInte = await AppManager.getCmdFrom(context.guild_id).catch(error => process.consoleLogger.commandError('interaction getCmdFrom 2', error));
 	const counterAfter = globalInte.length + localInte.length;
 
 	return new MessageMaker(`There were ${counterBefore} interactions, there are ${counterAfter}.`);

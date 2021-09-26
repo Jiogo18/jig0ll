@@ -1,14 +1,14 @@
 import { Guild, TextChannel } from 'discord.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 
 export default {
 	name: 'test',
 	description: 'Commandes de test (limitées)',
 
-	interaction: false,
 	security: {
 		place: 'private',
+		interaction: false,
 		wip: true,
 	},
 
@@ -27,16 +27,16 @@ export default {
 			/**
 			 * Executed with option
 			 * @param {ReceivedCommand} cmdData
-			 * @param {[{name:string,value:string}]} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
-			executeAttribute(cmdData, levelOptions) {
-				return embedIdTime(cmdData.guild, levelOptions.number || levelOptions[0].value);
+			async executeAttribute(cmdData, levelOptions) {
+				return embedIdTime(await cmdData.context.getGuild(), levelOptions.getArgumentValue('number', 0));
 			},
 			/**
 			 * Executed when there is no valid option
 			 * @param {ReceivedCommand} cmdData
 			 */
-			execute: cmdData => embedIdTime(cmdData.guild, 1),
+			execute: async cmdData => embedIdTime(await cmdData.context.getGuild(), 1),
 		},
 	],
 };
@@ -47,10 +47,12 @@ export default {
  * @param {number} nb Nombre de channels à créer
  */
 async function embedIdTime(guild, nb) {
+	if (!guild) return EmbedMaker.Error('test idTime', `Vous n'êtes pas dans un serveur.`);
+
 	const data = await idTime(guild, nb);
 
-	const decription = [`${data.length} channel${data.length == 1 ? ' créé' : 's créés'}`];
-	var retour = new EmbedMaker('test idTime', decription);
+	const description = `${data.length} channel${data.length == 1 ? ' créé' : 's créés'}`;
+	var retour = new EmbedMaker('test idTime', description);
 	data.forEach((channel, i) => {
 		retour.addField(
 			`Channel ${i + 1} :`,

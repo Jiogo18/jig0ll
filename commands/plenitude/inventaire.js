@@ -1,5 +1,5 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { DiscordChannelDatabase, getEveryMessageSnowflake, MessageData } from '../../lib/discordDatabase.js';
 import DiscordBot from '../../bot/bot.js';
 import { User } from 'discord.js';
@@ -49,24 +49,31 @@ function getPropId(id_prop, author) {
  * @param {Function} executeFunc
  */
 function createExecuteLink(executeFunc) {
-	return (cmdData, levelOptions) => executeFunc(cmdData, getPropId(levelOptions.shift()?.value, cmdData.author), ...levelOptions.map(i => i?.value));
+	/**
+	 * @param {ReceivedCommand} cmdData
+	 * @param {CommandLevelOptions} levelOptions
+	 */
+	return (cmdData, levelOptions) => {
+		const [{ value: prop }, nextLevelOptions] = levelOptions.getNextLevelOptions();
+		return executeFunc(cmdData, getPropId(prop, cmdData.author), ...nextLevelOptions.options.map(i => i?.value));
+	};
 }
 
 const invo = {
 	id_source: {
 		name: 'inv_source',
 		description: "Inventaire source (* pour l'inventaire perso)",
-		type: 3, // string
+		type: 3,
 		required: true,
 	},
 	id_target: {
 		name: 'inv',
 		description: "Inventaire cible (* pour l'inventaire perso)",
-		type: 3, // string
+		type: 3,
 		required: true,
 	},
 	item_name: {
-		name: 'name',
+		name: 'item',
 		description: "Nom de l'item",
 		type: 3,
 		required: true,
@@ -81,18 +88,18 @@ const invo = {
 
 export default {
 	name: 'inventaire',
-	description: 'Un inventaire',
+	description: 'Gestion des inventaires',
 	alts: ['inv'],
 
-	interaction: true,
 	security: {
 		place: 'public',
+		interaction: true,
 	},
 
 	options: [
 		{
 			name: 'reload',
-			description: 'Recharger tous les inventaires',
+			description: 'Recharger tous les inventaires (en cas de bug, ne pas en abuser)',
 			type: 1,
 			execute: executeReload,
 		},
@@ -108,13 +115,14 @@ export default {
 					required: true,
 				},
 			],
-			executeAttribute: (cmdData, levelOptions) => executeCreateBatiment(cmdData, levelOptions[0]?.value),
+			executeAttribute: (cmdData, levelOptions) => executeCreateBatiment(cmdData, levelOptions.getArgumentValue('name', 0)),
 		},
 		{
 			name: 'open',
 			description: "Ouvrir l'inventaire",
 			type: 1,
 			options: [{ ...invo.id_target, required: false }],
+			/** @param {ReceivedCommand} cmdData */
 			execute: cmdData => executeOpen(cmdData, cmdData.author.toString()),
 			executeAttribute: createExecuteLink(executeOpen),
 		},
@@ -137,13 +145,17 @@ export default {
 			description: "Déplacer un item d'un inventaire à un autre",
 			type: 1,
 			options: [invo.id_source, invo.id_target, invo.item_name, invo.item_count],
+			/**
+			 * @param {ReceivedCommand} cmdData
+			 * @param {CommandLevelOptions} levelOptions
+			 */
 			executeAttribute: (cmdData, levelOptions) =>
 				executeMove(
 					cmdData,
-					getPropId(levelOptions[0]?.value, cmdData.author),
-					getPropId(levelOptions[1]?.value, cmdData.author),
-					levelOptions[2]?.value,
-					levelOptions[3]?.value
+					getPropId(levelOptions.getArgumentValue('inv_source', 0), cmdData.author),
+					getPropId(levelOptions.getArgumentValue('inv', 1), cmdData.author),
+					levelOptions.getArgumentValue('item', 2),
+					levelOptions.getArgumentValue('count', 3)
 				),
 		},
 		{
@@ -159,15 +171,28 @@ export default {
 					required: true,
 				},
 			],
+			/**
+			 * @param {ReceivedCommand} cmdData
+			 * @param {CommandLevelOptions} levelOptions
+			 */
 			executeAttribute: (cmdData, levelOptions) =>
-				executeDescription(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+				executeDescription(
+					cmdData,
+					getPropId(levelOptions.getArgumentValue('inv', 0), cmdData.author),
+					levelOptions.getArgumentValue('description', 1)
+				),
 		},
 		{
 			name: 'couleur',
-			description: `'Changer la couleur de l'inventaire`,
+			description: `Changer la couleur de l'inventaire`,
 			type: 1,
 			options: [invo.id_target, colorLib.commandOptions],
-			executeAttribute: (cmdData, levelOptions) => executeCouleur(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+			/**
+			 * @param {ReceivedCommand} cmdData
+			 * @param {CommandLevelOptions} levelOptions
+			 */
+			executeAttribute: (cmdData, levelOptions) =>
+				executeCouleur(cmdData, getPropId(levelOptions.getArgumentValue('inv', 0), cmdData.author), levelOptions.getArgumentValue('couleur', 1)),
 		},
 		{
 			name: 'liste',
@@ -181,9 +206,14 @@ export default {
 					required: false,
 				},
 			],
+			/** @param {ReceivedCommand} cmdData */
 			execute: cmdData => executeListUserInventory(cmdData, cmdData.author.toString()),
+			/**
+			 * @param {ReceivedCommand} cmdData
+			 * @param {CommandLevelOptions} levelOptions
+			 */
 			executeAttribute: (cmdData, levelOptions) =>
-				executeListUserInventory(cmdData, getPropId(levelOptions[0]?.value, cmdData.author), levelOptions[1]?.value),
+				executeListUserInventory(cmdData, getPropId(levelOptions.getArgumentValue('user', 0), cmdData.author)),
 		},
 	],
 
@@ -246,7 +276,7 @@ function makeMessage(description, color) {
  * @param {string} description The content
  */
 function makeError(description) {
-	return new EmbedMaker('Inventaire', description, { color: 'red' });
+	return EmbedMaker.Error('Inventaire', description);
 }
 
 const messages = {
@@ -300,27 +330,49 @@ class Inventory {
 	 * The name/id of the inventory
 	 * @type {string}
 	 */
-	noms;
+	get noms() {
+		return this.messageData.id;
+	}
+	set noms(noms) {
+		this.messageData.id = noms;
+		if (this.proprietaire === noms) this.proprietaire = undefined;
+	}
+
 	/**
 	 * The owner of the inventory (the first user)
 	 * @type {string}
 	 */
-	proprietaire;
+	get proprietaire() {
+		return this.messageData.data.proprietaire || this.messageData.id;
+	}
+	set proprietaire(prop) {
+		if (prop === this.noms) delete this.messageData.data.proprietaire;
+		else this.messageData.data.proprietaire = prop;
+	}
+
 	/**
 	 * Items in the inventory
 	 * @type {Item[]}
 	 */
-	items = [];
+	items;
+
 	/**
 	 * The MessageData where the inventory is stored
 	 * @type {MessageData}
 	 */
 	messageData;
+
 	/**
 	 * Description of the inventory
 	 * @type {string}
 	 */
-	description;
+	get description() {
+		return this.messageData.data.description;
+	}
+	set description(desc) {
+		if (!desc) delete this.messageData.data.description;
+		else this.messageData.data.description = desc;
+	}
 
 	get color() {
 		return colorLib.DiscordColorToHex(this.messageData?.color);
@@ -337,33 +389,18 @@ class Inventory {
 	 */
 	constructor(messageData) {
 		this.messageData = messageData;
-		this.noms = messageData.id;
-		this.proprietaire = messageData.proprietaire || messageData.id;
 		/**
 		 * @type {Item[]}
 		 */
 		const inv = messageData.data.inventaire;
 		this.items = inv?.map(item => new Item(item.name, item.count)) || [];
-		this.description = messageData.data.description;
+		this.messageData.data.inventaire = this.items;
 	}
 
 	/**
 	 * Save the inventory
 	 */
 	save() {
-		this.messageData.data.id = this.noms;
-		if (this.proprietaire != this.noms) {
-			this.messageData.data.proprietaire = this.proprietaire;
-		} else {
-			delete this.messageData.data.proprietaire;
-		}
-		if (this.description) {
-			this.messageData.data.description = this.description;
-		} else {
-			delete this.messageData.data.description;
-		}
-		this.messageData.data.inventaire = this.items;
-
 		return this.messageData.save();
 	}
 
@@ -378,7 +415,7 @@ class Inventory {
 	 * Does the inventory belong to a user or a building
 	 */
 	isPlayerInventory() {
-		return !!this.noms.match(/<@.+>/);
+		return !!this.noms.match(/^<@\W?\d{10,20}>$/);
 	}
 
 	/**
@@ -390,10 +427,6 @@ class Inventory {
 		if (this.noms === user.toString()) return true;
 		if (this.proprietaire === user.toString()) return true;
 		return false;
-	}
-
-	isCreated() {
-		return this.messageData?.exist;
 	}
 
 	/**
@@ -511,7 +544,7 @@ class Inventory {
  * @param {string} id
  */
 async function getInventory(id) {
-	return new Inventory(await channelDatabase.getMessageData(id));
+	return new Inventory(await channelDatabase?.getMessageData(id));
 }
 
 ////////////////////////// execute commands //////////////////////////
@@ -537,18 +570,18 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 	if (!name_batiment) {
 		return makeError(`Nom invalide du bâtiment : ${name_batiment}`);
 	}
-	const name = '$' + name_batiment;
+	const name = (name_batiment.startsWith('$') ? '' : '$') + name_batiment;
 
 	const inv = await getInventory(name);
 	if (!inv) {
-		process.consoleLogger.commandError(cmdData.commandLine, `Impossible de créer le bâtiment ${name}`);
+		process.consoleLogger.commandError(cmdData.commandLine, `Impossible de créer le bâtiment \`${name}\``);
 		return makeError('Impossible de créer le bâtiment, réessayez');
 	}
-	if (inv.exist) return makeError(`Ce bâtiment existe déjà : ${name}`);
+	if (inv.exist) return makeError(`Ce bâtiment existe déjà : \`${name}\``);
 
 	inv.proprietaire = cmdData.author.toString();
 	await inv.save();
-	return makeMessage(`Un bâtiment a été créé pour ${inv.proprietaire} : ${name}\nPrécisez "${name}" pour ouvrir son inventaire`, inv.color);
+	return makeMessage(`Un bâtiment a été créé pour ${inv.proprietaire} : \`${name}\`\nPrécisez \`${name}\` pour ouvrir son inventaire`, inv.color);
 }
 
 /**
@@ -660,14 +693,14 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 	try {
 		item_source = inv_source.removeItem(item);
 		item_target = inv_target.addItem(item);
-	} catch (e) {
-		return makeError(`Erreur en déplaçant ${item.name} de ${inv_source} vers ${inv_target} (${e})`);
+	} catch (error) {
+		return makeError(`Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
 	}
 
 	try {
-		await Promise.all(inv_source.save(), inv_target.save());
-	} catch (e) {
-		return makeError(`Erreur lors de la sauvegarde en déplaçant ${item.name} de ${inv_source} vers ${inv_target} (${e})`);
+		await Promise.all([inv_source.save(), inv_target.save()]);
+	} catch (error) {
+		return makeError(`Erreur lors de la sauvegarde en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
 	}
 
 	return makeMessage(
@@ -691,6 +724,7 @@ async function executeDescription(cmdData, inv_id, description) {
 
 	inv.description = description;
 	await inv.save();
+	if (!description) return makeMessage(`La description de ${inv_id} est désormais vide`, inv.color);
 	return makeMessage(`La description de ${inv_id} est désormais : ${description}`, inv.color);
 }
 
@@ -729,7 +763,6 @@ async function executeCouleur(cmdData, inv_id, couleur) {
  */
 async function executeListUserInventory(cmdData, user_mention) {
 	const userId = user_mention.match(/<@!?(\d+)>/)?.[1] || user_mention.match(/^\d+$/)?.[0] || cmdData.author.id;
-	console.log(user_mention, userId);
 	const channel = channelDatabase.channel;
 	// const channel = await cmdData.bot.channels.fetch('858620313117917184');
 	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());

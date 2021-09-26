@@ -4,6 +4,7 @@ import { SecurityPlaces } from './security.js';
 const defaultCommandsPath = './commands'; //from index.js !
 import CommandStored from './commandStored.js';
 import DiscordBot from '../bot.js';
+import { strToFlatStr } from '../../lib/utils.js';
 
 export default class CommandManager {
 	bot;
@@ -28,23 +29,24 @@ export default class CommandManager {
 	/**
 	 * Get the command stored by the CommandManager
 	 * @param {string} commandName The name of the command
-	 * @returns {CommandStored} The command
+	 * @returns The command
 	 */
 	getCommand(commandName) {
-		return this.commands.find(c => c.isCommand(commandName)) || this.altCommands.get(commandName);
+		const flatName = strToFlatStr(commandName);
+		return this.commands.find(c => c.isCommandName(flatName));
 	}
 
 	/**
 	 * Load and store the command
 	 * @param {string} commandFilename The filename of the command
-	 * @returns {Pomise<CommandStored>} `undefined` if the command wasn't created
+	 * @returns `undefined` if the command wasn't created
 	 */
 	async loadCommand(commandFilename) {
 		var file;
 		try {
 			file = await import('../../' + commandFilename);
-		} catch (e) {
-			process.consoleLogger.internalError('loadCommand', `While loading '${commandFilename}'`.red, e);
+		} catch (error) {
+			process.consoleLogger.internalError('loadCommand', `While loading '${commandFilename}'`.red, error);
 			return;
 		}
 
@@ -69,6 +71,7 @@ export default class CommandManager {
 				}
 			});
 		}
+
 		return command;
 	}
 	/**
@@ -81,13 +84,14 @@ export default class CommandManager {
 		const commandPaths = getAllCommandFiles(defaultCommandsPath);
 
 		var c = {
-			before: this.commands.length,
+			before: this.commands.size,
 			after: 0,
 			public: 0,
 			wip: 0,
 			private: 0,
 			hidden: 0,
 			interaction: 0,
+			total: 0,
 		};
 
 		const loadedCommands = (await Promise.all(commandPaths.map(c => this.loadCommand(c)))).filter(c => c != undefined);
@@ -108,11 +112,15 @@ export default class CommandManager {
 				}
 			}
 		});
-		c.after = this.commands.length;
+		c.after = this.commands.size;
 		c.total = loadedCommands.length;
 
 		console.log(`Loaded ${loadedCommands.length} commands in ${Date.now() - start} msec`.green);
-		console.log(`Commands : ${c.public} public, ${c.private} private, ${c.hidden} hidden, ${c.wip} wip, ${c.interaction} with interaction`.green);
+		if (loadedCommands.length != commandPaths.length) {
+			const notLoadedCommands = commandPaths.filter(file => !loadedCommands.find(cmd => cmd.filename === file));
+			console.warn(`Load Command didn't loaded ${notLoadedCommands.length} commands : `.yellow, notLoadedCommands);
+		}
+		console.log(`Commands Loaded :`.green, c);
 		return c;
 	}
 

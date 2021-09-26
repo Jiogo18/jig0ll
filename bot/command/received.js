@@ -1,141 +1,384 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
-const inspect = Symbol.for('nodejs.util.inspect.custom');
 import { splitCommand } from '../../lib/commandTools.js';
-import { Channel, Guild, Message, User } from 'discord.js';
+import { Channel, Guild, Message, Interaction as DiscordInteraction, User, Constants } from 'discord.js';
 import DiscordBot from '../bot.js';
+import { ApplicationCommandOptionTypes } from './commandStored.js';
 
-export class CommandContent {
-	commandName;
+class CommandInteractionOption {
+	/**
+	 * @type {string}
+	 */
+	name;
+	/**
+	 * @type {ApplicationCommandOptionTypes}
+	 */
+	type;
+	/**
+	 * @type {string | number | boolean}
+	 */
+	value;
+}
+
+class Interaction extends DiscordInteraction {
+	/**
+	 * @type {string}
+	 */
+	guild_id;
+	/**
+	 * @type { {type: number, options?: CommandInteractionOption[], name: string, id: string} }
+	 */
+	data;
+	/**
+	 * @type {string}
+	 */
+	channel_id;
+	/**
+	 * @type {string}
+	 */
+	application_id;
+}
+
+export class CommandArgument {
+	value;
+	type;
+	name;
+	static BooleanTrue = [true, 'true', 'vrai', 'oui', 'on', '1', 1];
+	static BooleanFalse = [false, 'false', 'faux', 'non', 'off', '0', 0];
+
+	/**
+	 * @param {CommandInteractionOption|string} option
+	 */
+	constructor(option) {
+		if (typeof option == 'object') {
+			this.value = option.value;
+			this.type = option.type;
+			this.name = option.name;
+		} else {
+			this.value = option;
+		}
+	}
+
+	getValueOrName() {
+		return this.value !== undefined ? this.value : this.name;
+	}
+
+	getNameOrValue() {
+		return this.name !== undefined ? this.name : this.value;
+	}
+
+	/**
+	 * @return `true` if it's *maybe* an argument, `false` if it's a subcommand
+	 */
+	canBeArgument() {
+		if (this.type == undefined) {
+			if (this.name !== undefined && this.value === undefined) return false; // subcommand
+			return true; // Maybe
+		}
+		if (this.type >= Constants.ApplicationCommandOptionTypes.STRING) return this.type; // Yes
+		return false; // No
+	}
+
+	/**
+	 * @return `true` if it's *maybe* a subcommand, `false` if it's an argument
+	 */
+	canBeSubcommand() {
+		if (this.type !== undefined) {
+			if (this.type === 1 || this.type === 2) return true; // subcommand
+			return false; // No
+		}
+		if (this.name !== undefined && this.value === undefined) return true; // subcommand
+		return true; // Maybe
+	}
+
+	isSnowflake() {
+		return typeof this.value == 'string' && !!this.value.match(/^\d{10,20}$/);
+	}
+
+	isDiscordTag() {
+		return typeof this.value == 'string' && !!this.value.match(/^<\W\W?\d{10,20}>$/);
+	}
+
+	getSnowflake() {
+		if (typeof this.value !== 'string') return;
+		if (this.value.match(/^\d{10,20}$/)) return this.value;
+		return this.value.match(/^<\W\W?(\d{10,20})>$/)?.[1];
+	}
+
+	/**
+	 * @param {CommandLevelOptions.OptionTypes} type
+	 */
+	canBeOptionOfType(type) {
+		// Interaction
+		if (this.type) return this.type === type;
+		if (typeof this.value != 'string') throw 'Unexpected value in non-interaction option';
+
+		// Message
+		switch (type) {
+			case ApplicationCommandOptionTypes.APPLICATION_COMMAND:
+				return false;
+			case ApplicationCommandOptionTypes.SUB_COMMAND_GROUP:
+			case ApplicationCommandOptionTypes.SUB_COMMAND:
+				return true;
+			case ApplicationCommandOptionTypes.STRING:
+				return true;
+			case ApplicationCommandOptionTypes.INTEGER:
+			case ApplicationCommandOptionTypes.NUMBER:
+				return !isNaN(new Number(this.value.replace(',', '.')));
+			case ApplicationCommandOptionTypes.BOOLEAN:
+				return CommandArgument.BooleanTrue.includes(this.value.toLowerCase()) || CommandArgument.BooleanFalse.includes(this.value.toLowerCase());
+			case ApplicationCommandOptionTypes.USER:
+				return this.value.match(/^<@!?(\d{10,20})>$/) || this.isSnowflake();
+			case ApplicationCommandOptionTypes.CHANNEL:
+				return this.value.match(/^<#(\d{10,20})>$/) || this.isSnowflake();
+			case ApplicationCommandOptionTypes.ROLE:
+				return this.value.match(/^<@&(\d{10,20})>$/) || this.isSnowflake();
+			case ApplicationCommandOptionTypes.MENTIONABLE:
+				return this.value.match(/^<@[!&]?(\d{10,20})>$/) || this.isSnowflake(); // USER or ROLE
+			default:
+				throw 'ApplicationCommandOptionTypes unknow';
+		}
+	}
+
+	/**
+	 * @param {CommandLevelOptions.OptionTypes} type
+	 */
+	getArgumentValue(type) {
+		// Interaction
+		if (typeof this.value === 'number') return this.value;
+		if (typeof this.value === 'boolean') return this.value;
+
+		// Message
+		switch (type) {
+			case ApplicationCommandOptionTypes.APPLICATION_COMMAND:
+			case ApplicationCommandOptionTypes.SUB_COMMAND_GROUP:
+			case ApplicationCommandOptionTypes.SUB_COMMAND:
+				return this.getValueOrName();
+			case ApplicationCommandOptionTypes.STRING:
+				return this.value;
+			case ApplicationCommandOptionTypes.INTEGER:
+			case ApplicationCommandOptionTypes.NUMBER:
+				return new Number(this.value.replace(',', '.'));
+			case ApplicationCommandOptionTypes.BOOLEAN:
+				if (CommandArgument.BooleanTrue.includes(this.value.toLowerCase())) return true;
+				if (CommandArgument.BooleanFalse.includes(this.value.toLowerCase())) return false;
+				if (process.env.WIPOnly) console.warn(`Argument ${this.value} is not a Boolean`.yellow);
+				return this.value;
+			case ApplicationCommandOptionTypes.USER:
+			case ApplicationCommandOptionTypes.CHANNEL:
+			case ApplicationCommandOptionTypes.ROLE:
+			case ApplicationCommandOptionTypes.MENTIONABLE:
+				return this.getSnowflake();
+			default:
+				throw 'ApplicationCommandOptionTypes unknow';
+		}
+	}
+}
+
+export class CommandLevelOptions {
+	/**
+	 * @type {CommandArgument[]}
+	 */
 	options;
-	optionsName;
-	optionsValue;
-	commandLine;
 
-	constructor(commandName, options) {
-		this.commandName = commandName;
-		this.options = options.map(o => (typeof o == 'object' ? o : { value: o })); //format de options: [ {'name':'a',value:'a'}, { 'name':'b', 'value':'123' } ]
+	get length() {
+		return this.options.length;
+	}
 
-		//https://stackoverflow.com/questions/13973158/how-do-i-convert-a-javascript-object-array-to-a-string-array-of-the-object-attri#answer-13973194
-		this.optionsName = this.options.map(option => option.name);
-		this.optionsValue = this.options.map(option => (option.value == undefined ? option.name : option.value));
-		this.commandLine = [this.commandName]
-			.concat(this.optionsValue)
-			.map((s, i) => (i ? `"${s}"` : s))
-			.join(' '); //just for the console
+	static OptionTypes = Constants.ApplicationCommandOptionTypes;
+
+	constructor(options) {
+		this.options = options;
 	}
 
 	clone() {
-		return new CommandContent(this.commandName, [...this.options]);
+		return new CommandLevelOptions([...this.options]);
+	}
+
+	/**
+	 * @return {[CommandArgument,CommandLevelOptions]}
+	 */
+	getNextLevelOptions() {
+		const clone = this.clone();
+		return [clone.options.shift(), clone];
+	}
+
+	/**
+	 * @param {string} name
+	 * @param {number} defaultPos
+	 */
+	getArgument(name, defaultPos) {
+		var argument = this.options.find(o => o.name === name);
+		if (!argument) argument = this.options[defaultPos];
+		return argument;
+	}
+
+	/**
+	 * @param {string} name
+	 * @param {number} defaultPos
+	 */
+	getArgumentValue(name, defaultPos) {
+		return this.getArgument(name, defaultPos)?.value;
+	}
+}
+
+export class CommandContent {
+	/**
+	 * @type {string}
+	 */
+	commandName;
+	/**
+	 * @type {CommandLevelOptions}
+	 */
+	levelOptions;
+	/**
+	 * @type {string}
+	 */
+	commandLine;
+
+	/**
+	 * @param {string} commandName
+	 * @param {CommandLevelOptions} levelOptions
+	 */
+	constructor(commandName, levelOptions) {
+		this.commandName = commandName;
+		this.levelOptions = levelOptions;
 	}
 
 	/**
 	 * Make a CommandContent from an interaction
-	 * @param {Object} interaction
+	 * @param {Interaction} interaction
 	 */
 	static fromInteraction(interaction) {
-		//format de interaction.data.options: [{ 'name':'a', options: [{'name':'b','value':'123'}] }], ou undefined si vide
 		const options = [];
 		var suboptions = interaction.data.options;
 		while (suboptions && suboptions.length > 0) {
 			const suboption = suboptions.shift();
-			if (suboption.value != undefined) {
-				options.push({ name: suboption.name, value: suboption.value });
-				options[suboption.name] = suboption.value;
-			} else options.push({ name: suboption.name });
+			options.push(new CommandArgument(suboption));
 
+			// Passer aux options de la sous commande
+			// il n'y a qu'une sous commande OU plusieurs arguments par options
 			if (suboptions.length == 0 && suboption.options) suboptions = suboption.options;
-			//dans le cas contraire on est soit en fin de commande soit avec les Attributs (qui n'ont pas d'options !)
 		}
 
-		return new CommandContent(interaction.data.name, options);
+		const content = new CommandContent(interaction.data.name, new CommandLevelOptions(options));
+		content.commandLine = [content.commandName, ...content.levelOptions.options.map(o => `"${o.getValueOrName()}"`)].join(' ');
+		return content;
 	}
+
 	/**
 	 * Make a CommandContent from a message
-	 * @param {Message} message
+	 * @param {Interaction} message
 	 */
 	static fromMessage(message) {
 		const options = splitCommand(message.content) || []; //on suppose que le préfix est enlevé
 		const firstOption = options.shift();
-		const options2 = options.map(option => {
-			return { value: option };
-		});
-		return new CommandContent(firstOption, options2);
+		const levelOptions = new CommandLevelOptions(options.map(option => new CommandArgument({ value: option })));
+
+		const content = new CommandContent(firstOption, levelOptions);
+		content.commandLine = message.content;
+		return content;
 	}
 }
 
 export class CommandContext {
-	#guild = { partiel: true };
-	/**
-	 * The guild where the action is
-	 * @returns {Guild}
-	 */
-	get guild() {
-		return this.#guild || { partiel: true };
+	bot;
+	/** @param {DiscordBot} bot */
+	constructor(bot) {
+		this.bot = bot;
 	}
-	get guild_id() {
-		return typeof this.guild == 'object' ? this.guild.id : undefined;
+	/** @return {string} */
+	get guild_id() {}
+	/** @return {Promise<Guild>} */
+	getGuild() {}
+	/** @return {string} */
+	get channel_id() {}
+	/** @return {Promise<Channel>} */
+	getChannel() {}
+	/**  @return {string} */
+	get author_id() {}
+	/** @return {User|import('discord-api-types').APIUser} */
+	getAuthor() {}
+	/** @return {Promise<User>} */
+	getFullAuthor() {
+		return this.bot.users.fetch(this.author_id);
 	}
-	#channel = { partiel: true };
-	/**
-	 * The channel where the action is
-	 * @returns {Channel}
-	 */
-	get channel() {
-		return this.#channel || { partiel: true };
-	}
-	get channel_id() {
-		return typeof this.channel == 'object' ? this.channel.id : undefined;
-	}
-	#author = { partiel: true };
-	/**
-	 * The user initiating the action
-	 * @returns {User}
-	 */
-	get author() {
-		return this.#author || { partiel: true };
-	}
-	get username() {
-		return this.author ? this.author.username : undefined;
-	}
+}
 
-	constructor(guild, channel, author) {
-		this.#guild = guild;
-		this.#channel = channel;
-		this.#author = author;
-	}
+class CommandContextInteraction extends CommandContext {
+	interaction;
+
 	/**
 	 * Make a CommandContext from an interaction
-	 * @param {Object} interaction
+	 * @param {Interaction} interaction
 	 * @param {DiscordBot} bot
 	 */
-	static fromInteraction(interaction, bot) {
-		return new CommandContext(
-			bot.guilds.cache.get(interaction.guild_id),
-			bot.channels.cache.get(interaction.channel_id),
-			interaction.user || interaction.member?.user
-		);
+	constructor(interaction, bot) {
+		super(bot);
+		this.interaction = interaction;
 	}
+
+	get guild_id() {
+		return this.interaction.guild_id;
+	}
+	getGuild() {
+		return this.bot.guilds.fetch(this.interaction.guild_id);
+	}
+	get channel_id() {
+		return this.interaction.channel_id;
+	}
+	getChannel() {
+		return this.bot.channels.fetch(this.interaction.channel_id);
+	}
+	get author_id() {
+		return this.interaction.member?.user?.id || this.interaction.user?.i;
+	}
+	getAuthor() {
+		return this.interaction.member?.user || this.interaction.user;
+	}
+}
+
+class CommandContextMessage extends CommandContext {
+	message;
+
 	/**
-	 * Make a CommandContent from a message
+	 * Make a CommandContext from a message
 	 * @param {Message} message
 	 */
-	static fromMessage(message) {
-		const channel = message.channel;
-		return new CommandContext(channel ? channel.guild : undefined, channel, message.author);
+	constructor(message, bot) {
+		super(bot);
+		this.message = message;
+	}
+
+	get guild_id() {
+		return this.message.guildId;
+	}
+	getGuild() {
+		return this.message.guild;
+	}
+	get channel_id() {
+		return this.message.channelId;
+	}
+	getChannel() {
+		return this.message.channel;
+	}
+	get author_id() {
+		return this.message.author.id;
+	}
+	getAuthor() {
+		return this.message.author;
 	}
 }
 
 /**
  * Get a MessageMaker for the given message
- * @param {any} message The message to transform
- * @returns {MessageMaker|EmbedMaker}
+ * @param {MessageMaker|EmbedMaker|string} message The message to transform
  */
 function makeSafeMessage(message) {
 	if (message == undefined) {
 		return undefined;
 	}
-	if (!message.getForMessage) {
-		console.warn('ReceivedCommand::sendAnswer Message not created with MessageMaker'.yellow);
+	if (message.constructor != MessageMaker && message.constructor != EmbedMaker) {
+		console.error(`ReceivedCommand::sendAnswer Message not created with MessageMaker : ${message}`.red);
 		if (message.type == 'rich') return new EmbedMaker(message.title, message.description, message.cosmetic, message.fields);
 		else return new MessageMaker(message);
 	}
@@ -144,107 +387,95 @@ function makeSafeMessage(message) {
 
 export class ReceivedCommand {
 	content;
-	#context;
-	get context() {
-		return this.#context;
-	} //readonly
 
 	get commandName() {
 		return this.content.commandName;
 	}
-	get options() {
-		return this.content.options;
-	}
-	get optionsName() {
-		return this.content.optionsName;
-	}
-	get optionsValue() {
-		return this.content.optionsValue;
+	get levelOptions() {
+		return this.content.levelOptions;
 	}
 	get commandLine() {
 		return this.content.commandLine;
 	}
 
-	get guild_id() {
-		return this.context.guild_id;
-	}
-	get guild() {
-		return this.bot.guilds.cache.get(this.context.guild.id) || this.context.guild;
-	}
-	get channel() {
-		return this.bot.channels.cache.get(this.context.channel.id) || this.context.channel;
+	#context;
+	get context() {
+		return this.#context;
 	}
 	get author() {
-		return this.bot.users.cache.get(this.context.author.id) || this.context.author;
+		return this.context.getAuthor();
 	}
-	get source() {
+	get isInteraction() {
+		return false;
+	}
+	get isPrivateMessage() {
+		return false;
+	}
+	get isMessage() {
+		return false;
+	}
+	get sourceType() {
 		if (this.isInteraction) return 'interaction';
-		if (this.isMessagePrivate) return 'message privé';
+		if (this.isPrivateMessage) return 'message privé';
 		if (this.isMessage) return 'message';
+		return 'Unknow';
 	}
 
-	#commandSource;
-	get commandSource() {
-		return this.#commandSource;
-	}
+	/**
+	 * @type {Interaction|Message} The message or the interaction
+	 */
+	get commandSource() {}
 	get id() {
-		return this.commandSource.id;
+		return this.commandSource?.id;
 	}
-	#bot;
 	get bot() {
-		return this.#bot;
-	}
-	get interactionMgr() {
-		return this.bot.interactionMgr;
-	}
-	get commands() {
-		return this.bot.commandMgr.commands;
+		return this.context.bot;
 	}
 
 	receivedAt;
+	answeredAt = -1;
 
 	/**
 	 * @param {CommandContent} content
-	 * @param {CommandContext} context
-	 * @param {Message|Object} commandSource The message or the interaction
-	 * @param {DiscordBot} bot
+	 * @param {CommandContextInteraction|CommandContextMessage} context
 	 */
-	constructor(content, context, commandSource, bot) {
+	constructor(content, context) {
 		this.content = content;
 		this.#context = context;
-		this.#commandSource = commandSource;
-		this.#bot = bot;
 		this.receivedAt = Date.now();
-	}
-
-	clone() {
-		return new ReceivedCommand(this.content.clone(), this.context, this.bot);
 	}
 
 	/**
 	 * Send the answer to the target
-	 * @param {*} target The target
 	 * @param {MessageMaker|EmbedMaker} message The answer
-	 * @returns {Promise<boolean>} Return a `falsy` if the answer was not sent
+	 * @return {Promise<boolean>} a `falsy` value if the answer was not sent
 	 */
-	async sendAnswer(target, message) {
-		if (!message) return false;
-		if (!target) {
-			console.warn(`ReceivedCommand can't answer ${this.source}`);
-			return false;
-		}
-		return await target(message);
+	async sendAnswer(message) {
+		throw `ReceivedCommand can't answer`;
 	}
 }
 
 export class ReceivedInteraction extends ReceivedCommand {
-	answered = false;
 	/**
-	 * @param {Message|Object} interaction The interaction received
+	 * @type {CommandContextInteraction}
+	 */
+	get context() {
+		return super.context;
+	}
+
+	get interaction() {
+		return this.context.interaction;
+	}
+	get commandSource() {
+		return this.context.interaction;
+	}
+
+	/**
+	 * @param {Interaction} interaction The interaction received
 	 * @param {DiscordBot} bot
 	 */
 	constructor(interaction, bot) {
-		super(CommandContent.fromInteraction(interaction), CommandContext.fromInteraction(interaction, bot), interaction, bot);
+		super(CommandContent.fromInteraction(interaction), new CommandContextInteraction(interaction, bot));
 	}
 
 	get isInteraction() {
@@ -253,69 +484,83 @@ export class ReceivedInteraction extends ReceivedCommand {
 
 	/**
 	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} message The answer
-	 * @returns {Promise<boolean>} Return a `falsy` value if the answer was not sent
+	 * @param {MessageMaker|EmbedMaker} answer The answer
 	 */
-	async sendAnswer(message) {
-		this.answered = true;
-		message = makeSafeMessage(message);
-		if (!message) return false;
-		//https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Op%C3%A9rateurs/super#syntaxe
-		var retour = undefined;
+	async sendAnswer(answer) {
+		answer = makeSafeMessage(answer);
+		if (!answer) return false;
+
 		try {
-			retour = await super.sendAnswer(
-				this.bot.api.interactions(this.commandSource.id, this.commandSource.token).callback.post,
-				message.getForInteraction()
-			);
-		} catch (e) {
-			if (e.httpStatus == 404 && message.content != '') {
-				const channel = this.bot.channels.cache.get(this.context.channel_id);
-				retour = await channel.send(message.getForMessage({ author: this.author }));
+			/**
+			 * @type {Function(): Promise<boolean>}
+			 */
+			const post = this.bot.api.interactions(this.interaction.id, this.interaction.token).callback?.post;
+			if (!post) {
+				console.warn(`ReceivedCommand can't answer ${this.sourceType}`.yellow);
+			} else {
+				this.answeredAt = Date.now();
+				return post(answer.getForInteraction());
 			}
+		} catch (error) {
+			process.consoleLogger.error(`ReceivedCommand can't answer ${this.sourceType}, error: ${error.httpStatus}`.red);
 		}
-		return retour;
+
+		const channel = await this.context.getChannel();
+		const answer_for_message = answer.getForMessage({ author: this.author });
+		this.answeredAt = Date.now();
+		if (channel?.send) return channel.send(answer_for_message);
+		return (await this.context.getFullAuthor()).send(answer_for_message);
 	}
 }
 export class ReceivedMessage extends ReceivedCommand {
-	#message_private = false;
+	/**
+	 * @type {CommandContextMessage}
+	 */
+	get context() {
+		return super.context;
+	}
+
+	get message() {
+		return this.context.message;
+	}
+	get commandSource() {
+		return this.context.message;
+	}
 
 	/**
 	 * @param {Message} message
 	 * @param {DiscordBot} bot
 	 */
 	constructor(message, bot) {
-		super(CommandContent.fromMessage(message), CommandContext.fromMessage(message), message, bot);
-		this.#message_private = message.channel == undefined;
-	}
-
-	clone() {
-		return new ReceivedMessage(this.commandSource, this.bot);
+		super(CommandContent.fromMessage(message), new CommandContextMessage(message, bot));
 	}
 
 	get isMessage() {
 		return true;
 	}
-	get isMessagePrivate() {
-		return this.#message_private;
+	get isPrivateMessage() {
+		return this.message.channel.type == 'DM' || this.message.channel.type == 'GROUP_DM' || this.message.channel.type == 'UNKNOWN';
 	}
 
 	/**
 	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} message The answer
-	 * @returns {Promise<boolean>} Return a `falsy` value if the answer was not sent
+	 * @param {MessageMaker|EmbedMaker} answer The answer
 	 */
-	async sendAnswer(message) {
-		message = makeSafeMessage(message);
-		if (!message) return false;
-		if (message.type == 3) {
+	async sendAnswer(answer) {
+		answer = makeSafeMessage(answer);
+		if (!answer) return false;
+
+		this.answeredAt = Date.now();
+		if (answer.type == 3) {
 			//don't reply
-			return await this.commandSource.channel.send(message.getForMessage());
+			return await this.message.channel.send(answer.getForMessage());
 		}
-		return await this.commandSource.reply(message.getForMessage());
+		return await this.message.reply(answer.getForMessage());
 	}
 }
 
 export default {
+	CommandArgument,
 	CommandContent,
 	CommandContext,
 	ReceivedCommand,

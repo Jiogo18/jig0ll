@@ -13,23 +13,23 @@ async function safeInteractionAnswer(cmdData) {
 	//ne fonctionne que si la commande fonctionne au await (pas au sleep des dates)
 	const timeRemaining = 3000 + timestampId - Date.now();
 	return setTimeout(async () => {
-		if (cmdData.answered || cmdData.needAnswer == false) return;
-		console.log(`Interaction is too long, an acknowledgement will be sent (for '/${cmdData.commandLine}')`);
+		if (cmdData.answeredAt || cmdData.needAnswer == false) return;
+		console.warn(`Interaction is too long, an acknowledgement will be sent (for '/${cmdData.commandLine}')`);
 		cmdData.sendAnswer(new InteractionSpecialMaker(5)); //accepte l'intéraction (et attent le retour)
 	}, timeRemaining - 1000); //on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
 
 /**
  * Read every interactions handled by the bot
- * @param {ReceivedInteraction} interaction
+ * @param {ReceivedInteraction} cmdData
  */
-export default async function interactionHandler(interaction) {
-	const safeTimeout = safeInteractionAnswer(interaction);
+export default async function interactionHandler(cmdData) {
+	const safeTimeout = safeInteractionAnswer(cmdData);
 
 	try {
-		await commandHandler.call(this, interaction);
-	} catch (err) {
-		process.consoleLogger.internalError(`an interaction`, err);
+		await commandHandler(cmdData);
+	} catch (error) {
+		process.consoleLogger.internalError(`an interaction`, error);
 	}
 	clearTimeout(safeTimeout);
 }

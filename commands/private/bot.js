@@ -1,64 +1,99 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { getDurationTime } from '../../lib/date.js';
+import { getDurationTime, getFrenchDate } from '../../lib/date.js';
 import DiscordBot from '../../bot/bot.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
+
+const actions = [
+	{
+		name: 'info',
+		need_id: false,
+		description: 'Information sur le bot',
+		/**
+		 * @param {ReceivedCommand} cmdData
+		 */
+		execute: cmdData => getInfo(cmdData.bot),
+	},
+	{
+		name: 'cut',
+		need_id: true,
+		description: 'Arrêter le bot',
+		/**
+		 * @param {ReceivedCommand} cmdData
+		 */
+		execute: cmdData => {
+			cmdData.bot.stop();
+			console.warn(`Stoppé par ${cmdData.author.toString()} ${getFrenchDate(new Date())}`.red);
+			return new EmbedMaker('', `Stoppé par ${cmdData.author.username}`);
+		},
+	},
+	{
+		name: 'reset_id',
+		need_id: true,
+		description: `Changer l'id locale du bot`,
+		/**
+		 * @param {ReceivedCommand} cmdData
+		 */
+		execute: cmdData => {
+			cmdData.bot.resetLocalId();
+			return new EmbedMaker('', `La nouvelle id du bot sur ${getBotLocation()} est ${cmdData.bot.localId}`);
+		},
+	},
+];
 
 export default {
 	name: 'bot',
 	description: 'Commandes pour gérer le bot',
-	interaction: true,
 	security: {
 		place: 'private',
+		interaction: true,
 	},
 
 	options: [
 		{
-			name: 'info',
-			description: 'Informations sur le bot',
-			type: 1,
-
-			/**
-			 * @param {ReceivedCommand} cmdData
-			 */
-			execute: cmdData => getInfo(cmdData.bot),
+			name: 'action',
+			description: 'Action du bot',
+			type: 3,
+			choices: actions,
+			required: true,
 		},
 		{
-			//TODO: selectionner l'id puis quoi faire avec un str à choix multiple
-			...idVerificator('cut', 'Arrête le bot', cmdData => {
-				stop(cmdData.bot, cmdData.author.username);
-				return new EmbedMaker('', `Stoppé par ${cmdData.author.username}`);
-			}),
-		},
-		{
-			...idVerificator('reset_id', "Change l'id du bot (id global: 0)", () => {
-				resetLocalId();
-				return new EmbedMaker('', `La nouvelle id du bot sur ${getBotLocation()} est ${getLocalId()}`);
-			}),
+			name: 'bot_id',
+			description: 'Bot ciblé (id global: 0)',
+			type: 4,
+			required: false,
 		},
 	],
+
+	/**
+	 * @param {ReceivedCommand} cmdData
+	 * @param {CommandLevelOptions} levelOptions
+	 */
+	executeAttribute: (cmdData, levelOptions) => {
+		const actionName = levelOptions.getArgument('action', 0).getValueOrName();
+		const bot_id = levelOptions.getArgumentValue('bot_id', 1);
+		const is_bot_id = cmdData.bot.isLocalId(bot_id);
+
+		const action = actions.find(a => a.name === actionName);
+		if (!action) return EmbedMaker.Error('', `Aucune action nommée '${actionName}'`);
+
+		if (action.need_id && !is_bot_id) {
+			if (!bot_id) {
+				return new EmbedMaker(
+					'',
+					`Vous devez préciser l'id du bot ciblé pour cette commande.\nL'id du bot sur ${getBotLocation()} est ${cmdData.bot.localId}`
+				);
+			}
+			cmdData.needAnswer = false;
+			return;
+		}
+		if (bot_id && !is_bot_id) {
+			cmdData.needAnswer = false;
+			return;
+		}
+
+		return action.execute(cmdData);
+	},
 };
-
-/**
- * Reset the `local id` of the bot
- */
-function resetLocalId() {
-	const nb = Math.floor(Math.random() * 1000); //id à 3 chiffres
-	process.localId = nb || 1; // 0 est un @a
-}
-resetLocalId();
-
-/**
- * Get the `local id` of the bot
- * @returns {number}
- */
-const getLocalId = _ => process.localId;
-
-/**
- * Is it the id of this bot?
- * @param {number} idMsg
- * @returns {boolean} if `true` then this bot is targeted
- */
-const isLocalId = idMsg => idMsg == 0 || getLocalId() == idMsg; //cible tous les bots ou ce bot
 
 /**
  * Get a small description here the bot is
@@ -72,74 +107,44 @@ function getBotLocation() {
 	return 'Unkown';
 }
 
-/**
- * Get the session duraction of the bot
- */
-const getSessionTime = start => getDurationTime(Date.now() - start);
+function getNumberWithSignificantFigure(x, number_of_figure) {
+	const figure_on_left = Math.floor(Math.log10(x)) + 1;
+	var figure_to_keep_on_right = Math.max(number_of_figure - figure_on_left, 0);
+	var figure_decalage = Math.pow(10, figure_to_keep_on_right);
+	x = Math.floor(x * figure_decalage) / figure_decalage;
+	return x;
+}
+
+function getReadableOctetSize(size_octet) {
+	if (size_octet < 1000) return size_octet + ' o';
+	const size_ko = size_octet / 1000;
+	if (size_ko < 1000) return getNumberWithSignificantFigure(size_ko, 3) + ' ko';
+	const size_Mo = size_ko / 1000;
+	if (size_Mo < 1000) return getNumberWithSignificantFigure(size_Mo, 3) + ' Mo';
+	const size_Go = size_Mo / 1000;
+	return getNumberWithSignificantFigure(size_Go, 3) + ' Go';
+}
 
 /**
  * Get info on the bot
  * @param {DiscordBot} bot
  */
 function getInfo(bot) {
-	const idLocal = `Id local du bot : ${getLocalId()}`;
+	const idLocal = `Id local du bot : ${bot.localId}, pid : ${process.pid}`;
 	const retour = new EmbedMaker('Informations sur bot', idLocal);
 
 	retour.addField('Guilds', `Connecté sur ${bot.guilds.cache.size} serveurs`, true);
-	retour.addField('Session', `Démarré sur ${getBotLocation()}\ndepuis ${getSessionTime(bot.startedTime)}`, true);
+	retour.addField('Session', `Démarré sur ${getBotLocation()}\ndepuis ${getDurationTime(process.uptime() * 1000)}`, true);
+
+	const cpuUsage = process.cpuUsage();
+	const memoryUsage = process.memoryUsage();
+	retour.addField(
+		'Ressources',
+		`Cpu : ${cpuUsage.user} / ${cpuUsage.system}\n` +
+			`Mémoire : ${getReadableOctetSize(memoryUsage.heapUsed)} / ${getReadableOctetSize(memoryUsage.heapTotal)} / ${getReadableOctetSize(
+				memoryUsage.rss
+			)}`
+	);
 
 	return retour;
-}
-
-/**
- * Make an option with id verification
- * @deprecated TODO: Use a choice of option and ask the id then
- * @param {string} name Name of the option
- * @param {string} description Description of the option
- * @param {Function} funcExec Things to do if this bot is targeted
- */
-function idVerificator(name, description, funcExec) {
-	return {
-		name: name,
-		type: 1,
-		description: description,
-		options: [
-			{
-				name: 'id',
-				description: description,
-				required: true,
-				type: 4,
-			},
-		],
-		/**
-		 * Executed with option(s)
-		 * @param {ReceivedCommand} cmdData
-		 * @param {*} levelOptions
-		 */
-		executeAttribute(cmdData, levelOptions) {
-			if (!isLocalId(levelOptions[levelOptions.length - 1].value)) {
-				cmdData.needAnswer = false;
-				return; //ne réagit pas
-			}
-			return funcExec(cmdData);
-		},
-		/**
-		 * Executed when there is no valid option
-		 */
-		execute() {
-			return new EmbedMaker('', `${description}\nid de ce bot : ${getLocalId()} (bot sur ${getBotLocation()})`);
-		},
-	};
-}
-
-/**
- * Stop the bot
- * @deprecated TODO: use bot.stop() from DiscordBot
- * @param {DiscordBot} bot The bot
- * @param {string} source A name to identify the source
- */
-export function stop(bot, source) {
-	process.stopped = true;
-	console.warn(`Stoppé par ${source} le ${new Date().toUTCString()}`.red);
-	setTimeout(bot.destroy, 200); //arrêt dans 200 ms par sécurité
 }

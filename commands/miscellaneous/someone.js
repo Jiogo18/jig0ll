@@ -1,3 +1,5 @@
+import { User } from 'discord.js';
+import { ReceivedCommand } from '../../bot/command/received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
 
 var useInMinute = [];
@@ -6,10 +8,10 @@ var lastReset = [];
 export default {
 	name: 'someone',
 	description: "Appel aléatoirement un membre du channel avec les memes du @someone d'avril 2018",
-	interaction: false,
 
 	security: {
 		place: 'public',
+		interaction: false,
 		hidden: true,
 	},
 
@@ -17,12 +19,25 @@ export default {
 	 * Executed when there is no valid option
 	 * @param {ReceivedCommand} cmdData
 	 */
-	execute(cmdData) {
+	async execute(cmdData) {
 		const id = cmdData.guild_id;
 
-		const members = cmdData.channel.members; //Tous les membres du channel maintenant : https://discordjs.guide/popular-topics/intents.html
-		var randomUser = members.random();
+		/**
+		 * @type {User}
+		 */
+		var randomUser;
 
+		const channel = await cmdData.context.getChannel();
+		if (channel.members) {
+			// https://discordjs.guide/popular-topics/intents.html
+			// Seul les membres qui ont parlé il y a peu de temps seront choisis
+			// C'est pas plus mal, ça évite de ping d'autres personnes
+			randomUser = channel.members.random();
+		} else {
+			randomUser = getRandomInt(2) ? channel.recipient : cmdData.bot.user;
+		}
+
+		// Sécurité pour pas spammer la commande
 		if (lastReset[id] == undefined || useInMinute[id] == undefined) {
 			lastReset[id] = 0;
 		}
@@ -33,6 +48,7 @@ export default {
 		if (useInMinute[id] >= 10) {
 			//s'il y a plus de 10 appels par minute on envoie l'auteur
 			randomUser = cmdData.author;
+			if (process.env.WIPOnly) console.warn(`Anonyme : spam de ${cmdData.author.toString()} (${cmdData.author.username})`);
 		}
 		useInMinute[id]++;
 

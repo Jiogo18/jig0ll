@@ -1,4 +1,4 @@
-import { Client, Constants, Message, Intents } from 'discord.js';
+import { Client, Constants, Message, Intents, Interaction } from 'discord.js';
 
 import AppManager from './AppManager.js';
 import CommandManager from './command/commandManager.js';
@@ -11,11 +11,6 @@ import interactionHandler from './command/interactionHandler.js';
 import { PGDatabase } from '../lib/database.js';
 
 export default class DiscordBot extends Client {
-	startedTime;
-	#stopped = false;
-	get stopped() {
-		return this.#stopped;
-	}
 	commandMgr;
 	interactionMgr;
 	commandEnabled = true;
@@ -34,8 +29,9 @@ export default class DiscordBot extends Client {
 				Intents.FLAGS.GUILD_MEMBERS,
 				Intents.FLAGS.GUILD_INVITES,
 			],
+			partials: ['CHANNEL'],
 		});
-		this.startedTime = Date.now();
+		this.resetLocalId();
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
 		this.interactionMgr = new InteractionManager(this);
@@ -56,16 +52,12 @@ export default class DiscordBot extends Client {
 	}
 
 	start() {
-		this.#stopped = false;
+		process.stopped = false;
 		this.login();
 	}
 	stop() {
-		this.#stopped = true;
-		setTimeout(this.destroy, 1000);
-	}
-	restart() {
-		if (!this.#stopped) this.stop();
-		this.start();
+		process.stopped = true;
+		setTimeout(() => this.destroy(), 200);
 	}
 
 	onBotConnected() {
@@ -88,26 +80,51 @@ export default class DiscordBot extends Client {
 			this.interactionMgr.postCommands();
 		}
 	}
+
+	/**
+	 * @type {number}
+	 */
+	get localId() {
+		return process.localId;
+	}
+	set localId(id) {
+		process.localId = id;
+	}
+	/**
+	 * Reset the id of this bot if an id of 3 chiffers
+	 */
+	resetLocalId() {
+		const nb = Math.floor(Math.random() * 1000);
+		this.localId = nb || 1; // 0 est un @a
+	}
+	/**
+	 * @param {number} idMsg cible tous les bots ou ce bot
+	 * @returns this bot is targeted
+	 */
+	isLocalId(idMsg) {
+		return idMsg == 0 || this.localId == idMsg;
+	}
 }
 
 /**
  * Récéption d'un message et vérification avant de l'analyser
+ * @this {DiscordBot}
  * @param {Message} message
  */
 function onMessage(message) {
-	if (process.stopped == true || this.stopped) return;
+	if (process.stopped == true) return;
 
 	try {
 		if (
 			!botIsAllowedToDo({
-				author: message.author,
-				guild: message.channel.guild,
-				channel: message.channel,
+				guild_id: message.guild?.id,
+				channel_id: message.channel?.id,
+				author_id: message.author?.id,
 			})
 		)
 			return; //pas autorisé en WIPOnly
 
-		messageHandler.call(this, message);
+		messageHandler(this, message);
 	} catch (error) {
 		process.consoleLogger.internalError('onMessage', error);
 	}
@@ -115,17 +132,18 @@ function onMessage(message) {
 
 /**
  * Récéption d'une interaction et vérification avant de l'analyser
- * @param {Object} interaction
+ * @this {DiscordBot}
+ * @param {Interaction} interaction
  */
 function onInteraction(interaction) {
-	if (process.stopped == true || this.stopped) return;
+	if (process.stopped == true) return;
 
 	try {
 		const cmdData = new ReceivedInteraction(interaction, this);
 
 		if (!botIsAllowedToDo(cmdData.context)) return;
 
-		interactionHandler.call(this, cmdData);
+		interactionHandler(cmdData);
 	} catch (error) {
 		process.consoleLogger.internalError('onInteraction', error);
 	}

@@ -1,22 +1,22 @@
-import { Client, TextChannel } from 'discord.js';
+import { TextChannel } from 'discord.js';
+import DiscordBot from './bot.js';
 
 /**
  * @param {string} name
  * @param {string} description
  */
 async function internalError(name, description, ..._) {
+	console.error(`Error with ${name}`.red + ` : ${description}`, ..._);
 	/**
-	 * @type {Client}
+	 * @type {DiscordBot}
 	 */
 	const bot = process.bot;
-	if (!bot) return false;
+	if (!bot || !(await bot.onReady)) return false;
 	/**
 	 * @type {TextChannel}
 	 */
 	const log_channel = await bot.channels.fetch('858620313117917184'); // #error-log
 	if (!log_channel) return false;
-
-	console.error(`Error with ${name}`.red + ` : ${description}`, ..._);
 	return !!log_channel.send(`Error with ${name} :\n${description}`);
 }
 

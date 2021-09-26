@@ -1,11 +1,12 @@
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
 
 export default {
 	name: 'anonyme',
 	description: 'Faire une annonce anonymement',
 
-	interaction: false,
 	security: {
+		interaction: false,
 		hidden: true,
 		place: 'public',
 	},
@@ -13,6 +14,7 @@ export default {
 	options: [
 		{
 			name: 'message',
+			description: 'Votre message',
 			type: 3,
 			required: true,
 		},
@@ -21,16 +23,20 @@ export default {
 	/**
 	 * Executed with option(s)
 	 * @param {ReceivedCommand} cmdData
-	 * @param {[*]} levelOptions
+	 * @param {CommandLevelOptions} levelOptions
 	 */
 	executeAttribute(cmdData, levelOptions) {
-		var options = levelOptions.map(e => e.value);
+		var options = levelOptions.options.map(e => e.value);
 
 		const message = options.join(' ');
 
-		if (cmdData.commandSource) {
-			if (cmdData.commandSource.delete) cmdData.commandSource.delete().catch(() => {});
+		if (!cmdData.commandSource.deletable) {
+			return EmbedMaker.Error('Anonyme', 'Bien tenté mais je ne pourrais pas supprimer votre message...');
 		}
+		if (cmdData.commandSource.delete)
+			cmdData.commandSource.delete().catch(e => {
+				process.consoleLogger.internalError("deleting a message for '/anonyme'", e);
+			});
 		return new EmbedMaker('Anonyme', message, 3);
 	},
 };

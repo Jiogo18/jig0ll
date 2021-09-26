@@ -1,3 +1,4 @@
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
 
 export default {
@@ -19,8 +20,12 @@ export default {
 		},
 	],
 
+	/**
+	 * @param {ReceivedCommand} cmdData
+	 * @param {CommandLevelOptions} levelOptions
+	 */
 	executeAttribute(cmdData, levelOptions) {
-		var lineCalc = levelOptions.map(o => o.value).join(' ');
+		var lineCalc = levelOptions.options.map(o => o.value).join(' ');
 
 		const comment = lineCalc.match(/#.*$/)?.[0] || '';
 		if (comment.length) {

@@ -67,9 +67,9 @@ export default class InteractionManager {
 			return 'match';
 		}
 		if (online) {
-			console.debug(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
+			console.log(`L'Intéraction pour '${command.name}' existe déjà dans ${targetId || 'global'} mais n'est pas à jour`.green);
 		} else {
-			console.debug(`L'Intéraction pour '${command.name}' n'existe pas encore dans ${targetId || 'global'}`.green);
+			console.log(`L'Intéraction pour '${command.name}' n'existe pas encore dans ${targetId || 'global'}`.green);
 		}
 		const posted = await AppManager.postCommand(command, target);
 
@@ -77,7 +77,7 @@ export default class InteractionManager {
 		this.getGuildInteractionsRow(targetId).resetSoon(1000);
 
 		if (posted) {
-			this.interactionsPosted.set(command.name, command.JSON);
+			this.interactionsPosted.set(command.name, command.getJSON());
 		}
 		return posted;
 	}
@@ -121,7 +121,7 @@ export default class InteractionManager {
 						return;
 				}
 
-				//if(process.env.WIPOnly && target == targetGlobal) target = targetPrivate;//serv privé (en WIP)
+				if (process.env.WIPOnly && target == targetGlobal) target = targetPrivate; //serv privé (en WIP)
 
 				const result = await this.postCommand(command, target);
 				if (result) {

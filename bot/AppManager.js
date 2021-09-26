@@ -1,4 +1,5 @@
 import DiscordBot from './bot.js';
+import CommandStored from './command/commandStored.js';
 
 /**
  * @type {DiscordBot}
@@ -102,24 +103,24 @@ export async function postCommand(command, target, force) {
 	/**
 	 * @type {Promise<*>}
 	 */
-	var promise = target.r.post(command.JSON);
+	var promise = target.r.post(command.getJSON());
 	//TODO : utiliser patch si elle existe car ça supprimerais des mauvais trucs
 	return new Promise((resolve, reject) => {
 		promise
 			.then(() => resolve(true))
-			.catch(e => {
+			.catch(error => {
 				if (!canPostCommands) return resolve(false); //on sait déjà qu'on peut pas poster
 
-				process.consoleLogger.internalError('posting command', `'${command.name}' code: ${e.httpStatus}`.red);
+				process.consoleLogger.internalError('posting command', `'${command.name}' code: ${error.httpStatus}`.red);
 
-				switch (e.code) {
+				switch (error.code) {
 					case 0:
-						process.consoleLogger.error(e.message);
+						process.consoleLogger.error(error.message);
 						canPostCommands = false; //on a dépassé le quota des 200 messages
 						setTimeout(() => (canPostCommands = true), 10000); //peut être dans 10s
 						break;
 					default:
-						process.consoleLogger.internalError('posting command', e);
+						process.consoleLogger.internalError(`posting command`, error);
 						break;
 				}
 
@@ -142,8 +143,8 @@ export async function deleteCommand(command, target) {
 		target.r
 			.delete()
 			.then(() => resolve(true))
-			.catch(e => {
-				process.consoleLogger.internalError('deleteCommand', `removing command '${command.name || command.id || command}'`.red, e);
+			.catch(error => {
+				process.consoleLogger.internalError('deleteCommand', `removing command '${command.name || command.id || command}'`.red, error);
 				resolve(false);
 			});
 	});

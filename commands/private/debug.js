@@ -1,4 +1,4 @@
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { MessageMaker } from '../../lib/messageMaker.js';
 
 const done = new MessageMaker('Done');
@@ -15,7 +15,7 @@ const options = [
 		name: 'error',
 		description: "Fait une erreur lors de l'exécution",
 		execute: () => {
-			throw `Erreur demandée par '/test error'`;
+			throw `Erreur demandée par '/debug choice test_error'`;
 		},
 	},
 	{
@@ -33,10 +33,10 @@ const options = [
 export default {
 	name: 'debug',
 	description: 'Tests diverses',
-	interaction: true,
 
 	security: {
 		place: 'private',
+		interaction: true,
 	},
 
 	options: [
@@ -59,11 +59,11 @@ export default {
 			/**
 			 * Executed with option(s)
 			 * @param {ReceivedCommand} cmdData
-			 * @param {[*]} levelOptions
+			 * @param {CommandLevelOptions} levelOptions
 			 */
 			executeAttribute(cmdData, levelOptions) {
-				const optionName = levelOptions.fonction || levelOptions[0].value;
-				const option = options.find(o => (o.value || o.name) == optionName);
+				const optionName = levelOptions.getArgumentValue('fonction', 0);
+				const option = options.find(o => o.name == optionName);
 				if (!option) return new MessageMaker(`There is no option for ${optionName}`);
 				if (typeof option.execute != 'function') return new MessageMaker(`Option ${optionName} is incomplete`);
 

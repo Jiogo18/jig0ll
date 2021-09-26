@@ -14,17 +14,16 @@ app.use(favicon(__dirname + '/favicon.ico'));
 function registerWeb(webPath, filePath) {
 	app.get(webPath, (req, res) => {
 		if (!filePath.startsWith('/')) filePath = '/' + filePath;
-		res.sendFile(__dirname + filePath, undefined, (err) => {
-			if (!err) return;
-			if (err.errno == -4058) {
+		res.sendFile(__dirname + filePath, undefined, error => {
+			if (!error) return;
+			if (error.errno == -4058) {
 				res.send(`File not found : ${filePath}`);
-				console.log(`File not found : '${err.path}'`.red);
+				console.log(`File not found : '${error.path}'`.red);
+			} else {
+				res.send(`An error occurred, please try again later (${error.status})`);
+				console.error(error);
 			}
-			else {
-				res.send(`An error occurred, please try again later (${err.status})`);
-				console.error(err);
-			}
-		})
+		});
 	});
 }
 
@@ -33,24 +32,20 @@ registerWeb('/', '/web/index.html');
 registerWeb('/main.css', '/web/css/main.css');
 //registerWeb('/main.js', '/web/js/main.js');
 
-
 // page unknow
 app.use((req, res) => {
 	res.status(404);
-	res.sendFile(__dirname + '/web/unknow.html', undefined, (error) => {
+	res.sendFile(__dirname + '/web/unknow.html', undefined, error => {
 		if (!error) return;
 		if (error.errno == -4058) {
 			res.send(`File not found`);
 			console.log(`File not found : '${error.path}'`.red);
-		}
-		else {
+		} else {
 			res.send(`An error occurred, please try again later (${error.status})`);
 			console.error(error);
 		}
 	});
 });
-
-
 
 export default {
 	start() {

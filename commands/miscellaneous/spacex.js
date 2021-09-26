@@ -121,10 +121,10 @@ export default {
 	name: 'spacex',
 	description:
 		'Donne la liste des autoraisations du FAA à BROWNSVILLE, site de lancement des prototypes du Starship, see https://sua.faa.gov/sua/schedule.json',
-	interaction: false,
 
 	security: {
 		place: 'public',
+		interaction: false,
 		hidden: true,
 	},
 

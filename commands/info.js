@@ -2,7 +2,7 @@ import { EmbedMaker } from '../lib/messageMaker.js';
 import { Snowflake } from '../lib/snowflake.js';
 import { getFrenchDate } from '../lib/date.js';
 import { Channel, Guild, Role, User } from 'discord.js';
-import { ReceivedCommand } from '../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../bot/command/received.js';
 
 const snowflakeLink = 'https://discord.js.org/#/docs/main/stable/typedef/Snowflake';
 
@@ -10,9 +10,9 @@ export default {
 	name: 'info',
 	description: 'Informations sur le snowflake de la cible',
 
-	interaction: true,
 	security: {
 		place: 'private',
+		interaction: true,
 	},
 
 	options: [
@@ -24,20 +24,20 @@ export default {
 				{
 					name: 'snowflake',
 					description: 'Informations du snowflake (id)',
-					type: 4,
+					type: 3,
 					required: true,
 				},
 			],
-			execute: executeSnowflake,
+			executeAttribute: executeSnowflake,
 		},
 		{
 			name: 'user',
-			description: "Date de création de l'utilisateur",
+			description: "Informations d'un utilisateur",
 			type: 1,
 			options: [
 				{
 					name: 'user',
-					description: "Date de création d'un utilisateur",
+					description: "Informations d'un utilisateur",
 					type: 6,
 				},
 			],
@@ -45,12 +45,12 @@ export default {
 		},
 		{
 			name: 'channel',
-			description: 'Date de création du salon',
+			description: "Informations d'un salon",
 			type: 1,
 			options: [
 				{
 					name: 'channel',
-					description: "Date de création d'un salon",
+					description: "Informations d'un salon",
 					type: 7,
 				},
 			],
@@ -58,12 +58,12 @@ export default {
 		},
 		{
 			name: 'role',
-			description: "Date de création d'un role",
+			description: "Informations d'un role",
 			type: 1,
 			options: [
 				{
 					name: 'role',
-					description: "Date de création d'un role",
+					description: "Informations d'un role",
 					type: 8,
 					required: true, //il n'y a pas de role 'actuel'
 				},
@@ -72,7 +72,7 @@ export default {
 		},
 		{
 			name: 'guild',
-			description: 'Date de création du serveur',
+			description: 'Informations du serveur',
 			type: 1,
 			execute: executeInfoGuild,
 		},
@@ -91,7 +91,7 @@ function makeMessage(description) {
  * @param {string} description The content
  */
 function makeError(description) {
-	return new EmbedMaker('Info', description, { color: 'red' });
+	return EmbedMaker.Error('Info', description);
 }
 
 /**
@@ -100,16 +100,22 @@ function makeError(description) {
  * @returns {string} A mention or a name to identify the target
  */
 function getTargetName(target) {
-	if (typeof target != 'object') return target;
-	if (target.partial == false) return target;
+	if (typeof target === 'string') return target;
+	if (typeof target.toString === 'function') return target.toString();
+
 	if (target.username) return target.username;
-	return target; //sinon target.name éventuellement
+	if (target.name) return target.name;
+
+	if (process.env.WIPOnly) {
+		console.warn(`getTargetName can't find name`.yellow, target);
+	}
+	return target;
 }
 
 /**
  * Get basic informations for the target
  * @param {string} targetTitle The type of the target
- * @param {string|Guild|Channel|User|Role} target The target
+ * @param {Guild|Channel|User|Role} target The target
  */
 function getBasicInfo(targetTitle, target) {
 	const snowflake = new Snowflake(target.id);
@@ -118,7 +124,7 @@ function getBasicInfo(targetTitle, target) {
 
 	const targetName = getTargetName(target);
 	return makeMessage(
-		`${target.name || target.username ? `Informations ${targetTitle} ${targetName}` : ''}
+		`${targetName ? `Informations ${targetTitle} ${targetName}` : ''}
 		Snowflake : ${target.id}
 		Créé ${date}`
 	);
@@ -127,7 +133,7 @@ function getBasicInfo(targetTitle, target) {
 /**
  * Get inforamtions about the target and his snowflake
  * @param {string} targetTitle The type of the target
- * @param {string|Guild|Channel|User|Role} target The target
+ * @param {Guild|Channel|User|Role} target The target
  */
 function getInfo(targetTitle, target) {
 	const snowflake = new Snowflake(target.id);
@@ -148,23 +154,22 @@ function getInfo(targetTitle, target) {
 /**
  * `info user` was called
  * @param {ReceivedCommand} cmdData
- * @param {*} levelOptions
+ * @param {CommandLevelOptions} levelOptions
  * @returns informations about the user targeted or the user who executed this command
  */
 async function executeInfoUser(cmdData, levelOptions) {
-	var userId = levelOptions ? levelOptions.user || (levelOptions[0] && levelOptions[0].value) : undefined;
+	/**
+	 * @type {string}
+	 */
+	var user_id = levelOptions?.getArgument('user', 0)?.getArgumentValue(CommandLevelOptions.OptionTypes.USER);
 
-	if (userId.match(/<@&(\d+)>/)) {
+	if (user_id?.match(/<@&(\d+)>/)) {
 		return makeError(`Mention invalide, essayez de retapper la mention.`);
 	}
 
-	const matchMention = userId.match(/<@!?(\d+)>/);
-	if (matchMention) userId = matchMention[1];
-	console.debug(matchMention, userId);
-
-	const user = await cmdData.bot.users.fetch(userId || cmdData.author.id);
+	const user = await (user_id ? cmdData.bot.users.fetch(user_id) : cmdData.context.getFullAuthor());
 	if (!user) {
-		return makeMessage(`L'utilisateur ${userId} est introuvable`);
+		return makeMessage(`L'utilisateur \`<#${user_id}>\` est introuvable`);
 	}
 
 	return getBasicInfo("de l'utilisateur", user);
@@ -172,61 +177,71 @@ async function executeInfoUser(cmdData, levelOptions) {
 /**
  * `info channel` was called
  * @param {ReceivedCommand} cmdData
- * @param {*} levelOptions
+ * @param {CommandLevelOptions} levelOptions
  * @returns informations about the channel targeted or the channel where this command is executed
  */
 async function executeInfoChannel(cmdData, levelOptions) {
 	/**
 	 * @type {string}
 	 */
-	const channelId = levelOptions ? levelOptions.channel || (levelOptions[0] && levelOptions[0].value) : undefined;
+	const channel_id = levelOptions?.getArgument('channel', 0)?.getArgumentValue(CommandLevelOptions.OptionTypes.CHANNEL) || cmdData.context.channel_id;
 
-	const channel = await cmdData.guild.channels.fetch(channelId || cmdData.channel.id);
-	if (!channel) {
-		return makeMessage(`Le channel ${channelId} est introuvable`);
+	var channel;
+	try {
+		channel = await cmdData.bot.channels.fetch(channel_id);
+	} catch (error) {}
+	if (!channel) return makeMessage(`Le channel \`<#${channel_id}>\` est introuvable`);
+
+	var channelTitle = 'du channel';
+	if (channel.type == 'DM') channelTitle = 'de la conversation privée avec';
+	if (channel.type == 'GROUP_DM') channelTitle = 'de la conversation de groupe';
+	const info = getBasicInfo(channelTitle, channel);
+	if (channel.type != 'DM' && channel.type != 'GROUP_DM' && channel.type != 'UNKNOWN') {
+		// Class extends from GuildChannel
+		info.addField('', `Guild : ${channel.guild} (${channel.guild.id})\nMembres (minimum) : ${channel.members.size}`);
 	}
-
-	return getBasicInfo('du channel', channel).addField('', `Membres (minimum) : ${channel.members.size}`);
+	return info;
 }
 /**
  * `info role` was called
  * @param {ReceivedCommand} cmdData
- * @param {*} levelOptions
+ * @param {CommandLevelOptions} levelOptions
  * @returns informations about the role targeted
  */
 async function executeInfoRole(cmdData, levelOptions) {
-	const roleId = levelOptions.role || (levelOptions[0] && levelOptions[0].value);
+	const role_id = levelOptions.getArgument('role', 0)?.getArgumentValue(CommandLevelOptions.OptionTypes.ROLE);
 
-	const role = roleId ? await cmdData.guild.roles.fetch(roleId) : undefined;
-	if (!role) {
-		return makeMessage(`Le role ${roleId} est introuvable`);
-	}
+	const role = role_id ? await (await cmdData.context.getGuild())?.roles.fetch(role_id) : undefined;
+	if (!role) return makeMessage(`Le role \`<@&${role_id}>\` est introuvable`);
 
 	return getBasicInfo('du role', role).addField('', `Membres (minimum) : ${role.members.size}`);
 }
 /**
  * `info guild` was called
  * @param {ReceivedCommand} cmdData
- * @param {*} levelOptions
  * @returns informations about the guild
  */
-function executeInfoGuild(cmdData) {
-	const guild = cmdData.guild;
+async function executeInfoGuild(cmdData) {
+	const guild = await cmdData.context.getGuild();
+
+	if (!guild) return EmbedMaker.Error('Info', "Vous n'êtes pas dans un serveur. Essayez `/info channel`.");
+
 	return getBasicInfo('du serveur', guild).addField('', `Membres : ${guild.memberCount}`);
 }
 
 /**
  * `info snowflake` was called
  * @param {ReceivedCommand} cmdData
+ * @param {CommandLevelOptions} levelOptions
  * @returns informations about the snowflake
  */
-function executeSnowflake(cmdData) {
-	const option = cmdData.options ? cmdData.options[1] : undefined; //TODO: change this
-	const snowflake = option ? option.value : undefined;
+function executeSnowflake(cmdData, levelOptions) {
+	const snowflakeArgument = levelOptions.getArgument('snowflake', 0);
+	const snowflake = snowflakeArgument.isSnowflake();
 	if (snowflake == undefined) {
 		return new EmbedMaker(
 			'Snowflake',
-			`Aucun snowflake
+			`Préciser un snowflake
 		(${snowflakeLink})`
 		);
 	}

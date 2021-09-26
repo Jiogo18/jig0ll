@@ -3,16 +3,17 @@ const meteoColor = 3447003;
 import { getMeteo as getMeteoPlenitude } from './plenitude/plenitude.js';
 import { EmbedMaker } from '../lib/messageMaker.js';
 import { getFrenchDate, getFrenchTime } from '../lib/date.js';
+import { CommandLevelOptions } from '../bot/command/received.js';
 const lunarDuration = (((29 * 24 + 12) * 60 + 44) * 60 + 2.9) * 1000;
 const lunarPhaseRef = 1623276000000; // nouvelle lune Le 10/06/2021 à  12:54:05
 
 export default {
 	name: 'météo',
 	description: 'La météo actuelle de la ville/région (par openweathermap)',
-	interaction: true,
 
 	security: {
 		place: 'public',
+		interaction: true,
 	},
 
 	options: [
@@ -27,13 +28,13 @@ export default {
 	/**
 	 * Executed with the location
 	 * @param {ReceivedCommand} cmdData
-	 * @param {{location: string}} levelOptions
+	 * @param {CommandLevelOptions} levelOptions
 	 */
 	async executeAttribute(cmdData, levelOptions) {
 		/**
 		 * @type {string}
 		 */
-		const location = levelOptions.location || levelOptions[0].value;
+		const location = levelOptions.getArgumentValue('location', 0);
 
 		if (location?.toLowerCase?.().match(/pl[eé]nitude/)) return getMeteoPlenitude(cmdData);
 
@@ -61,8 +62,8 @@ async function getData(location) {
 
 				// The whole response has been received.
 			})
-			.on('error', err => {
-				console.log(`Socket Error with : api.openweathermap.org ${err.message}`.red);
+			.on('error', error => {
+				console.log(`Socket Error with : api.openweathermap.org ${error.message}`.red);
 				resolve({ cod: 404, message: "Can't access to api.openweathermap.org" });
 			});
 	});
@@ -135,10 +136,10 @@ function getDescription(embed, data) {
 	if (data.sys) {
 		let soleilLeve = getFrenchTime(data.sys.sunrise * 1000, false);
 		let soleilCouche = getFrenchTime(data.sys.sunset * 1000, true);
-		embed.addField('Présence du soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
+		embed.addField('Présence du Soleil', `de ${soleilLeve} à ${soleilCouche}`, true);
 	}
 
-	embed.addField('Phase de la lune', getMoonState(), true);
+	embed.addField('Phase de la Lune', getMoonState(), true);
 
 	return embed;
 }

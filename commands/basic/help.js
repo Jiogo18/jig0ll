@@ -1,28 +1,36 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { ReceivedCommand } from '../../bot/command/received.js';
+import { CommandArgument, CommandContext, CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
+import LocalApplicationCommand from '../../bot/command/commandStored.js';
+import { Collection } from 'discord.js';
+import { indentString } from '../../lib/utils.js';
 
 /**
  * Make a Help message
  * @param {string} description
- * @param {boolean} error
  */
-function makeMessage(description, error) {
-	const color = error && 'red';
-	return new EmbedMaker('Help', description, { color: color });
+function makeMessage(description) {
+	return new EmbedMaker('Help', description);
+}
+/**
+ * Make a Help message
+ * @param {string} description
+ */
+function makeError(description) {
+	return EmbedMaker.Error('Help', description);
 }
 
 /**
  * get a command base on the option given
  * @param {ReceivedCommand} cmdData
- * @param {Array} levelOptions
+ * @param {CommandLevelOptions} levelOptions
  */
 function getCommandToHelp(cmdData, levelOptions) {
-	const commandName = levelOptions.shift().value;
+	const [{ value: commandName }, nextLevelOptions] = levelOptions.getNextLevelOptions();
 
 	const command = cmdData.bot.commandMgr.getCommand(commandName, true);
 	if (!command) return;
 
-	const [subCommand] = command.getSubCommand(levelOptions);
+	const [subCommand] = command.getSubCommand(nextLevelOptions);
 	if (!subCommand.security.isAllowedToSee(cmdData.context)) {
 		return `You can't do that`;
 	}
@@ -32,10 +40,10 @@ function getCommandToHelp(cmdData, levelOptions) {
 export default {
 	name: 'help',
 	description: 'Affiche les commandes disponibles',
-	interaction: true,
 
 	security: {
 		place: 'public',
+		interaction: true,
 	},
 
 	options: [
@@ -50,18 +58,18 @@ export default {
 	/**
 	 * Executed with option(s)
 	 * @param {ReceivedCommand} cmdData
-	 * @param {[{value:string]} levelOptions
+	 * @param {CommandLevelOptions} levelOptions
 	 */
 	executeAttribute(cmdData, levelOptions) {
 		//split options with spaces
-		var levelOptions2 = [];
-		levelOptions.forEach(option => {
-			levelOptions2 = [...levelOptions2, ...option.value.split(' ').map(v => ({ name: v, value: v }))];
+		var levelOptions2 = new CommandLevelOptions([]);
+		levelOptions.options.forEach(option => {
+			levelOptions2.options.push(...option.value.split(' ').map(v => new CommandArgument({ name: v, value: v })));
 		});
 		const command = getCommandToHelp(cmdData, levelOptions2);
 
 		if (typeof command == 'string') {
-			return makeMessage(command, true);
+			return makeError(command);
 		}
 		if (!command) {
 			return this.execute(cmdData);
@@ -79,25 +87,24 @@ export default {
 	 * @param {ReceivedCommand} cmdData
 	 */
 	execute(cmdData) {
-		return makeMessage(getFullDescription('\u200b \u200b \u200b \u200b ', cmdData, cmdData.commands));
+		return makeMessage(getFullDescription(cmdData, cmdData.bot.commandMgr.commands));
 	},
 };
 
 /**
  * get a readable description of options
- * @param {string} spaces - indentation
  * @param {CommandContext} context
- * @param {CommandStored} commands
+ * @param {Collection<string,LocalApplicationCommand>} commands
  */
-function getFullDescription(spaces, context, commands) {
+function getFullDescription(context, commands) {
 	//every commands
-	var commandsDesc = commands
-		.sort((a, b) => (a.name < b.name ? -1 : 1))
-		.map(command => command.getHelpSmallDescription(context)?.replace(/\n/g, '\n' + spaces + spaces))
-		.filter(c => c != undefined)
-		.join('\n' + spaces);
-	if (commandsDesc != '') commandsDesc = `\n${spaces}${commandsDesc}`;
+	const commandsSmallDesc = commands
+		.sort((a, b) => a.name.localeCompare(b.name))
+		.map(command => command.getHelpSmallDescription(context))
+		.filter(c => c != undefined);
+	var commandsDesc = indentString(commandsSmallDesc.join('\n'), '\xa0 \xa0 \xa0 \xa0 ');
 
-	commandsDesc = "Préfix du bot : '!', '@Jig0ll', compatible avec les interactions" + commandsDesc;
-	return commandsDesc;
+	const botDesc = "Préfix du bot : '!', '@Jig0ll', compatible avec les interactions";
+	if (!commandsDesc) return botDesc;
+	return botDesc + '\n' + commandsDesc;
 }

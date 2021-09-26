@@ -30,10 +30,10 @@ function getStricFunction(func) {
  * @param {CommandContext} context
  */
 export function isBetaAllowed(context) {
-	const guild_id = (context.guild && context.guild.id) || context.guild_id;
+	const guild_id = context.guild_id;
 	if (guild_id == undefined) {
 		//mp
-		return isBetaTester(context.author.id);
+		return isBetaTester(context.author_id);
 	}
 	return isBetaGuild(guild_id);
 }
@@ -64,6 +64,22 @@ export const isBetaTester = user_id => user_beta_tester.includes(user_id);
  */
 export const isHightPrivilegeUser = user_id => user_high_privilege.includes(user_id);
 /**
+ * @param {CommandContext} context
+ * @param {SecurityCommand} security
+ */
+function isAllowedToUseDefault(context, security) {
+	switch (security.place) {
+		case SecurityPlaces.PRIVATE:
+			return isHightPrivilegeUser(context.author_id);
+		case SecurityPlaces.PUBLIC:
+			return true;
+		case SecurityPlaces.NONE:
+			return false;
+		default:
+			throw `isAllowedToUse place unknow`;
+	}
+}
+/**
  * Is this user has private privileges?
  * @param {string} user_id only the bot and the author
  * @returns `true` if this user has private privileges
@@ -85,14 +101,7 @@ export class SecurityCommand {
 
 	#wip;
 	get wip() {
-		return this.#wip || (this.parent && this.parent.wip);
-	}
-	get wipSet() {
-		return this.#wip;
-	}
-	setWip(wip = true) {
-		this.#wip = wip;
-		return this;
+		return this.#wip || this.parent?.wip;
 	}
 	hidden = false;
 
@@ -101,7 +110,7 @@ export class SecurityCommand {
 	inheritance = true;
 
 	/**
-	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function, isAllowedToUse:Function, hidden:boolean}} security
+	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean}} security
 	 * @param {SecurityCommand} parent
 	 */
 	constructor(security, parent) {
@@ -117,6 +126,28 @@ export class SecurityCommand {
 		if (security.isAllowedToSee) this.isAllowedToSee = security.isAllowedToSee;
 		if (security.isAllowedToUse) this.#isAllowedToUse2 = security.isAllowedToUse;
 		this.hidden = security.hidden;
+	}
+
+	/**
+	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean}} security
+	 * @param {SecurityCommand} parent
+	 */
+	static Create(security, parent) {
+		if (!security && parent) return parent;
+		if (parent) {
+			if (
+				!(
+					security.wip ^ parent.#wip ||
+					security.place !== parent.place ||
+					!security.inheritance ||
+					(security.isAllowedToSee && security.isAllowedToSee != parent.isAllowedToSee) ||
+					(security.isAllowedToUse && security.isAllowedToUse != parent.isAllowedToUse) ||
+					security.hidden ^ parent.hidden
+				)
+			)
+				return parent; // Si tout est pareil
+		}
+		return new SecurityCommand(security, parent);
 	}
 
 	/**
@@ -137,41 +168,27 @@ export class SecurityCommand {
 
 	/**
 	 * @param {CommandContext} context The context where you want to use this
-	 * @returns {boolean} `true` if you are allowed to user this
+	 * @returns {Promise<boolean>} `true` if you are allowed to user this
 	 */
-	isAllowedToUse(context) {
+	async isAllowedToUse(context) {
 		if (this.wip && isBetaAllowed(context) != true) {
 			context.NotAllowedReason = context.NotAllowedReason || `Sorry, you can't do that outside of a test server`;
 			return false;
 		}
 
 		if (this.inheritance && this.parent?.isAllowedToUse) {
-			if (this.parent.isAllowedToUse(context) != true) {
+			if ((await this.parent.isAllowedToUse(context)) != true) {
 				return false;
 			}
 		}
-		
-		return this.#isAllowedToUse2(context);
+
+		return typeof this.#isAllowedToUse2 === 'function' ? this.#isAllowedToUse2(context, this) : this.#isAllowedToUse2;
 	}
 	/**
 	 * @param {CommandContext} context The context where you want to use this
 	 * @returns {boolean} `true` if you are allowed to user this
 	 */
-	#isAllowedToUse2 = function (context) {
-		switch (this.place) {
-			case SecurityPlaces.PRIVATE:
-				return isHightPrivilegeUser(context.author.id);
-			case SecurityPlaces.PUBLIC:
-				return true;
-			case SecurityPlaces.NONE:
-				return false;
-			case undefined:
-				return this.parent != undefined;//undefined = parent place
-			default:
-				console.warn(`isAllowedToUse place unknow for ${this.name} : ${this.place}`);
-				return false;
-		}
-	};
+	#isAllowedToUse2 = isAllowedToUseDefault;
 	/**
 	 * Change the rule of isAllowedToUse
 	 * @param {Function} func
@@ -187,8 +204,8 @@ export class SecurityCommand {
  * @returns {boolean} `true` if the bot can do things
  */
 export function botIsAllowedToDo(context) {
-	const guild_id = (context.guild && context.guild.id) || context.guild_id;
-	const channel_id = (context.channel && context.channel.id) || context.channel_id;
+	const guild_id = context.guild_id;
+	const channel_id = context.channel_id;
 	if (process.env.WIPOnly) {
 		//en WIPOnly on n'autorise que les serveurs de beta test
 		return isBetaAllowed(context);

@@ -33,13 +33,13 @@ const PlenCity = {
 
 	/**
 	 * Get the location of Plénitude
-	 * @returns {Promise<string>} The current location
+	 * @returns The current location
 	 */
-	get: async _ => (await PlenCity.value.get()) || 'Chamonix-Mont-Blanc',
+	get: async () => (await PlenCity.value.get()) || 'Chamonix-Mont-Blanc',
 	/**
 	 * Change the location of Plénitude
 	 * @param {string} location Where you want to move
-	 * @returns {Promise<string>} The new location
+	 * @returns The new location
 	 */
 	set: async function (location) {
 		await PlenCity.value.set(location);
@@ -62,10 +62,10 @@ export const setLocation = PlenCity.set;
 export default {
 	name: 'plénitude',
 	description: 'Commandes de Plénitude',
-	interaction: true,
 
 	security: {
 		place: 'public',
+		interaction: true,
 	},
 
 	options: [
@@ -99,10 +99,9 @@ export default {
 				/**
 				 * @param {CommandContext} context
 				 */
-				isAllowedToUse(context) {
-					if (!guild_plenitude.includes(context.guild_id)) return false;
-					const user = context.guild?.members?.cache.get(context.author?.id); //si on veut passer en fetch il faut TOUT passer en async...
-					//donc dans cette situation là il faut que l'user envoie au un message avant
+				async isAllowedToUse(context) {
+					if (!guild_plenitude.includes(context.getGuildId)) return false;
+					const user = await (await context.getGuild())?.members?.fetch(context.author_id);
 					if (!user) return false;
 					const userRole = user.roles?.cache;
 					//Maître du Jeu || admin || Jiogo
@@ -126,13 +125,10 @@ export default {
 		kvInvite.setDatabase(bot.database);
 
 		bot.onReady.then(() => {
+			const channelDailyWeatherAuto = process.env.WIPOnly ? '891608045128388638' : '661991986039095316';
 			bot.channels
-				.fetch('661991986039095316')
+				.fetch(channelDailyWeatherAuto)
 				.then(channel => {
-					// farundir-salé-du-marais
-
-					// timer for the weather
-					// le 22/06/2021 à 8h00 il était 1623110400s = 450864 heures
 					const nextHourSinceEpoch = Math.ceil(Date.now() / 1000 / 3600);
 					const timeForInterval = nextHourSinceEpoch * 1000 * 3600;
 
@@ -141,8 +137,8 @@ export default {
 						dailyNewsTimer = setInterval(() => updateDailyWeather(channel), 3600000);
 					}, timeForInterval - Date.now());
 				})
-				.catch(err => {
-					process.consoleLogger.internalError('plenitude daily weather', err);
+				.catch(error => {
+					process.consoleLogger.internalError('plenitude daily weather', error);
 				});
 		});
 	},
@@ -152,7 +148,7 @@ function makeMessage(description) {
 	return new EmbedMaker('Plénitude', description);
 }
 function makeError(description) {
-	return new EmbedMaker('Plénitude', description, { color: 'red' });
+	return EmbedMaker.Error('Plénitude', description);
 }
 
 /**
@@ -191,9 +187,11 @@ async function updateDailyWeather(channelDailyWeather) {
  * Get the generic info of Plénitude
  */
 function getInfo() {
-	return makeMessage(`La ville de Plénitude reste un lieu fictif.
-	Seule ville de Zemlji et par conséquent sa capitale, c'est une cité coloniale en pleine expansion où l'esclavage y est devenu une nécessité.
-	L'île en elle-même présente un climat tempéré.`);
+	return makeMessage(
+		`La ville de Plénitude reste un lieu fictif.\n` +
+			`Seule ville de Zemlji et par conséquent sa capitale, c'est une cité coloniale en pleine expansion où l'esclavage y est devenu une nécessité.\n` +
+			`L'île en elle-même présente un climat tempéré.`
+	);
 }
 
 /**
@@ -239,9 +237,9 @@ async function getInviteScore(cmdData) {
 		if (!invitesSorted?.length) {
 			return makeMessage(`Il n'y a pas d'invitations dans ${guild.name}`);
 		}
-	} catch (err) {
-		process.consoleLogger.commandError(cmdData.commandLine, err);
-		return makeError(err);
+	} catch (error) {
+		process.consoleLogger.commandError(cmdData.commandLine, error);
+		return makeError(error);
 	}
 
 	var countNewInvit = countInvitedMembers(invitesSorted);
@@ -264,7 +262,7 @@ function isInvitesAllowedUser(user) {
  * @param {ReceivedCommand} cmdData
  */
 async function closeInvitesCompetition(cmdData) {
-	const guild = cmdData.bot.guilds.cache.get(plenitudeGuildId);
+	const guild = await cmdData.bot.guilds.fetch(plenitudeGuildId);
 
 	/**
 	 * Number of uses of invites created by an user since the copetition has started
@@ -276,8 +274,8 @@ async function closeInvitesCompetition(cmdData) {
 		if (!invitesSorted?.length) {
 			return makeMessage(`Il n'y a pas d'invitations sur ce serveur`);
 		}
-	} catch (err) {
-		return makeError(err);
+	} catch (error) {
+		return makeError(error);
 	}
 
 	const dateResetmsec = parseInt((await kvPlenitude.get('InvitResetTime')) || 0) || 0;
@@ -312,7 +310,7 @@ async function closeInvitesCompetition(cmdData) {
 
 	kvPlenitude.set('InvitResetTime', Date.now());
 
-	const countDesc = await embedInvitesList(invitesSorted.splice(0, 5), cmdData.guild);
+	const countDesc = await embedInvitesList(invitesSorted.splice(0, 5), guild);
 	return makeMessage(
 		[`${winnerStr}\n${countInvitedMembers(invitesSorted)} nouveaux membres ont rejoints le serveur\n\nLes 5 premiers sont :`, ...countDesc].join('\n')
 	);

@@ -6,12 +6,19 @@ import DiscordBot from './bot.js';
 
 /**
  * Read every messages that the bot can read
- * @this {DiscordBot}
+ * @param {DiscordBot} bot
  * @param {Message} message
  */
-export default async function messageHandler(message) {
-	if (isCommand(message) && this.commandEnabled) {
-		onMessageCommand.call(this, message).catch(error => process.consoleLogger.commandError('messageHandler', message.content + '\n\n' + error));
+export default async function messageHandler(bot, message) {
+	if (isCommand(message) && bot.commandEnabled) {
+		const cmdData = new ReceivedMessage(message, bot);
+
+		try {
+			await commandHandler(cmdData);
+		} catch (error) {
+			message.reply(`Sorry I've had an error while sending the answer: ${error}`);
+			process.consoleLogger.error(`Error while sending an answer for '${cmdData.commandLine}' ${error}`.red);
+		}
 	}
 }
 
@@ -28,20 +35,5 @@ function isCommand(message) {
 	message.content = content;
 	message.prefix = prefix;
 	message.isCommand = true;
-	return prefix != undefined;
-}
-
-/**
- * Read every commands from a message
- * @this {DiscordBot}
- * @param {Message} message
- */
-async function onMessageCommand(message) {
-	if (!isCommand(message)) return;
-
-	var command = new ReceivedMessage(message, this);
-	commandHandler.call(this, command).catch(error => {
-		message.reply(`Sorry I've had an error while sending the answer: ${error}`);
-		process.consoleLogger.error(`Error while sending an answer for '${command.commandLine}' ${error}`.red);
-	});
+	return true;
 }
