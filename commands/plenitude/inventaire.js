@@ -33,9 +33,9 @@ async function setChannelDatabase() {
  */
 function getPropId(id_prop, author) {
 	if (!id_prop || id_prop == '*' || id_prop == '$' || id_prop == '') {
-		return author.toString();
+		return `<@${author.id}>`;
 	}
-	const snowflakeMatch = id_prop.match(/<@!(\d+)>/);
+	const snowflakeMatch = id_prop.match(/<@!?(\d+)>/);
 	if (snowflakeMatch) {
 		return `<@${snowflakeMatch[1]}>`;
 	}
@@ -53,10 +53,12 @@ function createExecuteLink(executeFunc) {
 	 * @param {ReceivedCommand} cmdData
 	 * @param {CommandLevelOptions} levelOptions
 	 */
-	return (cmdData, levelOptions) => {
-		const [{ value: prop }, nextLevelOptions] = levelOptions.getNextLevelOptions();
-		return executeFunc(cmdData, getPropId(prop, cmdData.author), ...nextLevelOptions.options.map(i => i?.value));
-	};
+	return (cmdData, levelOptions) =>
+		executeFunc(
+			cmdData,
+			getPropId(levelOptions.getArgumentValue('inv', 0), cmdData.author),
+			...levelOptions.options.filter((v, i) => i).map(i => i?.value)
+		);
 }
 
 const invo = {
@@ -118,12 +120,19 @@ export default {
 			executeAttribute: (cmdData, levelOptions) => executeCreateBatiment(cmdData, levelOptions.getArgumentValue('name', 0)),
 		},
 		{
+			name: 'delete',
+			description: "Supprimer l'inventaire",
+			type: 1,
+			options: [invo.id_target],
+			executeAttribute: createExecuteLink(executeDelete),
+		},
+		{
 			name: 'open',
 			description: "Ouvrir l'inventaire",
 			type: 1,
 			options: [{ ...invo.id_target, required: false }],
 			/** @param {ReceivedCommand} cmdData */
-			execute: cmdData => executeOpen(cmdData, cmdData.author.toString()),
+			execute: cmdData => executeOpen(cmdData, getPropId('', cmdData.author)),
 			executeAttribute: createExecuteLink(executeOpen),
 		},
 		{
@@ -183,6 +192,41 @@ export default {
 				),
 		},
 		{
+			name: 'set',
+			description: "Changer une donnée de l'inventaire",
+			type: 1,
+			options: [
+				invo.id_target,
+				{
+					name: 'key',
+					description: 'Nom de la donnée',
+					type: 3,
+					choices: [
+						{ name: 'Propriétaire', value: 'prop' },
+						{ name: 'Nom', value: 'name' },
+					],
+					required: true,
+				},
+				{
+					name: 'value',
+					description: 'Valeur de la donnée',
+					type: 3,
+					required: true,
+				},
+			],
+			/**
+			 * @param {ReceivedCommand} cmdData
+			 * @param {CommandLevelOptions} levelOptions
+			 */
+			executeAttribute: (cmdData, levelOptions) =>
+				executeSetData(
+					cmdData,
+					getPropId(levelOptions.getArgumentValue('inv', 0), cmdData.author),
+					levelOptions.getArgumentValue('key', 1),
+					levelOptions.getArgumentValue('value', 2)
+				),
+		},
+		{
 			name: 'couleur',
 			description: `Changer la couleur de l'inventaire`,
 			type: 1,
@@ -207,7 +251,7 @@ export default {
 				},
 			],
 			/** @param {ReceivedCommand} cmdData */
-			execute: cmdData => executeListUserInventory(cmdData, cmdData.author.toString()),
+			execute: cmdData => executeListUserInventory(cmdData, getPropId('', cmdData.author)),
 			/**
 			 * @param {ReceivedCommand} cmdData
 			 * @param {CommandLevelOptions} levelOptions
@@ -343,10 +387,10 @@ class Inventory {
 	 * @type {string}
 	 */
 	get proprietaire() {
-		return this.messageData.data.proprietaire || this.messageData.id;
+		return this.messageData.data.proprietaire || this.noms;
 	}
 	set proprietaire(prop) {
-		if (prop === this.noms) delete this.messageData.data.proprietaire;
+		if (prop === this.noms || !prop) delete this.messageData.data.proprietaire;
 		else this.messageData.data.proprietaire = prop;
 	}
 
@@ -411,6 +455,10 @@ class Inventory {
 		return this.messageData.exist;
 	}
 
+	delete() {
+		return this.messageData.delete();
+	}
+
 	/**
 	 * Does the inventory belong to a user or a building
 	 */
@@ -424,8 +472,8 @@ class Inventory {
 	 */
 	isProp(user) {
 		if (!user) return false;
-		if (this.noms === user.toString()) return true;
-		if (this.proprietaire === user.toString()) return true;
+		if (this.noms === getPropId('', user)) return true;
+		if (this.proprietaire === getPropId('', user)) return true;
 		return false;
 	}
 
@@ -579,24 +627,42 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 	}
 	if (inv.exist) return makeError(`Ce bâtiment existe déjà : \`${name}\``);
 
-	inv.proprietaire = cmdData.author.toString();
+	inv.proprietaire = getPropId('', cmdData.author);
 	await inv.save();
 	return makeMessage(`Un bâtiment a été créé pour ${inv.proprietaire} : \`${name}\`\nPrécisez \`${name}\` pour ouvrir son inventaire`, inv.color);
 }
 
 /**
  * @param {ReceivedCommand} cmdData
- * @param {string} id_prop
+ * @param {string} inv_id
  */
-async function executeOpen(cmdData, id_prop) {
-	const inv = await getInventory(id_prop);
+async function executeDelete(cmdData, inv_id) {
+	const inv = await getInventory(inv_id);
+
+	if (!inv.exist) return messages.doesntExist(inv);
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
+
+	try {
+		await inv.delete();
+		return makeMessage(`L'inventaire ${inv_id} a été supprimé`);
+	} catch (error) {
+		return makeError(`Impossible de supprimer l'inventaire \`${inv.noms}\``);
+	}
+}
+
+/**
+ * @param {ReceivedCommand} cmdData
+ * @param {string} inv_id
+ */
+async function executeOpen(cmdData, inv_id) {
+	const inv = await getInventory(inv_id);
 
 	if (!inv.exist) return messages.doesntExist(inv);
 	if (!inv.canOpen(cmdData.author)) return messages.cantOpen(inv);
 
 	const inventory_source = inv.items;
 
-	var retour = `**Inventaire de ${id_prop}**\n`;
+	var retour = `**Inventaire de ${inv_id}**\n`;
 	if (inv.description) {
 		retour += inv.description + '\n';
 	}
@@ -645,7 +711,7 @@ async function executeRemove(cmdData, id, item_name, item_count) {
 	item_count = parseInt(item_count) || 1;
 	if (item_count < 0) return executeGive(cmdData, id, item_name, -item_count);
 
-	const inv = await getInventory(id, true);
+	const inv = await getInventory(id);
 
 	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
@@ -671,8 +737,8 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 	item_count = parseInt(item_count) || 1;
 	if (item_count < 0) return executeMove(cmdData, id_target, id_source, item_name, -item_count);
 
-	const inv_source = await getInventory(id_source, false);
-	const inv_target = await getInventory(id_target, false);
+	const inv_source = await getInventory(id_source);
+	const inv_target = await getInventory(id_target);
 
 	if (!inv_source.isPlayerInventory() && !inv_source.exist) return messages.doesntExist(inv_source); // bâtiment et n'existe pas
 	if (!inv_target.isPlayerInventory() && !inv_target.exist) return messages.doesntExist(inv_target); // bâtiment et n'existe pas
@@ -717,7 +783,7 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
  * @param {string} description
  */
 async function executeDescription(cmdData, inv_id, description) {
-	const inv = await getInventory(inv_id, false);
+	const inv = await getInventory(inv_id);
 
 	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
@@ -731,10 +797,49 @@ async function executeDescription(cmdData, inv_id, description) {
 /**
  * @param {ReceivedCommand} cmdData
  * @param {string} inv_id
+ * @param {string} key
+ * @param {string} value
+ */
+async function executeSetData(cmdData, inv_id, key, value) {
+	const inv = await getInventory(inv_id);
+
+	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
+
+	switch (key) {
+		case 'prop':
+			if (inv.isPlayerInventory()) {
+				return makeError(`Vous ne pouvez pas modifier le propriétaire de l'inventaire d'un joueur`);
+			}
+			const prop_id = getPropId(value);
+			inv.proprietaire = prop_id;
+			await inv.save();
+			if (inv.proprietaire) return makeMessage(`Le propriétaire de \`${inv.noms}\` est désormais '${inv.proprietaire}'`);
+			else return makeMessage(`L'inventaire \`${inv.noms}\` n'a plus de propriétaire`);
+
+		case 'name':
+			if (inv.isPlayerInventory()) {
+				return makeError(`Vous ne pouvez pas modifier le nom de l'inventaire d'un joueur`);
+			}
+			if (!value.match(/\w+/)) return makeError(`Le nom de l'inventaire ne peut pas être vide`);
+			const name = (value.startsWith('$') ? '' : '$') + value;
+			const old_name = inv.noms;
+			inv.noms = name;
+			await inv.save();
+			return makeMessage(`L'inventaire \`${old_name}\` a été renommé \`${inv.noms}\``);
+
+		default:
+			return makeError(`Aucun paramètre nommée '${key}'`);
+	}
+}
+
+/**
+ * @param {ReceivedCommand} cmdData
+ * @param {string} inv_id
  * @param {string} couleur
  */
 async function executeCouleur(cmdData, inv_id, couleur) {
-	const inv = await getInventory(inv_id, false);
+	const inv = await getInventory(inv_id);
 
 	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
 
@@ -762,9 +867,8 @@ async function executeCouleur(cmdData, inv_id, couleur) {
  * @param {string} user_mention
  */
 async function executeListUserInventory(cmdData, user_mention) {
-	const userId = user_mention.match(/<@!?(\d+)>/)?.[1] || user_mention.match(/^\d+$/)?.[0] || cmdData.author.id;
 	const channel = channelDatabase.channel;
-	// const channel = await cmdData.bot.channels.fetch('858620313117917184');
+
 	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());
 
 	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0]?.description || '')));
@@ -775,13 +879,11 @@ async function executeListUserInventory(cmdData, user_mention) {
 		 */
 		const inv = m.data;
 		if (!inv) return false;
-		const proprietaireId = inv.proprietaire?.match?.(/<@!?(\d+)>/)?.[1] || inv.id?.match?.(/<@!?(\d+)>/)?.[1];
-		return proprietaireId == userId;
+		return inv.proprietaire === user_mention;
 	});
 
-	const user = await cmdData.bot.users.fetch(userId);
 	const msg = makeMessage(
-		`${userInventories.length} inventaires appartiennent à ${user.toString()} :\n${userInventories.map(m => m.data.id).join(', ')}`
+		`${userInventories.length} inventaires appartiennent à ${user_mention} :\n${userInventories.map(m => m.data.id).join(', ')}`
 	);
 
 	return msg;
