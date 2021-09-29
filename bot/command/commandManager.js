@@ -120,7 +120,9 @@ export default class CommandManager {
 			const notLoadedCommands = commandPaths.filter(file => !loadedCommands.find(cmd => cmd.filename === file));
 			console.warn(`Load Command didn't loaded ${notLoadedCommands.length} commands : `.yellow, notLoadedCommands);
 		}
-		console.log(`Commands Loaded :`.green, c);
+		if (process.env.WIPOnly) {
+			console.log(`Commands Loaded :`.green, c);
+		}
 		return c;
 	}
 
