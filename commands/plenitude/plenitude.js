@@ -7,8 +7,8 @@ import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
 import { Guild, User } from 'discord.js';
 import { guild_plenitude } from '../../bot/command/security.js';
 import DiscordBot from '../../bot/bot.js';
-var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { createTable: true, insertIfNotExist: true }, 10000);
-var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { createTable: true, insertIfNotExist: true }, 10000);
+var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { insertIfNotExist: true }, 10000);
+var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { insertIfNotExist: true }, 10000);
 
 const PlenWeekdays = ['Primidi', 'Duodi', 'Tridi', 'Quartidi', 'Quintidi', 'Sextidi', 'Septidi'];
 const PlenMonths = [
