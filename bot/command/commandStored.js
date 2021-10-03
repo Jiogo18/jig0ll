@@ -212,7 +212,7 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 	 */
 	parameters = [];
 	/**
-	 * @type {AbstractCommandOption[]}
+	 * @type {(AbstractCommandExtendable|CommandParameter)[]}
 	 */
 	get discordOptions() {
 		return [...this.options, ...this.parameters];
@@ -297,7 +297,10 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 	getJSON() {
 		return {
 			...super.getJSON(),
-			options: this.discordOptions.map(option => option.getJSON()),
+			options: [
+				...this.options.filter(option => option.security.interaction !== false && !option.security.hidden).map(option => option.getJSON()),
+				...this.parameters.map(option => option.getJSON()),
+			],
 		};
 	}
 	/**
@@ -332,7 +335,7 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 		}
 
 		//terminus => #execute
-		if ((await this.security?.isAllowedToUse?.(cmdData.context)) != true) {
+		if (this.security?.isAllowedToUse?.(cmdData.context) != true) {
 			return EmbedMaker.Error('', cmdData.context.NotAllowedReason || "Sorry you can't do that");
 		}
 
@@ -413,7 +416,9 @@ class ApplicationCommand extends AbstractCommandExtendable {
 	isAllowedOptionType(type) {
 		return Object.values(Constants.ApplicationCommandOptionTypes).includes(type);
 	}
-	interaction;
+	get interaction() {
+		return this.security.interaction;
+	}
 	/**
 	 * Alternative names
 	 * @type {string[]}
@@ -440,7 +445,6 @@ class ApplicationCommand extends AbstractCommandExtendable {
 	 */
 	constructor(commandConfig) {
 		super(commandConfig);
-		this.interaction = commandConfig.security?.interaction; //enable interactions
 		this.alts = commandConfig.alts;
 
 		if (!commandConfig.security) {

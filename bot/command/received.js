@@ -288,6 +288,9 @@ export class CommandContext {
 	}
 	/** @return {string} */
 	get guild_id() {}
+	getCacheGuild() {
+		return this.bot.guilds.cache.get(this.guild_id);
+	}
 	/** @return {Promise<Guild>} */
 	getGuild() {}
 	/** @return {string} */
@@ -298,9 +301,14 @@ export class CommandContext {
 	get author_id() {}
 	/** @return {User|import('discord-api-types').APIUser} */
 	getAuthor() {}
-	/** @return {Promise<User>} */
 	getFullAuthor() {
 		return this.bot.users.fetch(this.author_id);
+	}
+	getCacheGuildAuthor() {
+		return this.getCacheGuild()?.members.cache.get(this.author_id);
+	}
+	async getFullGuildAuthor() {
+		return (await this.getGuild())?.members?.fetch(this.author_id);
 	}
 }
 

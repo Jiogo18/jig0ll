@@ -5,6 +5,7 @@ import DiscordBot from '../../bot/bot.js';
 import { User } from 'discord.js';
 import colorLib from '../../lib/color.js';
 import YAML from 'yaml';
+import { securityPlenModoOnly } from '../../bot/command/security.js';
 
 /**
  * @type {DiscordChannelDatabase}
@@ -102,6 +103,7 @@ export default {
 			name: 'reload',
 			description: 'Recharger tous les inventaires (en cas de bug, ne pas en abuser)',
 			type: 1,
+			security: securityPlenModoOnly,
 			execute: executeReload,
 		},
 		{
@@ -192,7 +194,7 @@ export default {
 		},
 		{
 			name: 'set',
-			description: "Changer une donnée de l'inventaire",
+			description: `Changer une donnée de l'inventaire\n(exemple : \`inventaire set "inv2" name "Inventaire maison"\`)`,
 			type: 1,
 			options: [
 				invo.id_target,
@@ -838,6 +840,10 @@ async function executeSetData(cmdData, inv_id, key, value) {
 			if (inv.isPlayerInventory()) {
 				return makeError(`Vous ne pouvez pas modifier le propriétaire de l'inventaire d'un joueur`);
 			}
+
+			if (!(await securityPlenModoOnly.isAllowedToUse(cmdData.context)))
+				return makeError(`Vous n'avez pas l'autorisation de modifier le propriétaire d'un inventaire, contactez un modo`);
+
 			const prop_id = getPropId(value);
 			inv.proprietaire = prop_id;
 			await inv.save();

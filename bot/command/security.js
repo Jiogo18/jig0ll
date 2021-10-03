@@ -4,6 +4,8 @@ import { CommandContext } from './received.js';
 export const guild_beta_tester = [config.guild_test, '815995510178447422'];
 export const channel_beta_only = ['541315862016032788'];
 export const guild_plenitude = [config.guild_test, '815995510178447422', '626121178163183628']; //plenitude invite_score
+export const guild_plenitude_modo_rp = '894327915033002004';
+export const guild_plenitude_modo_comportement = '811656599915593768';
 
 export const user_beta_tester = [config.jiogo18];
 export const user_high_privilege = [config.jiogo18]; // cut command
@@ -104,13 +106,14 @@ export class SecurityCommand {
 		return this.#wip || this.parent?.wip;
 	}
 	hidden = false;
+	interaction = true;
 
 	parent;
 
 	inheritance = true;
 
 	/**
-	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean}} security
+	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean, interaction:boolean}} security
 	 * @param {SecurityCommand} parent
 	 */
 	constructor(security, parent) {
@@ -122,32 +125,32 @@ export class SecurityCommand {
 
 		this.#securityPlace = security.place;
 
-		if (security.inheritance != undefined) this.inheritance = security.inheritance;
+		this.inheritance = security.inheritance ?? this.inheritance;
 		if (security.isAllowedToSee) this.isAllowedToSee = security.isAllowedToSee;
 		if (security.isAllowedToUse) this.#isAllowedToUse2 = security.isAllowedToUse;
-		this.hidden = security.hidden;
+		this.hidden = security.hidden ?? this.hidden;
+		this.interaction = security.interaction ?? this.interaction;
 	}
 
 	/**
-	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean}} security
+	 * @param {{wip:boolean, place:SecurityPlaces, inheritance:boolean, isAllowedToSee:Function|boolean, isAllowedToUse:Function, hidden:boolean, interaction:boolean}} security
 	 * @param {SecurityCommand} parent
 	 */
 	static Create(security, parent) {
 		if (!security && parent) return parent;
-		if (parent) {
-			if (
-				!(
-					security.wip ^ parent.#wip ||
-					security.place !== parent.place ||
-					!security.inheritance ||
-					(security.isAllowedToSee && security.isAllowedToSee != parent.isAllowedToSee) ||
-					(security.isAllowedToUse && security.isAllowedToUse != parent.isAllowedToUse) ||
-					security.hidden ^ parent.hidden
-				)
-			)
-				return parent; // Si tout est pareil
-		}
-		return new SecurityCommand(security, parent);
+		if (
+			!parent ||
+			security.wip ^ parent.#wip ||
+			security.place !== parent.place ||
+			!security.inheritance ||
+			(security.isAllowedToSee && security.isAllowedToSee != parent.isAllowedToSee) ||
+			(security.isAllowedToUse && security.isAllowedToUse != parent.isAllowedToUse) ||
+			(security.hidden ?? false) ^ parent.hidden ||
+			(security.interaction ?? true) ^ parent.interaction
+		)
+			return new SecurityCommand(security, parent);
+
+		return parent; // Si tout est pareil
 	}
 
 	/**
@@ -168,16 +171,16 @@ export class SecurityCommand {
 
 	/**
 	 * @param {CommandContext} context The context where you want to use this
-	 * @returns {Promise<boolean>} `true` if you are allowed to user this
+	 * @returns {boolean} `true` if you are allowed to user this
 	 */
-	async isAllowedToUse(context) {
+	isAllowedToUse(context) {
 		if (this.wip && isBetaAllowed(context) != true) {
 			context.NotAllowedReason = context.NotAllowedReason || `Sorry, you can't do that outside of a test server`;
 			return false;
 		}
 
 		if (this.inheritance && this.parent?.isAllowedToUse) {
-			if ((await this.parent.isAllowedToUse(context)) != true) {
+			if (this.parent.isAllowedToUse(context) != true) {
 				return false;
 			}
 		}
@@ -220,6 +223,23 @@ export function botIsAllowedToDo(context) {
 		return true; //sinon c'est autorisé
 	}
 }
+
+export const securityPlenModoOnly = {
+	/** @param {CommandContext} context */
+	isAllowedToUse: context => {
+		if (!guild_plenitude.includes(context.guild_id)) return false;
+		const author = context.getCacheGuildAuthor();
+		if (!author?.roles?.cache) return false;
+		if (
+			!author.roles.cache.has(guild_plenitude_modo_rp) &&
+			!author.roles.cache.has(guild_plenitude_modo_comportement) &&
+			!user_plenitude_privilege.includes(author.id)
+		)
+			return false;
+		return true;
+	},
+	interaction: false,
+};
 
 export default {
 	get guild_test() {
