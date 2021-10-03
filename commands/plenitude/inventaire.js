@@ -36,7 +36,7 @@ function getPropId(id_prop, author) {
 	if (!id_prop || id_prop == '*' || id_prop == '$' || id_prop == '') {
 		return `<@${author.id}>`;
 	}
-	const snowflakeMatch = id_prop.match(/<@!?(\d+)>/);
+	const snowflakeMatch = id_prop.match(/^<@!?(\d+)>$/) || id_prop.match(/^(\d{10,20})$/);
 	if (snowflakeMatch) {
 		return `<@${snowflakeMatch[1]}>`;
 	}
