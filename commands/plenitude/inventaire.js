@@ -41,7 +41,6 @@ function getPropId(id_prop, author) {
 	}
 	const snowflake2Match = id_prop.match(/<@&(\d+)>/);
 	if (snowflake2Match) throw `Ce type de tag n'est pas valide : \`<@&${snowflake2Match[1]}>\`.\nEvitez de copier/coller les tags`;
-	if (id_prop.includes(' ')) throw `Les espaces ne sont pas autorisés dans le nom de bâtiment`;
 	return id_prop;
 }
 
@@ -202,7 +201,7 @@ export default {
 					description: 'Nom de la donnée',
 					type: 3,
 					choices: [
-						{ name: 'Propriétaire', value: 'prop' },
+						{ name: 'Proprietaire', value: 'prop' },
 						{ name: 'Nom', value: 'name' },
 					],
 					required: true,
@@ -334,8 +333,14 @@ const messages = {
 	cantEdit: inv => makeError(`Cet inventaire appartient à ${inv?.proprietaire} et vous ne pouvez pas modifier son contenu`),
 	/**
 	 * @param {Inventory} inv
+	 * @param {ReceivedCommand} cmdData
 	 */
-	doesntExist: inv => makeError(`Cet inventaire n'existe pas.\nPour créer un inventaire de bâtiment utilisez \`create <nom_batiment>\``),
+	doesntExist: async (inv, cmdData) => {
+		const error = makeError(`Cet inventaire n'existe pas.\nPour créer un inventaire de bâtiment utilisez \`create <nom_batiment>\``);
+		const user_invs = await getInventoryListOf(getPropId('', cmdData.author));
+		if (user_invs.length > 0) error.addField(`Vous avez ${user_invs.length} inventaires`, user_invs.map(inv => inv.id).join(', '));
+		return error;
+	},
 	/**
 	 * @param {string} name
 	 */
@@ -449,10 +454,17 @@ class Inventory {
 	}
 
 	/**
-	 * Does the inventory exist
+	 * Does the message of inventory is created
+	 */
+	get created() {
+		return this.messageData.exist;
+	}
+
+	/**
+	 * Does the inventory don't need to be created first
 	 */
 	get exist() {
-		return this.messageData.exist;
+		return this.created || this.isPlayerInventory();
 	}
 
 	delete() {
@@ -595,6 +607,18 @@ async function getInventory(id) {
 	return new Inventory(await channelDatabase?.getMessageData(id));
 }
 
+/**
+ * @param {string} user_mention
+ * @return {Promise<Inventory[]>} Almost the same object
+ */
+async function getInventoryListOf(user_mention) {
+	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channelDatabase.channel)).values());
+
+	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0]?.description || '')));
+
+	return messagesSnowflake.filter(m => m.data?.proprietaire === user_mention).map(m => m.data);
+}
+
 ////////////////////////// execute commands //////////////////////////
 
 /**
@@ -618,18 +642,21 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 	if (!name_batiment) {
 		return makeError(`Nom invalide du bâtiment : ${name_batiment}`);
 	}
-	const name = (name_batiment.startsWith('$') ? '' : '$') + name_batiment;
+	if (name_batiment.match(/^ +$/)) return makeError('Le nom du bâtiment doit contenir des lettres et / ou des chiffres');
 
-	const inv = await getInventory(name);
+	const inv = await getInventory(name_batiment);
 	if (!inv) {
-		process.consoleLogger.commandError(cmdData.commandLine, `Impossible de créer le bâtiment \`${name}\``);
+		process.consoleLogger.commandError(cmdData.commandLine, `Impossible de créer le bâtiment \`${name_batiment}\``);
 		return makeError('Impossible de créer le bâtiment, réessayez');
 	}
-	if (inv.exist) return makeError(`Ce bâtiment existe déjà : \`${name}\``);
+	if (inv.created) return makeError(`Ce bâtiment existe déjà : \`${name_batiment}\``);
 
 	inv.proprietaire = getPropId('', cmdData.author);
 	await inv.save();
-	return makeMessage(`Un bâtiment a été créé pour ${inv.proprietaire} : \`${name}\`\nPrécisez \`${name}\` pour ouvrir son inventaire`, inv.color);
+	return makeMessage(
+		`Un bâtiment a été créé pour ${inv.proprietaire} : \`${name_batiment}\`\nPrécisez \`${name_batiment}\` pour ouvrir son inventaire`,
+		inv.color
+	);
 }
 
 /**
@@ -639,7 +666,7 @@ async function executeCreateBatiment(cmdData, name_batiment) {
 async function executeDelete(cmdData, inv_id) {
 	const inv = await getInventory(inv_id);
 
-	if (!inv.exist) return messages.doesntExist(inv);
+	if (!inv.created) return messages.doesntExist(inv, cmdData);
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 
 	try {
@@ -657,7 +684,7 @@ async function executeDelete(cmdData, inv_id) {
 async function executeOpen(cmdData, inv_id) {
 	const inv = await getInventory(inv_id);
 
-	if (!inv.exist) return messages.doesntExist(inv);
+	if (!inv.exist) return messages.doesntExist(inv, cmdData);
 	if (!inv.canOpen(cmdData.author)) return messages.cantOpen(inv);
 
 	const inventory_source = inv.items;
@@ -688,7 +715,7 @@ async function executeGive(cmdData, inv_id, item_name, item_count) {
 
 	const inv = await getInventory(inv_id);
 
-	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.exist) return messages.doesntExist(inv, cmdData); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 	if (!item_name) return messages.badName(item_name);
 
@@ -713,7 +740,7 @@ async function executeRemove(cmdData, id, item_name, item_count) {
 
 	const inv = await getInventory(id);
 
-	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.exist) return messages.doesntExist(inv, cmdData); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 	if (!item_name) return messages.badName(item_name);
 
@@ -740,8 +767,8 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 	const inv_source = await getInventory(id_source);
 	const inv_target = await getInventory(id_target);
 
-	if (!inv_source.isPlayerInventory() && !inv_source.exist) return messages.doesntExist(inv_source); // bâtiment et n'existe pas
-	if (!inv_target.isPlayerInventory() && !inv_target.exist) return messages.doesntExist(inv_target); // bâtiment et n'existe pas
+	if (!inv_source.exist) return messages.doesntExist(inv_source, cmdData); // bâtiment et n'existe pas
+	if (!inv_target.exist) return messages.doesntExist(inv_target, cmdData); // bâtiment et n'existe pas
 	if (!inv_source.canEdit(cmdData.author) && !inv_target.canEdit(cmdData.author))
 		return makeMessage(`Vous n'etes le propriétaire d'aucun de ces inventaire donc vous ne pouvez pas déplacer les objets`);
 	if (!item_name) return messages.badName(item_name);
@@ -785,7 +812,7 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 async function executeDescription(cmdData, inv_id, description) {
 	const inv = await getInventory(inv_id);
 
-	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.exist) return messages.doesntExist(inv, cmdData); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 
 	inv.description = description;
@@ -803,7 +830,7 @@ async function executeDescription(cmdData, inv_id, description) {
 async function executeSetData(cmdData, inv_id, key, value) {
 	const inv = await getInventory(inv_id);
 
-	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.exist) return messages.doesntExist(inv, cmdData); // bâtiment et n'existe pas
 	if (!inv.canEdit(cmdData.author)) return messages.cantEdit(inv);
 
 	switch (key) {
@@ -822,9 +849,8 @@ async function executeSetData(cmdData, inv_id, key, value) {
 				return makeError(`Vous ne pouvez pas modifier le nom de l'inventaire d'un joueur`);
 			}
 			if (!value.match(/\w+/)) return makeError(`Le nom de l'inventaire ne peut pas être vide`);
-			const name = (value.startsWith('$') ? '' : '$') + value;
 			const old_name = inv.noms;
-			inv.noms = name;
+			inv.noms = value;
 			await inv.save();
 			return makeMessage(`L'inventaire \`${old_name}\` a été renommé \`${inv.noms}\``);
 
@@ -841,7 +867,7 @@ async function executeSetData(cmdData, inv_id, key, value) {
 async function executeCouleur(cmdData, inv_id, couleur) {
 	const inv = await getInventory(inv_id);
 
-	if (!inv.isPlayerInventory() && !inv.exist) return messages.doesntExist(inv); // bâtiment et n'existe pas
+	if (!inv.exist) return messages.doesntExist(inv, cmdData); // bâtiment et n'existe pas
 
 	if (!couleur) {
 		return makeMessage(`La couleur de ${inv_id} est actuellement ${inv.color}`, inv.color);
@@ -867,24 +893,7 @@ async function executeCouleur(cmdData, inv_id, couleur) {
  * @param {string} user_mention
  */
 async function executeListUserInventory(cmdData, user_mention) {
-	const channel = channelDatabase.channel;
+	const userInventories = await getInventoryListOf(user_mention);
 
-	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channel)).values());
-
-	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0]?.description || '')));
-
-	const userInventories = messagesSnowflake.filter(m => {
-		/**
-		 * @type {Inventory}
-		 */
-		const inv = m.data;
-		if (!inv) return false;
-		return inv.proprietaire === user_mention;
-	});
-
-	const msg = makeMessage(
-		`${userInventories.length} inventaires appartiennent à ${user_mention} :\n${userInventories.map(m => m.data.id).join(', ')}`
-	);
-
-	return msg;
+	return makeMessage(`${userInventories.length} inventaires appartiennent à ${user_mention} :\n${userInventories.map(inv => inv.id).join(', ')}`);
 }

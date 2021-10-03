@@ -190,6 +190,7 @@ class CommandParameter extends AbstractCommandOption {
 			if (this.choices.length != command.choices?.length) return false;
 			for (const cIntern of this.choices) {
 				const cExtern = command.choices.find(c => c.name == cIntern.name);
+				if (!cExtern) return false;
 				if (cIntern.name != cExtern.name || cIntern.value != cExtern.value) return false;
 			}
 		}
