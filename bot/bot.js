@@ -1,4 +1,5 @@
-import { Client, Constants, Message, Intents, Interaction } from 'discord.js';
+import Discord from 'discord.js';
+import { Client, Constants, Message, Intents, Collection } from 'discord.js';
 
 import AppManager from './AppManager.js';
 import CommandManager from './command/commandManager.js';
@@ -18,6 +19,10 @@ export default class DiscordBot extends Client {
 	 * @type {Promise<boolean>}
 	 */
 	onReady;
+	/**
+	 * @type {Collection<string,{callback:Function,limit_one:boolean}>}
+	 */
+	interactionsHandler;
 
 	constructor() {
 		super({
@@ -44,11 +49,12 @@ export default class DiscordBot extends Client {
 		this.on(Constants.Events.CLIENT_READY, this.onBotConnected);
 		this.on(Constants.Events.MESSAGE_CREATE, onMessage);
 		if (this.commandEnabled) {
-			this.ws.on('INTERACTION_CREATE', (...a) => onInteraction.call(this, ...a));
+			this.on(Constants.Events.INTERACTION_CREATE, onInteraction);
 		} else {
 			console.warn('Commands are disabled by the bot'.yellow);
 		}
 		this.database = new PGDatabase(process.env.DATABASE_URL);
+		this.interactionsHandler = new Collection();
 	}
 
 	start() {
@@ -104,6 +110,14 @@ export default class DiscordBot extends Client {
 	isLocalId(idMsg) {
 		return idMsg == 0 || this.localId == idMsg;
 	}
+
+	addInteractionHandler(id, callback, timeout = 60000, limit_one = true) {
+		this.interactionsHandler.set(id, { callback, limit_one });
+		if (timeout) setTimeout(() => this.interactionsHandler.delete(id), timeout);
+	}
+	removeInteractionHandler(id) {
+		this.interactionsHandler.delete(id);
+	}
 }
 
 /**
@@ -133,10 +147,21 @@ function onMessage(message) {
 /**
  * Récéption d'une interaction et vérification avant de l'analyser
  * @this {DiscordBot}
- * @param {Interaction} interaction
+ * @param {Discord.CommandInteraction | Discord.MessageComponentInteraction} interaction
  */
 function onInteraction(interaction) {
 	if (process.stopped == true) return;
+	if (interaction.constructor == Discord.Interaction) {
+		if (process.env.WIPOnly) console.warn(`Interaction n'est pas une commande :`, interaction);
+		return;
+	}
+	if (interaction.isMessageComponent()) {
+		const handler = this.interactionsHandler.get(interaction.message.id);
+		return handler?.callback?.(interaction);
+	} else if (!interaction?.isCommand()) {
+		if (process.env.WIPOnly) console.warn(`Interaction n'est pas une commande :`, interaction);
+		return;
+	}
 
 	try {
 		const cmdData = new ReceivedInteraction(interaction, this);

@@ -1,7 +1,8 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand, ReceivedInteraction, ReceivedMessage } from '../../bot/command/received.js';
 import { DiscordChannelDatabase, getEveryMessageSnowflake, MessageData } from '../../lib/discordDatabase.js';
 import DiscordBot from '../../bot/bot.js';
+import Discord from 'discord.js';
 import { User } from 'discord.js';
 import colorLib from '../../lib/color.js';
 import YAML from 'yaml';
@@ -300,7 +301,14 @@ class Item {
 	 * @param {Item} item
 	 */
 	isEqual(item) {
-		return this.name == item.name;
+		return this.name.localeCompare(item.name, undefined, { sensitivity: 'base' }) === 0;
+	}
+
+	/**
+	 * @param {RegExp} regex
+	 */
+	match(regex) {
+		return regex.test(this.name);
 	}
 
 	toSmallText() {
@@ -763,8 +771,8 @@ async function executeRemove(cmdData, id, item_name, item_count) {
  * @param {string} item_count
  */
 async function executeMove(cmdData, id_source, id_target, item_name, item_count) {
-	item_count = parseInt(item_count) || 1;
-	if (item_count < 0) return executeMove(cmdData, id_target, id_source, item_name, -item_count);
+	if (parseInt(item_count) < 0) return executeMove(cmdData, id_target, id_source, item_name, -item_count);
+	if (item_count == '0') item_count = '*';
 
 	const inv_source = await getInventory(id_source);
 	const inv_target = await getInventory(id_target);
@@ -775,6 +783,13 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 		return makeMessage(`Vous n'etes le propriétaire d'aucun de ces inventaire donc vous ne pouvez pas déplacer les objets`);
 	if (!item_name) return messages.badName(item_name);
 
+	if (item_name.startsWith('/') && item_name.endsWith('/')) {
+		const item_filter = item_name.match('^/(.*)/$')?.[1];
+		if (item_filter) return executeMoveRegex(cmdData, inv_source, inv_target, item_filter, item_count);
+	}
+	if (item_count === '*') return executeMoveRegex(cmdData, inv_source, inv_target, item_name, item_count);
+
+	item_count = parseInt(item_count) || 1;
 	const item = new Item(item_name, item_count);
 
 	if (!inv_source.canRemoveItem(item)) {
@@ -804,6 +819,104 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 			'\n' +
 			messages.itemSmartInfo(item_target, id_target)
 	);
+}
+
+/**
+ * @param {ReceivedInteraction | ReceivedMessage} cmdData
+ * @param {Inventory} inv_source
+ * @param {Inventory} inv_target
+ * @param {string} item_filter
+ * @param {string} item_count
+ */
+async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, item_count) {
+	const regex_filter = new RegExp('^' + item_filter + '$', 'i');
+
+	if (item_count !== '*') item_count = parseInt(item_count) || 1;
+	const items_to_move = inv_source.items
+		.filter(item => item.match(regex_filter))
+		.map(item_in_source => new Item(item_in_source.name, item_count === '*' ? item_in_source.count : item_count));
+
+	if (items_to_move.length === 0) return makeError(`Le filtre '${item_filter}' n'a pas trouvé d'objet dans ${inv_source.noms}`);
+
+	const items_moved_info = items_to_move.map(item => item.toSmallText()).join(', ');
+	const text_items_from_to = `${items_moved_info} de ${inv_source.noms} vers ${inv_target.noms}`;
+
+	const item_cant_remove = items_to_move.find(item => (inv_source.canRemoveItem(item) ? undefined : item));
+	if (item_cant_remove) return messages.noItem(item_cant_remove, inv_source.noms);
+	const item_cant_add = items_to_move.find(item => (inv_target.canAddItem(item) ? undefined : item));
+	if (item_cant_add) return messages.cantAddItem(item_cant_add, inv_target.noms);
+
+	var messageActions = new Discord.MessageActionRow();
+	messageActions.addComponents(new Discord.MessageButton({ label: 'Transférer', customId: 'transfer', style: 'PRIMARY' }));
+	messageActions.addComponents(new Discord.MessageButton({ label: 'Annuler', customId: 'cancel', style: 'SECONDARY' }));
+	var confirm_answer = {
+		embeds: [makeMessage(`Êtes vous sûr de vouloir déplacer ${text_items_from_to} ?`).getContent()],
+		components: [messageActions],
+		fetchReply: true,
+		ephemeral: true,
+	};
+
+	/** @type {Discord.Message} */
+	var message;
+	if (cmdData.constructor === ReceivedInteraction) {
+		cmdData.sendAnswer(answer);
+		message = await cmdData.interaction.reply(confirm_answer);
+	} else if (cmdData.constructor === ReceivedMessage) {
+		message = await cmdData.message.reply(confirm_answer);
+	} else throw `Unknow ReceivedCommand : ${cmdData.constructor}`;
+
+	/**
+	 * @param {Discord.ButtonInteraction} interaction
+	 */
+	const callback_confirm = async interaction => {
+		cmdData.bot.removeInteractionHandler(message.id);
+
+		switch (interaction.customId) {
+			case 'cancel':
+				await interaction.update({ embeds: [makeMessage(`Transfert de ${text_items_from_to} **annulé** !`).getContent()], components: [] });
+				break;
+
+			case 'transfer':
+				var items_source = [],
+					items_target = [];
+				items_to_move.map(item => {
+					try {
+						items_source.push(inv_source.removeItem(item));
+						items_target.push(inv_target.addItem(item));
+					} catch (error) {
+						return makeError(`Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
+					}
+				});
+
+				const items_source_info = items_source.map(item => item.toSmallText()).join(', ');
+				const items_target_info = items_target.map(item => item.toSmallText()).join(', ');
+
+				try {
+					await Promise.all([inv_source.save(), inv_target.save()]);
+				} catch (error) {
+					return makeError(`Erreur lors de la sauvegarde en déplaçant ${text_items_from_to} (${error})`);
+				}
+
+				await interaction.update({
+					embeds: [
+						makeMessage(
+							`Vous avez déplacé ${text_items_from_to}.\n` +
+								`Il y a désormais ${items_source_info} dans l'inventaire de ${inv_source.noms}` +
+								'\n' +
+								`Il y a désormais ${items_target_info} dans l'inventaire de ${inv_target.noms}`
+						).getContent(),
+					],
+					components: [],
+				});
+				break;
+			default:
+				return;
+		}
+	};
+
+	cmdData.bot.addInteractionHandler(message.id, callback_confirm);
+	cmdData.needAnswer = false;
+	return;
 }
 
 /**

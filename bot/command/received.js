@@ -1,6 +1,6 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 import { splitCommand } from '../../lib/commandTools.js';
-import { Channel, Guild, Message, Interaction as DiscordInteraction, User, Constants } from 'discord.js';
+import { Channel, Guild, Message, Interaction as DiscordInteraction, User, Constants, CommandInteraction } from 'discord.js';
 import DiscordBot from '../bot.js';
 import { ApplicationCommandOptionTypes } from './commandStored.js';
 
@@ -246,11 +246,11 @@ export class CommandContent {
 
 	/**
 	 * Make a CommandContent from an interaction
-	 * @param {Interaction} interaction
+	 * @param {CommandInteraction} interaction
 	 */
 	static fromInteraction(interaction) {
 		const options = [];
-		var suboptions = interaction.data.options;
+		var suboptions = interaction.options.data.map(option => option);
 		while (suboptions && suboptions.length > 0) {
 			const suboption = suboptions.shift();
 			options.push(new CommandArgument(suboption));
@@ -260,7 +260,7 @@ export class CommandContent {
 			if (suboptions.length == 0 && suboption.options) suboptions = suboption.options;
 		}
 
-		const content = new CommandContent(interaction.data.name, new CommandLevelOptions(options));
+		const content = new CommandContent(interaction.commandName, new CommandLevelOptions(options));
 		content.commandLine = [content.commandName, ...content.levelOptions.options.map(o => `"${o.getValueOrName()}"`)].join(' ');
 		return content;
 	}
@@ -317,7 +317,7 @@ class CommandContextInteraction extends CommandContext {
 
 	/**
 	 * Make a CommandContext from an interaction
-	 * @param {Interaction} interaction
+	 * @param {CommandInteraction} interaction
 	 * @param {DiscordBot} bot
 	 */
 	constructor(interaction, bot) {
@@ -326,22 +326,22 @@ class CommandContextInteraction extends CommandContext {
 	}
 
 	get guild_id() {
-		return this.interaction.guild_id;
+		return this.interaction.guildId;
 	}
 	getGuild() {
-		return this.bot.guilds.fetch(this.interaction.guild_id);
+		return this.bot.guilds.fetch(this.interaction.guildId);
 	}
 	get channel_id() {
-		return this.interaction.channel_id;
+		return this.interaction.channelId;
 	}
 	getChannel() {
-		return this.bot.channels.fetch(this.interaction.channel_id);
+		return this.bot.channels.fetch(this.interaction.channelId);
 	}
 	get author_id() {
-		return this.interaction.member?.user?.id || this.interaction.user?.i;
+		return this.interaction.member?.user?.id || this.interaction.user?.id;
 	}
 	getAuthor() {
-		return this.interaction.member?.user || this.interaction.user;
+		return this.interaction.user;
 	}
 }
 
@@ -499,16 +499,8 @@ export class ReceivedInteraction extends ReceivedCommand {
 		if (!answer) return false;
 
 		try {
-			/**
-			 * @type {Function(): Promise<boolean>}
-			 */
-			const post = this.bot.api.interactions(this.interaction.id, this.interaction.token).callback?.post;
-			if (!post) {
-				console.warn(`ReceivedCommand can't answer ${this.sourceType}`.yellow);
-			} else {
-				this.answeredAt = Date.now();
-				return post(answer.getForInteraction());
-			}
+			this.answeredAt = Date.now();
+			return this.interaction.reply(answer.getForMessage());
 		} catch (error) {
 			process.consoleLogger.error(`ReceivedCommand can't answer ${this.sourceType}, error: ${error.httpStatus}`.red);
 		}

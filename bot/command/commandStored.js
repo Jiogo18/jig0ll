@@ -357,8 +357,10 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 	 * @returns {[AbstractCommandExtendable,CommandLevelOptions]} The command and remaning levelOptions
 	 */
 	getSubCommand(levelOptions) {
+		if (this.options.length === 0) return [this, levelOptions]; // no subcommand
 		const [optionAtThisLevel, nextLevelOptions] = levelOptions.getNextLevelOptions();
-		if (!optionAtThisLevel) return [this, levelOptions];
+		if (!optionAtThisLevel || optionAtThisLevel.type >= 3) return [this, levelOptions];
+
 		const optionName = optionAtThisLevel.getNameOrValue();
 
 		const option = this.options.find(option => option.isOptionName(optionName));
