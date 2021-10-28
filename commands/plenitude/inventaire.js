@@ -101,13 +101,6 @@ export default {
 
 	options: [
 		{
-			name: 'reload',
-			description: 'Recharger tous les inventaires (en cas de bug, ne pas en abuser)',
-			type: 1,
-			security: securityPlenModoOnly,
-			execute: executeReload,
-		},
-		{
 			name: 'create',
 			description: 'Créer un bâtiment',
 			type: 1,
