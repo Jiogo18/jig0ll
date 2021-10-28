@@ -1,7 +1,7 @@
 import { ReceivedInteraction } from './received.js';
 import { InteractionSpecialMaker } from '../../lib/messageMaker.js';
 import { getDateSinceEpoch as getSnowflakeTimestamp } from '../../lib/snowflake.js';
-import commandHandler from './commandHandler.js';
+import commandHandler from '../command/commandHandler.js';
 
 /**
  * Set a timer to display the interaction if the command is too long

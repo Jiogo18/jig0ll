@@ -1,12 +1,12 @@
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { CommandLevelOptions, ReceivedCommand, ReceivedInteraction, ReceivedMessage } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 import { DiscordChannelDatabase, getEveryMessageSnowflake, MessageData } from '../../lib/discordDatabase.js';
 import DiscordBot from '../../bot/bot.js';
-import Discord from 'discord.js';
-import { User } from 'discord.js';
+import { ButtonInteraction, MessageButton, User } from 'discord.js';
 import colorLib from '../../lib/color.js';
 import YAML from 'yaml';
 import { securityPlenModoOnly } from '../../bot/command/security.js';
+import { MessageInteractionBox } from '../../bot/command/MessageInteraction.js';
 
 /**
  * @type {DiscordChannelDatabase}
@@ -822,7 +822,7 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 }
 
 /**
- * @param {ReceivedInteraction | ReceivedMessage} cmdData
+ * @param {ReceivedCommand} cmdData
  * @param {Inventory} inv_source
  * @param {Inventory} inv_target
  * @param {string} item_filter
@@ -846,77 +846,52 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 	const item_cant_add = items_to_move.find(item => (inv_target.canAddItem(item) ? undefined : item));
 	if (item_cant_add) return messages.cantAddItem(item_cant_add, inv_target.noms);
 
-	var messageActions = new Discord.MessageActionRow();
-	messageActions.addComponents(new Discord.MessageButton({ label: 'Transférer', customId: 'transfer', style: 'PRIMARY' }));
-	messageActions.addComponents(new Discord.MessageButton({ label: 'Annuler', customId: 'cancel', style: 'SECONDARY' }));
-	var confirm_answer = {
-		embeds: [makeMessage(`Êtes vous sûr de vouloir déplacer ${text_items_from_to} ?`).getContent()],
-		components: [messageActions],
-		fetchReply: true,
-		ephemeral: true,
-	};
-
-	/** @type {Discord.Message} */
-	var message;
-	if (cmdData.constructor === ReceivedInteraction) {
-		cmdData.sendAnswer(answer);
-		message = await cmdData.interaction.reply(confirm_answer);
-	} else if (cmdData.constructor === ReceivedMessage) {
-		message = await cmdData.message.reply(confirm_answer);
-	} else throw `Unknow ReceivedCommand : ${cmdData.constructor}`;
-
-	/**
-	 * @param {Discord.ButtonInteraction} interaction
-	 */
-	const callback_confirm = async interaction => {
-		cmdData.bot.removeInteractionHandler(message.id);
-
-		switch (interaction.customId) {
-			case 'cancel':
-				await interaction.update({ embeds: [makeMessage(`Transfert de ${text_items_from_to} **annulé** !`).getContent()], components: [] });
-				break;
-
-			case 'transfer':
-				var items_source = [],
-					items_target = [];
-				items_to_move.map(item => {
-					try {
-						items_source.push(inv_source.removeItem(item));
-						items_target.push(inv_target.addItem(item));
-					} catch (error) {
-						return makeError(`Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
-					}
-				});
-
-				const items_source_info = items_source.map(item => item.toSmallText()).join(', ');
-				const items_target_info = items_target.map(item => item.toSmallText()).join(', ');
-
-				try {
-					await Promise.all([inv_source.save(), inv_target.save()]);
-				} catch (error) {
-					return makeError(`Erreur lors de la sauvegarde en déplaçant ${text_items_from_to} (${error})`);
-				}
-
-				await interaction.update({
-					embeds: [
-						makeMessage(
-							`Vous avez déplacé ${text_items_from_to}.\n` +
-								`Il y a désormais ${items_source_info} dans l'inventaire de ${inv_source.noms}` +
-								'\n' +
-								`Il y a désormais ${items_target_info} dans l'inventaire de ${inv_target.noms}`
-						).getContent(),
-					],
-					components: [],
-				});
-				break;
-			default:
-				return;
-		}
-	};
-
-	cmdData.bot.addInteractionHandler(message.id, callback_confirm);
 	cmdData.needAnswer = false;
-	return;
+
+	const confirm_answer = new MessageInteractionBox(cmdData);
+	/** @type {ButtonInteraction} */
+	const replyAction = await confirm_answer.sendMessageBox(makeMessage(`Êtes vous sûr de vouloir déplacer ${text_items_from_to} ?`).getContent(), [
+		new MessageButton({ label: 'Transférer', customId: 'transfer', style: 'PRIMARY' }),
+		new MessageButton({ label: 'Annuler', customId: 'cancel', style: 'SECONDARY' }),
+	]);
+
+	var reply;
+	switch (replyAction.customId) {
+		case 'cancel':
+			reply = `Transfert de ${text_items_from_to} **annulé** !`;
+			break;
+
+		case 'transfer':
+			var items_source = [],
+				items_target = [];
+			items_to_move.forEach(item => {
+				try {
+					items_source.push(inv_source.removeItem(item));
+					items_target.push(inv_target.addItem(item));
+				} catch (error) {
+					throw `Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`;
+				}
+			});
+
+			const items_source_info = items_source.map(item => item.toSmallText()).join(', ');
+			const items_target_info = items_target.map(item => item.toSmallText()).join(', ');
+
+			try {
+				await Promise.all([inv_source.save(), inv_target.save()]);
+			} catch (error) {
+				reply = `Erreur lors de la sauvegarde en déplaçant ${text_items_from_to} (${error})`;
+				break;
+			}
+
+			reply =
+				`Vous avez déplacé ${text_items_from_to}.\n` +
+				`Il y a désormais ${items_source_info} dans l'inventaire de ${inv_source.noms}` +
+				'\n' +
+				`Il y a désormais ${items_target_info} dans l'inventaire de ${inv_target.noms}`;
+			break;
+	}
+
+	await replyAction.update({ embeds: [makeMessage(reply).getContent()], components: [] });
 }
 
 /**

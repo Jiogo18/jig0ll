@@ -1,41 +1,16 @@
 import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 import { splitCommand } from '../../lib/commandTools.js';
-import { Channel, Guild, Message, Interaction as DiscordInteraction, User, Constants, CommandInteraction } from 'discord.js';
+import { Channel, Guild, Message, User, Constants, CommandInteraction, MessagePayload } from 'discord.js';
 import DiscordBot from '../bot.js';
 import { ApplicationCommandOptionTypes } from './commandStored.js';
 
 class CommandInteractionOption {
-	/**
-	 * @type {string}
-	 */
+	/** @type {string} */
 	name;
-	/**
-	 * @type {ApplicationCommandOptionTypes}
-	 */
+	/** @type {ApplicationCommandOptionTypes} */
 	type;
-	/**
-	 * @type {string | number | boolean}
-	 */
+	/** @type {string | number | boolean} */
 	value;
-}
-
-class Interaction extends DiscordInteraction {
-	/**
-	 * @type {string}
-	 */
-	guild_id;
-	/**
-	 * @type { {type: number, options?: CommandInteractionOption[], name: string, id: string} }
-	 */
-	data;
-	/**
-	 * @type {string}
-	 */
-	channel_id;
-	/**
-	 * @type {string}
-	 */
-	application_id;
 }
 
 export class CommandArgument {
@@ -59,11 +34,11 @@ export class CommandArgument {
 	}
 
 	getValueOrName() {
-		return this.value !== undefined ? this.value : this.name;
+		return this.value ?? this.value;
 	}
 
 	getNameOrValue() {
-		return this.name !== undefined ? this.name : this.value;
+		return this.name ?? this.value;
 	}
 
 	/**
@@ -267,7 +242,7 @@ export class CommandContent {
 
 	/**
 	 * Make a CommandContent from a message
-	 * @param {Interaction} message
+	 * @param {Message} message
 	 */
 	static fromMessage(message) {
 		const options = splitCommand(message.content) || []; //on suppose que le préfix est enlevé
@@ -312,76 +287,11 @@ export class CommandContext {
 	}
 }
 
-class CommandContextInteraction extends CommandContext {
-	interaction;
-
-	/**
-	 * Make a CommandContext from an interaction
-	 * @param {CommandInteraction} interaction
-	 * @param {DiscordBot} bot
-	 */
-	constructor(interaction, bot) {
-		super(bot);
-		this.interaction = interaction;
-	}
-
-	get guild_id() {
-		return this.interaction.guildId;
-	}
-	getGuild() {
-		return this.bot.guilds.fetch(this.interaction.guildId);
-	}
-	get channel_id() {
-		return this.interaction.channelId;
-	}
-	getChannel() {
-		return this.bot.channels.fetch(this.interaction.channelId);
-	}
-	get author_id() {
-		return this.interaction.member?.user?.id || this.interaction.user?.id;
-	}
-	getAuthor() {
-		return this.interaction.user;
-	}
-}
-
-class CommandContextMessage extends CommandContext {
-	message;
-
-	/**
-	 * Make a CommandContext from a message
-	 * @param {Message} message
-	 */
-	constructor(message, bot) {
-		super(bot);
-		this.message = message;
-	}
-
-	get guild_id() {
-		return this.message.guildId;
-	}
-	getGuild() {
-		return this.message.guild;
-	}
-	get channel_id() {
-		return this.message.channelId;
-	}
-	getChannel() {
-		return this.message.channel;
-	}
-	get author_id() {
-		return this.message.author.id;
-	}
-	getAuthor() {
-		return this.message.author;
-	}
-}
-
 /**
  * Get a MessageMaker for the given message
  * @param {MessageMaker|EmbedMaker|string} message The message to transform
  */
-function makeSafeMessage(message) {
+export function makeSafeMessage(message) {
 	if (message == undefined) {
 		return undefined;
 	}
@@ -430,7 +340,7 @@ export class ReceivedCommand {
 	}
 
 	/**
-	 * @type {Interaction|Message} The message or the interaction
+	 * @type {CommandInteraction|Message} The message or the interaction
 	 */
 	get commandSource() {}
 	get id() {
@@ -445,7 +355,7 @@ export class ReceivedCommand {
 
 	/**
 	 * @param {CommandContent} content
-	 * @param {CommandContextInteraction|CommandContextMessage} context
+	 * @param {CommandContext} context
 	 */
 	constructor(content, context) {
 		this.content = content;
@@ -459,103 +369,15 @@ export class ReceivedCommand {
 	 * @return {Promise<boolean>} a `falsy` value if the answer was not sent
 	 */
 	async sendAnswer(message) {
-		throw `ReceivedCommand can't answer`;
-	}
-}
-
-export class ReceivedInteraction extends ReceivedCommand {
-	/**
-	 * @type {CommandContextInteraction}
-	 */
-	get context() {
-		return super.context;
-	}
-
-	get interaction() {
-		return this.context.interaction;
-	}
-	get commandSource() {
-		return this.context.interaction;
+		throw `ReceivedCommand is abstract`;
 	}
 
 	/**
-	 * @param {Interaction} interaction The interaction received
-	 * @param {DiscordBot} bot
+	 * @param {string | MessagePayload} options The answer
+	 * @return {Promise<Message>} a `falsy` value if the answer was not sent
 	 */
-	constructor(interaction, bot) {
-		super(CommandContent.fromInteraction(interaction), new CommandContextInteraction(interaction, bot));
-	}
-
-	get isInteraction() {
-		return true;
-	}
-
-	/**
-	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} answer The answer
-	 */
-	async sendAnswer(answer) {
-		answer = makeSafeMessage(answer);
-		if (!answer) return false;
-
-		try {
-			this.answeredAt = Date.now();
-			return this.interaction.reply(answer.getForMessage());
-		} catch (error) {
-			process.consoleLogger.error(`ReceivedCommand can't answer ${this.sourceType}, error: ${error.httpStatus}`.red);
-		}
-
-		const channel = await this.context.getChannel();
-		const answer_for_message = answer.getForMessage({ author: this.author });
-		this.answeredAt = Date.now();
-		if (channel?.send) return channel.send(answer_for_message);
-		return (await this.context.getFullAuthor()).send(answer_for_message);
-	}
-}
-export class ReceivedMessage extends ReceivedCommand {
-	/**
-	 * @type {CommandContextMessage}
-	 */
-	get context() {
-		return super.context;
-	}
-
-	get message() {
-		return this.context.message;
-	}
-	get commandSource() {
-		return this.context.message;
-	}
-
-	/**
-	 * @param {Message} message
-	 * @param {DiscordBot} bot
-	 */
-	constructor(message, bot) {
-		super(CommandContent.fromMessage(message), new CommandContextMessage(message, bot));
-	}
-
-	get isMessage() {
-		return true;
-	}
-	get isPrivateMessage() {
-		return this.message.channel.type == 'DM' || this.message.channel.type == 'GROUP_DM' || this.message.channel.type == 'UNKNOWN';
-	}
-
-	/**
-	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} answer The answer
-	 */
-	async sendAnswer(answer) {
-		answer = makeSafeMessage(answer);
-		if (!answer) return false;
-
-		this.answeredAt = Date.now();
-		if (answer.type == 3) {
-			//don't reply
-			return await this.message.channel.send(answer.getForMessage());
-		}
-		return await this.message.reply(answer.getForMessage());
+	async reply(options) {
+		throw `ReceivedCommand is abstract`;
 	}
 }
 
@@ -564,6 +386,4 @@ export default {
 	CommandContent,
 	CommandContext,
 	ReceivedCommand,
-	ReceivedInteraction,
-	ReceivedMessage,
 };

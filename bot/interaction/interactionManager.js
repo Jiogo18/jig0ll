@@ -1,9 +1,9 @@
 import { Collection } from 'discord.js';
-import { SecurityPlaces } from './security.js';
+import { SecurityPlaces } from '../command/security.js';
 import AppManager, { DiscordRequest } from '../AppManager.js';
 import config from '../config.js';
 import DiscordBot from '../bot.js';
-import CommandStored from './commandStored.js';
+import CommandStored from '../command/commandStored.js';
 import { TemporaryList, TemporaryValue } from '../../lib/database.js';
 
 export default class InteractionManager {

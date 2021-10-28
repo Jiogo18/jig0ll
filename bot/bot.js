@@ -1,14 +1,13 @@
-import Discord from 'discord.js';
-import { Client, Constants, Message, Intents, Collection } from 'discord.js';
+import Discord, { Client, Constants, Message, Intents, LimitedCollection } from 'discord.js';
 
 import AppManager from './AppManager.js';
 import CommandManager from './command/commandManager.js';
-import InteractionManager from './command/interactionManager.js';
+import InteractionManager from './interaction/interactionManager.js';
 
-import { ReceivedInteraction } from './command/received.js';
+import { ReceivedInteraction } from './interaction/received.js';
 import { botIsAllowedToDo } from './command/security.js';
-import messageHandler from './messageHandler.js';
-import interactionHandler from './command/interactionHandler.js';
+import messageHandler from './message/messageHandler.js';
+import interactionHandler from './interaction/interactionHandler.js';
 import { PGDatabase } from '../lib/database.js';
 
 export default class DiscordBot extends Client {
@@ -20,7 +19,7 @@ export default class DiscordBot extends Client {
 	 */
 	onReady;
 	/**
-	 * @type {Collection<string,{callback:Function,limit_one:boolean}>}
+	 * @type {LimitedCollection<string,Function>}
 	 */
 	interactionsHandler;
 
@@ -54,7 +53,7 @@ export default class DiscordBot extends Client {
 			console.warn('Commands are disabled by the bot'.yellow);
 		}
 		this.database = new PGDatabase(process.env.DATABASE_URL);
-		this.interactionsHandler = new Collection();
+		this.interactionsHandler = new LimitedCollection({ sweepInterval: 60, sweepFilter: LimitedCollection.filterByLifetime({ lifetime: 60 }) });
 	}
 
 	start() {
@@ -111,9 +110,8 @@ export default class DiscordBot extends Client {
 		return idMsg == 0 || this.localId == idMsg;
 	}
 
-	addInteractionHandler(id, callback, timeout = 60000, limit_one = true) {
-		this.interactionsHandler.set(id, { callback, limit_one });
-		if (timeout) setTimeout(() => this.interactionsHandler.delete(id), timeout);
+	addInteractionHandler(id, callback) {
+		this.interactionsHandler.set(id, callback);
 	}
 	removeInteractionHandler(id) {
 		this.interactionsHandler.delete(id);
@@ -157,7 +155,7 @@ function onInteraction(interaction) {
 	}
 	if (interaction.isMessageComponent()) {
 		const handler = this.interactionsHandler.get(interaction.message.id);
-		return handler?.callback?.(interaction);
+		return handler?.(interaction);
 	} else if (!interaction?.isCommand()) {
 		if (process.env.WIPOnly) console.warn(`Interaction n'est pas une commande :`, interaction);
 		return;
