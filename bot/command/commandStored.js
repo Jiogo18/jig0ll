@@ -1,5 +1,5 @@
 import { SecurityPlaces, SecurityCommand } from './security.js';
-import { EmbedMaker, MessageMaker } from '../../lib/messageMaker.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 import { CommandLevelOptions, CommandContext, ReceivedCommand } from './received.js';
 import { Constants } from 'discord.js';
 import Discord from 'discord.js';
@@ -325,7 +325,7 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 	 * Execute the command or the subcommand
 	 * @param {ReceivedCommand} cmdData
 	 * @param {CommandLevelOptions} levelOptions Options
-	 * @returns {Promise<MessageMaker>} The answer of the command
+	 * @returns {Promise<EmbedMaker>} The answer of the command
 	 */
 	async execute(cmdData, levelOptions) {
 		if (levelOptions && levelOptions.length) {

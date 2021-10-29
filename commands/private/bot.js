@@ -83,11 +83,11 @@ export default {
 					`Vous devez préciser l'id du bot ciblé pour cette commande.\nL'id du bot sur ${getBotLocation()} est ${cmdData.bot.localId}`
 				);
 			}
-			cmdData.needAnswer = false;
+			cmdData.setReplied();
 			return;
 		}
 		if (bot_id && !is_bot_id) {
-			cmdData.needAnswer = false;
+			cmdData.setReplied();
 			return;
 		}
 

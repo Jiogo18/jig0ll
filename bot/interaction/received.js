@@ -1,5 +1,5 @@
 import { CommandInteraction, Message, MessagePayload } from 'discord.js';
-import { EmbedMaker, MessageMaker } from '../../lib/messageMaker.js';
+import { EmbedMaker, MessageOptions } from '../../lib/messageMaker.js';
 import DiscordBot from '../bot.js';
 import { CommandContent, CommandContext, makeSafeMessage, ReceivedCommand } from '../command/received.js';
 
@@ -65,7 +65,7 @@ export class ReceivedInteraction extends ReceivedCommand {
 
 	/**
 	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} answer The answer
+	 * @param {EmbedMaker} answer The answer
 	 */
 	async sendAnswer(answer) {
 		answer = makeSafeMessage(answer);
@@ -73,7 +73,11 @@ export class ReceivedInteraction extends ReceivedCommand {
 
 		try {
 			this.answeredAt = Date.now();
-			return this.interaction.reply(answer.getForMessage());
+			if (this.interaction.deferred) {
+				return await this.interaction.editReply(answer.getForMessage());
+			} else {
+				return await this.interaction.reply(answer.getForMessage());
+			}
 		} catch (error) {
 			process.consoleLogger.error(`ReceivedCommand can't answer ${this.sourceType}, error: ${error.httpStatus}`.red);
 		}
@@ -86,17 +90,20 @@ export class ReceivedInteraction extends ReceivedCommand {
 	}
 
 	/**
-	 * @param {string | MessagePayload} options The answer
+	 * @param {MessageOptions} options The answer
 	 * @return {Promise<Message>}
 	 */
 	async reply(options) {
-		return await this.interaction.reply({ ...options, fetchReply: true });
+		this.setReplied();
+		options.fetchReply = true;
+		return await this.interaction.reply(options);
 	}
 
 	/**
-	 * @param {string |  MessagePayload} options The answer
+	 * @param {MessageOptions} options The answer
 	 */
 	async replyNoFetch(options) {
+		this.setReplied();
 		return await this.interaction.reply(options);
 	}
 }

@@ -34,7 +34,7 @@ export class CommandArgument {
 	}
 
 	getValueOrName() {
-		return this.value ?? this.value;
+		return this.value ?? this.name;
 	}
 
 	getNameOrValue() {
@@ -289,18 +289,20 @@ export class CommandContext {
 
 /**
  * Get a MessageMaker for the given message
- * @param {MessageMaker|EmbedMaker|string} message The message to transform
+ * @param {EmbedMaker|string} message The message to transform
  */
 export function makeSafeMessage(message) {
-	if (message == undefined) {
-		return undefined;
+	if (message === undefined) return;
+	if (typeof message === 'string') return new MessageMaker(message);
+
+	switch (message.constructor) {
+		case EmbedMaker:
+		case MessageMaker:
+			return message;
+		default:
+			console.error(`ReceivedCommand::sendAnswer Message not created with EmbedMaker :`.red, message);
+			return new EmbedMaker('', '', message);
 	}
-	if (message.constructor != MessageMaker && message.constructor != EmbedMaker) {
-		console.error(`ReceivedCommand::sendAnswer Message not created with MessageMaker : ${message}`.red);
-		if (message.type == 'rich') return new EmbedMaker(message.title, message.description, message.cosmetic, message.fields);
-		else return new MessageMaker(message);
-	}
-	return message;
 }
 
 export class ReceivedCommand {
@@ -351,7 +353,7 @@ export class ReceivedCommand {
 	}
 
 	receivedAt;
-	answeredAt = -1;
+	answeredAt = null;
 
 	/**
 	 * @param {CommandContent} content
@@ -365,7 +367,7 @@ export class ReceivedCommand {
 
 	/**
 	 * Send the answer to the target
-	 * @param {MessageMaker|EmbedMaker} message The answer
+	 * @param {EmbedMaker} message The answer
 	 * @return {Promise<boolean>} a `falsy` value if the answer was not sent
 	 */
 	async sendAnswer(message) {
@@ -378,6 +380,11 @@ export class ReceivedCommand {
 	 */
 	async reply(options) {
 		throw `ReceivedCommand is abstract`;
+	}
+
+	setReplied() {
+		this.needAnswer = false;
+		this.answeredAt = Date.now();
 	}
 }
 

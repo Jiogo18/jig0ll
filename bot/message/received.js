@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import { EmbedMaker, MessageMaker } from '../../lib/messageMaker.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 import DiscordBot from '../bot.js';
 import { CommandContext, CommandContent, makeSafeMessage, ReceivedCommand } from '../command/received.js';
 
@@ -67,7 +67,7 @@ export class ReceivedMessage extends ReceivedCommand {
 
 	/**
 	 * Send the answer to the command
-	 * @param {MessageMaker|EmbedMaker} answer The answer
+	 * @param {EmbedMaker} answer The answer
 	 */
 	async sendAnswer(answer) {
 		answer = makeSafeMessage(answer);
@@ -82,9 +82,10 @@ export class ReceivedMessage extends ReceivedCommand {
 	}
 
 	/**
-	 * @param {string | MessagePayload} options The answer
+	 * @param {string | MessagePayload | EmbedMaker} options The answer
 	 */
 	async reply(options) {
+		this.setReplied();
 		return await this.message.reply(options);
 	}
 }

@@ -382,12 +382,12 @@ class Inventory {
 	 * The name/id of the inventory
 	 * @type {string}
 	 */
-	get noms() {
+	get nom() {
 		return this.messageData.id;
 	}
-	set noms(noms) {
-		this.messageData.id = noms;
-		if (this.proprietaire === noms) this.proprietaire = undefined;
+	set nom(nom) {
+		this.messageData.id = nom;
+		if (this.proprietaire === nom) this.proprietaire = undefined;
 	}
 
 	/**
@@ -395,10 +395,10 @@ class Inventory {
 	 * @type {string}
 	 */
 	get proprietaire() {
-		return this.messageData.data.proprietaire || this.noms;
+		return this.messageData.data.proprietaire || this.nom;
 	}
 	set proprietaire(prop) {
-		if (prop === this.noms || !prop) delete this.messageData.data.proprietaire;
+		if (prop === this.nom || !prop) delete this.messageData.data.proprietaire;
 		else this.messageData.data.proprietaire = prop;
 	}
 
@@ -478,7 +478,7 @@ class Inventory {
 	 * Does the inventory belong to a user or a building
 	 */
 	isPlayerInventory() {
-		return !!this.noms.match(/^<@\W?\d{10,20}>$/);
+		return !!this.nom.match(/^<@\W?\d{10,20}>$/);
 	}
 
 	/**
@@ -487,7 +487,7 @@ class Inventory {
 	 */
 	isProp(user) {
 		if (!user) return false;
-		if (this.noms === getPropId('', user)) return true;
+		if (this.nom === getPropId('', user)) return true;
 		if (this.proprietaire === getPropId('', user)) return true;
 		return false;
 	}
@@ -626,19 +626,6 @@ async function getInventoryListOf(user_mention) {
 
 /**
  * @param {ReceivedCommand} cmdData
- */
-async function executeReload(cmdData) {
-	if (!channelDatabase) {
-		bot = cmdData.bot;
-		setChannelDatabase();
-	} else {
-		channelDatabase.list.reset();
-	}
-	return makeMessage('Rechargement terminé !');
-}
-
-/**
- * @param {ReceivedCommand} cmdData
  * @param {string} name_batiment
  */
 async function executeCreateBatiment(cmdData, name_batiment) {
@@ -676,7 +663,7 @@ async function executeDelete(cmdData, inv_id) {
 		await inv.delete();
 		return makeMessage(`L'inventaire ${inv_id} a été supprimé`);
 	} catch (error) {
-		return makeError(`Impossible de supprimer l'inventaire \`${inv.noms}\``);
+		return makeError(`Impossible de supprimer l'inventaire \`${inv.nom}\``);
 	}
 }
 
@@ -797,13 +784,13 @@ async function executeMove(cmdData, id_source, id_target, item_name, item_count)
 		item_source = inv_source.removeItem(item);
 		item_target = inv_target.addItem(item);
 	} catch (error) {
-		return makeError(`Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
+		return makeError(`Erreur en déplaçant ${item.name} de ${inv_source.nom} vers ${inv_target.nom} (${error})`);
 	}
 
 	try {
 		await Promise.all([inv_source.save(), inv_target.save()]);
 	} catch (error) {
-		return makeError(`Erreur lors de la sauvegarde en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`);
+		return makeError(`Erreur lors de la sauvegarde en déplaçant ${item.name} de ${inv_source.nom} vers ${inv_target.nom} (${error})`);
 	}
 
 	return makeMessage(
@@ -829,17 +816,15 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 		.filter(item => item.match(regex_filter))
 		.map(item_in_source => new Item(item_in_source.name, item_count === '*' ? item_in_source.count : item_count));
 
-	if (items_to_move.length === 0) return makeError(`Le filtre '${item_filter}' n'a pas trouvé d'objet dans ${inv_source.noms}`);
+	if (items_to_move.length === 0) return makeError(`Le filtre '${item_filter}' n'a pas trouvé d'objet dans ${inv_source.nom}`);
 
 	const items_moved_info = items_to_move.map(item => item.toSmallText()).join(', ');
-	const text_items_from_to = `${items_moved_info} de ${inv_source.noms} vers ${inv_target.noms}`;
+	const text_items_from_to = `${items_moved_info} de ${inv_source.nom} vers ${inv_target.nom}`;
 
 	const item_cant_remove = items_to_move.find(item => (inv_source.canRemoveItem(item) ? undefined : item));
-	if (item_cant_remove) return messages.noItem(item_cant_remove, inv_source.noms);
+	if (item_cant_remove) return messages.noItem(item_cant_remove, inv_source.nom);
 	const item_cant_add = items_to_move.find(item => (inv_target.canAddItem(item) ? undefined : item));
-	if (item_cant_add) return messages.cantAddItem(item_cant_add, inv_target.noms);
-
-	cmdData.needAnswer = false;
+	if (item_cant_add) return messages.cantAddItem(item_cant_add, inv_target.nom);
 
 	const confirm_answer = new MessageInteractionBox(cmdData);
 	/** @type {ButtonInteraction} */
@@ -862,7 +847,7 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 					items_source.push(inv_source.removeItem(item));
 					items_target.push(inv_target.addItem(item));
 				} catch (error) {
-					throw `Erreur en déplaçant ${item.name} de ${inv_source.noms} vers ${inv_target.noms} (${error})`;
+					throw `Erreur en déplaçant ${item.name} de ${inv_source.nom} vers ${inv_target.nom} (${error})`;
 				}
 			});
 
@@ -878,9 +863,9 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 
 			reply =
 				`Vous avez déplacé ${text_items_from_to}.\n` +
-				`Il y a désormais ${items_source_info} dans l'inventaire de ${inv_source.noms}` +
+				`Il y a désormais ${items_source_info} dans l'inventaire de ${inv_source.nom}` +
 				'\n' +
-				`Il y a désormais ${items_target_info} dans l'inventaire de ${inv_target.noms}`;
+				`Il y a désormais ${items_target_info} dans l'inventaire de ${inv_target.nom}`;
 			break;
 	}
 
@@ -928,18 +913,18 @@ async function executeSetData(cmdData, inv_id, key, value) {
 			const prop_id = getPropId(value);
 			inv.proprietaire = prop_id;
 			await inv.save();
-			if (inv.proprietaire) return makeMessage(`Le propriétaire de \`${inv.noms}\` est désormais '${inv.proprietaire}'`);
-			else return makeMessage(`L'inventaire \`${inv.noms}\` n'a plus de propriétaire`);
+			if (inv.proprietaire) return makeMessage(`Le propriétaire de \`${inv.nom}\` est désormais '${inv.proprietaire}'`);
+			else return makeMessage(`L'inventaire \`${inv.nom}\` n'a plus de propriétaire`);
 
 		case 'name':
 			if (inv.isPlayerInventory()) {
 				return makeError(`Vous ne pouvez pas modifier le nom de l'inventaire d'un joueur`);
 			}
 			if (!value.match(/\w+/)) return makeError(`Le nom de l'inventaire ne peut pas être vide`);
-			const old_name = inv.noms;
-			inv.noms = value;
+			const old_name = inv.nom;
+			inv.nom = value;
 			await inv.save();
-			return makeMessage(`L'inventaire \`${old_name}\` a été renommé \`${inv.noms}\``);
+			return makeMessage(`L'inventaire \`${old_name}\` a été renommé \`${inv.nom}\``);
 
 		default:
 			return makeError(`Aucun paramètre nommée '${key}'`);

@@ -85,7 +85,6 @@ export class MessageInteractionBox extends MessageInteraction {
 			embeds: [embed],
 			components: components,
 			fetchReply: true,
-			ephemeral: true,
 		};
 		return await super.sendAnswerAndFetchActivity(answer);
 	}

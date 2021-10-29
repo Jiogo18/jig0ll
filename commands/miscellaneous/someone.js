@@ -1,6 +1,5 @@
 import { User } from 'discord.js';
 import { ReceivedCommand } from '../../bot/command/received.js';
-import { MessageMaker } from '../../lib/messageMaker.js';
 
 var useInMinute = [];
 var lastReset = [];
@@ -52,7 +51,7 @@ export default {
 		}
 		useInMinute[id]++;
 
-		return new MessageMaker(`@someone ${getRandomMeme()} ${randomUser?.toString()}`, 3); //don't reply
+		await cmdData.reply(`@someone ${getRandomMeme()} ${randomUser?.toString()}`);
 	},
 };
 

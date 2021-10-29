@@ -1,5 +1,4 @@
 import { ReceivedInteraction } from './received.js';
-import { InteractionSpecialMaker } from '../../lib/messageMaker.js';
 import { getDateSinceEpoch as getSnowflakeTimestamp } from '../../lib/snowflake.js';
 import commandHandler from '../command/commandHandler.js';
 
@@ -15,8 +14,8 @@ async function safeInteractionAnswer(cmdData) {
 	return setTimeout(async () => {
 		if (cmdData.answeredAt || cmdData.needAnswer == false) return;
 		console.warn(`Interaction is too long, an acknowledgement will be sent (for '/${cmdData.commandLine}')`);
-		cmdData.sendAnswer(new InteractionSpecialMaker(5)); //accepte l'intéraction (et attent le retour)
-	}, timeRemaining - 1000); //on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
+		await cmdData.interaction.deferReply(); //accepte l'intéraction (et attend le retour)
+	}, timeRemaining - 1500); //on a 3s pour répondre à l'interaction (et le bot peut être désyncro de 1s...)
 }
 
 /**

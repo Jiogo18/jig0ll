@@ -145,9 +145,7 @@ export default {
 			}
 		}
 
-		var retour = new EmbedMaker('SpaceX-Starship', `${data.total} Space Operation are allowed in Texas`, {
-			suffix: 'Source: https://sua.faa.gov/sua/siteFrame.app',
-		});
+		var retour = new EmbedMaker('SpaceX-Starship', `${data.total} Space Operation are allowed in Texas`);
 		const tfr_short_max_length = 800 / data.total;
 		for (const tfr of data.schedule) {
 			var tfr_short = tfr.tfr_short;
@@ -172,6 +170,8 @@ export default {
 					`Basic informations: ${tfr_short}`
 			);
 		}
+
+		retour.addField('', 'Source: https://sua.faa.gov/sua/siteFrame.app');
 
 		return retour;
 	},

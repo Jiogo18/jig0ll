@@ -1,5 +1,5 @@
 import { ReceivedCommand } from './received.js';
-import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
+import { EmbedMaker } from '../../lib/messageMaker.js';
 
 /**
  * Execute the command and return the result
@@ -9,11 +9,10 @@ import { MessageMaker, EmbedMaker } from '../../lib/messageMaker.js';
 async function executeCommand(cmdData) {
 	const command = cmdData.bot.commandMgr.getCommand(cmdData.commandName);
 	if (!command) return;
-	if (typeof command == 'string') return new MessageMaker(command);
 
 	try {
 		/**
-		 * @type {MessageMaker}
+		 * @type {EmbedMaker}
 		 */
 		const retour = await new Promise((res, rej) => {
 			command.execute(cmdData, cmdData.levelOptions).then(res).catch(rej); //try to solve with it
