@@ -828,7 +828,7 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 
 	const confirm_answer = new MessageInteractionBox(cmdData);
 	/** @type {ButtonInteraction} */
-	const replyAction = await confirm_answer.sendMessageBox(makeMessage(`Êtes vous sûr de vouloir déplacer ${text_items_from_to} ?`).getContent(), [
+	const replyAction = await confirm_answer.sendMessageBox(makeMessage(`Êtes vous sûr de vouloir déplacer ${text_items_from_to} ?`), [
 		new MessageButton({ label: 'Transférer', customId: 'transfer', style: 'PRIMARY' }),
 		new MessageButton({ label: 'Annuler', customId: 'cancel', style: 'SECONDARY' }),
 	]);
@@ -869,7 +869,7 @@ async function executeMoveRegex(cmdData, inv_source, inv_target, item_filter, it
 			break;
 	}
 
-	await replyAction.update({ embeds: [makeMessage(reply).getContent()], components: [] });
+	await replyAction.update(makeMessage(reply).getForMessage({ components: [] }));
 }
 
 /**

@@ -16,7 +16,7 @@ async function executeCommand(cmdData) {
 		 */
 		const retour = await new Promise((res, rej) => {
 			command.execute(cmdData, cmdData.levelOptions).then(res).catch(rej); //try to solve with it
-			setTimeout(() => rej('timeout'), 60000); //more than 60s
+			setTimeout(() => cmdData.answeredAt == null && rej('timeout'), 60000); //more than 60s
 		});
 		if (!retour && cmdData.needAnswer != false) {
 			console.warn(`Command '/${cmdData.commandLine}' has no answer`.yellow);

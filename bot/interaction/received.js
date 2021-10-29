@@ -83,7 +83,8 @@ export class ReceivedInteraction extends ReceivedCommand {
 		}
 
 		const channel = await this.context.getChannel();
-		const answer_for_message = answer.getForMessage({ author: this.author });
+		answer.setAuthor(this.author);
+		const answer_for_message = answer.getForMessage();
 		this.answeredAt = Date.now();
 		if (channel?.send) return channel.send(answer_for_message);
 		return (await this.context.getFullAuthor()).send(answer_for_message);
