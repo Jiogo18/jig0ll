@@ -9,7 +9,7 @@ export const guild_plenitude_modo_comportement = '811656599915593768';
 
 export const user_beta_tester = [config.jiogo18];
 export const user_high_privilege = [config.jiogo18]; // cut command
-export const user_plenitude_privilege = [config.jiogo18, config.rubis]; //plenitude_location
+export const user_plenitude_privilege = [config.jiogo18, config.rubis, config.tito]; //plenitude_location
 export const user_private = [config.jiogo18, config.jig0ll];
 
 export const SecurityPlaces = {
@@ -89,10 +89,18 @@ function isAllowedToUseDefault(context, security) {
 export const isPrivateUser = user_id => user_private.includes(user_id);
 /**
  * Is this user has privileges for Plénitude?
- * @param {string} user_id
+ * @param {CommandContext} context
  * @returns `true` if this user has privileges for Plénitude
  */
-export const isPlenitudePrivilege = user_id => user_plenitude_privilege.includes(user_id);
+export const isPlenitudePrivilege = async context => {
+	if (user_plenitude_privilege.includes(context.author_id)) return true;
+	if (!guild_plenitude.includes(context.getGuildId)) return false;
+	const user = await (await context.getGuild())?.members?.fetch(context.author_id);
+	if (!user) return false;
+	const userRole = user.roles?.cache;
+	//Maître du Jeu || admin || Jiogo
+	return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
+};
 
 export class SecurityCommand {
 	#securityPlace;
@@ -174,13 +182,13 @@ export class SecurityCommand {
 	 * @returns {boolean} `true` if you are allowed to user this
 	 */
 	isAllowedToUse(context) {
-		if (this.wip && isBetaAllowed(context) != true) {
+		if (this.wip && !isBetaAllowed(context)) {
 			context.NotAllowedReason = context.NotAllowedReason || `Sorry, you can't do that outside of a test server`;
 			return false;
 		}
 
 		if (this.inheritance && this.parent?.isAllowedToUse) {
-			if (this.parent.isAllowedToUse(context) != true) {
+			if (!this.parent.isAllowedToUse(context)) {
 				return false;
 			}
 		}
@@ -214,7 +222,7 @@ export function botIsAllowedToDo(context) {
 		return isBetaAllowed(context);
 	} else {
 		//en normal on autorise tout SAUF les channels de Beta Only
-		if (isBetaGuild(guild_id) == false) {
+		if (!isBetaGuild(guild_id)) {
 			return true; //autorise si c'est pas une guild de beta test
 		}
 		if (isBetaOnlyChannel(channel_id)) {

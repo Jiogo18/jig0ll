@@ -5,7 +5,7 @@ import { sendWeatherRequest } from '../meteo.js';
 import { countInvitesPerUserSorted, embedInvitesList, getInvites } from '../miscellaneous/invit.js';
 import { CommandContext, ReceivedCommand } from '../../bot/command/received.js';
 import { Guild, User } from 'discord.js';
-import { guild_plenitude } from '../../bot/command/security.js';
+import { guild_plenitude, isPlenitudePrivilege } from '../../bot/command/security.js';
 import DiscordBot from '../../bot/bot.js';
 var kvPlenitude = new TemporaryKVDatabase(undefined, 'plenitude', { insertIfNotExist: true }, 10000);
 var kvInvite = new TemporaryKVDatabase(undefined, 'plenitude_invite', { insertIfNotExist: true }, 10000);
@@ -96,17 +96,7 @@ export default {
 			description: 'Affiche le score des invitations',
 			type: 1,
 			security: {
-				/**
-				 * @param {CommandContext} context
-				 */
-				async isAllowedToUse(context) {
-					if (!guild_plenitude.includes(context.getGuildId)) return false;
-					const user = await (await context.getGuild())?.members?.fetch(context.author_id);
-					if (!user) return false;
-					const userRole = user.roles?.cache;
-					//Maître du Jeu || admin || Jiogo
-					return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
-				},
+				isAllowedToUse: isPlenitudePrivilege,
 			},
 			execute: closeInvitesCompetition,
 		},
@@ -205,7 +195,7 @@ async function getCurrentInviteList(guild, maxInvits = -1) {
 	//remove the old count from the invite (uses since the competition has started)
 	await Promise.all(invites.map(async i => (i.uses -= (await kvInvite.get(i.code)) || 0)));
 
-	const invitesSorted = countInvitesPerUserSorted(invites);
+	let invitesSorted = countInvitesPerUserSorted(invites);
 	if (maxInvits > -1) invitesSorted = invitesSorted.slice(0, maxInvits);
 	return invitesSorted;
 }
@@ -306,7 +296,7 @@ async function closeInvitesCompetition(cmdData) {
 
 	//and set the current uses in the database
 	const invites = await getInvites(guild);
-	await Promise.all(invites.map(async i => await kvInvite.set(i.code, i.uses)));
+	await Promise.all(invites.map(i => kvInvite.set(i.code, i.uses)));
 
 	kvPlenitude.set('InvitResetTime', Date.now());
 

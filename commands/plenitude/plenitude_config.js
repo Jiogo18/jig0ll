@@ -1,7 +1,7 @@
 import { getLocation, setLocation } from './plenitude.js';
 import { isPlenitudePrivilege } from '../../bot/command/security.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
-import { CommandContext, CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
+import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
 
 const vars = [
 	{
@@ -17,8 +17,7 @@ const vars = [
 		 * @param {string} value
 		 */
 		textSet: async function (value) {
-			const optionsValue = value.map(e => e.value);
-			const newValue = await this.set(optionsValue.join(','));
+			const newValue = await this.set(value);
 			return `La ville de Plénitude est maintenant ${newValue}`;
 		},
 	},
@@ -37,11 +36,7 @@ export default {
 	security: {
 		place: 'private',
 		interaction: true, //private donc sera ok juste sur mon serv
-		/**
-		 * Custom isAllowedToUse
-		 * @param {CommandContext} context
-		 */
-		isAllowedToUse: context => isPlenitudePrivilege(context.author_id),
+		isAllowedToUse: isPlenitudePrivilege,
 	},
 
 	//format: get [var], set [var] [value]
@@ -64,7 +59,7 @@ export default {
 			 */
 			async executeAttribute(cmdData, levelOptions) {
 				const name = levelOptions.getArgumentValue('var', 0);
-				return await onGetCommand(name);
+				return onGetCommand(name);
 			},
 			/**
 			 * Executed when there is no valid option
@@ -104,7 +99,7 @@ export default {
 				} else {
 					value = levelOptions.getArgumentValue('value', 1);
 				}
-				return await onSetCommand(name, value);
+				return onSetCommand(name, value);
 			},
 			/**
 			 * Executed when there is no valid option
@@ -160,7 +155,7 @@ async function onACommand(name, func) {
  * @param {string} name The name of the variable
  */
 async function onGetCommand(name) {
-	return await onACommand(name, variable => variable.textGet());
+	return onACommand(name, variable => variable.textGet());
 }
 /**
  * When `plenitude_location set` was called
@@ -168,5 +163,5 @@ async function onGetCommand(name) {
  * @param {string} value The data with the new value
  */
 async function onSetCommand(name, value) {
-	return await onACommand(name, variable => variable.textSet(value));
+	return onACommand(name, variable => variable.textSet(value));
 }
