@@ -179,7 +179,7 @@ export class SecurityCommand {
 
 	/**
 	 * @param {CommandContext} context The context where you want to use this
-	 * @returns {boolean} `true` if you are allowed to user this
+	 * @returns {Promise<boolean>} `true` if you are allowed to user this
 	 */
 	isAllowedToUse(context) {
 		if (this.wip && !isBetaAllowed(context)) {
@@ -197,7 +197,7 @@ export class SecurityCommand {
 	}
 	/**
 	 * @param {CommandContext} context The context where you want to use this
-	 * @returns {boolean} `true` if you are allowed to user this
+	 * @returns {Promise<boolean>} `true` if you are allowed to user this
 	 */
 	#isAllowedToUse2 = isAllowedToUseDefault;
 	/**

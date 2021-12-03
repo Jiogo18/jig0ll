@@ -335,7 +335,7 @@ class AbstractCommandExtendable extends AbstractCommandOption {
 		}
 
 		//terminus => #execute
-		if (this.security?.isAllowedToUse?.(cmdData.context) != true) {
+		if (!(await this.security?.isAllowedToUse?.(cmdData.context))) {
 			return EmbedMaker.Error('', cmdData.context.NotAllowedReason || "Sorry you can't do that");
 		}
 
