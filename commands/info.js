@@ -101,10 +101,12 @@ function makeError(description) {
  */
 function getTargetName(target) {
 	if (typeof target === 'string') return target;
-	if (typeof target.toString === 'function') return target.toString();
 
 	if (target.username) return target.username;
 	if (target.name) return target.name;
+	if (target.id) return target.id;
+
+	if (typeof target.toString === 'function') return target.toString();
 
 	if (process.env.WIPOnly) {
 		console.warn(`getTargetName can't find name`.yellow, target);
@@ -237,7 +239,7 @@ async function executeInfoGuild(cmdData) {
  */
 function executeSnowflake(cmdData, levelOptions) {
 	const snowflakeArgument = levelOptions.getArgument('snowflake', 0);
-	const snowflake = snowflakeArgument.isSnowflake();
+	const snowflake = snowflakeArgument.getSnowflake();
 	if (snowflake == undefined) {
 		return new EmbedMaker(
 			'Snowflake',

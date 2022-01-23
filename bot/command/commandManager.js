@@ -13,9 +13,14 @@ export default class CommandManager {
 	 */
 	commands = new Collection();
 	/**
+	 * Only used to warn conflicts on load
 	 * @type {Collection<string,CommandStored>}
 	 */
 	altCommands = new Collection();
+	/**
+	 * @type {Collection<string,CommandStored>}
+	 */
+	customCommands = new Collection();
 
 	/**
 	 * The command manager store every commands of the bot
@@ -33,7 +38,7 @@ export default class CommandManager {
 	 */
 	getCommand(commandName) {
 		const flatName = strToFlatStr(commandName);
-		return this.commands.find(c => c.isCommandName(flatName));
+		return this.commands.find(c => c.isCommandName(flatName)) || this.customCommands.get(flatName);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 import Discord, { Client, Constants, Message, Intents, LimitedCollection } from 'discord.js';
 
+import ConsoleLogger from './ConsoleLogger.js';
 import AppManager from './AppManager.js';
 import CommandManager from './command/commandManager.js';
 import InteractionManager from './interaction/interactionManager.js';
@@ -22,6 +23,7 @@ export default class DiscordBot extends Client {
 	 * @type {LimitedCollection<string,Function>}
 	 */
 	interactionsHandler;
+	consoleLogger;
 
 	constructor() {
 		super({
@@ -35,6 +37,7 @@ export default class DiscordBot extends Client {
 			],
 			partials: ['CHANNEL'],
 		});
+		this.consoleLogger = ConsoleLogger;
 		this.resetLocalId();
 		AppManager.setBot(this);
 		this.commandMgr = new CommandManager(this);
