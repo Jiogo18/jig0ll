@@ -77,16 +77,19 @@ export default {
 			 * @param {CommandLevelOptions} levelOptions
 			 */
 			async executeAttribute(cmdData, levelOptions) {
-				/**
-				 * @type {string}
-				 */
-				var commande = levelOptions.getArgument('commande', 0).value.toLowerCase();
+				/** @type {string} */
+				var commande = levelOptions.getArgument('commande', 0).value;
 				levelOptions.options.shift();
 				var content = levelOptions.options.map(o => o.value).join(' ');
 				if (commande.match(/\s/)) {
 					const match = commande.match(/\s/);
-					content = commande.substring(match.index + 1) + content;
+					content = commande.substring(match.index + 1) + ' ' + content;
 					commande = commande.substring(0, match.index);
+				}
+
+				commande = commande.toLowerCase();
+				if (bot.commandMgr.commands.has(commande) || bot.commandMgr.altCommands.has(commande)) {
+					return new EmbedMaker.Error(`Custom Command ${commande}`, `Ce nom est déjà utilisé par une commande du bot. Choisissez autre chose.`);
 				}
 
 				return setCustomCommand(commande, content);
