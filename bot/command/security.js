@@ -101,6 +101,20 @@ export const isPlenitudePrivilege = async context => {
 	//Maître du Jeu || admin || Jiogo
 	return userRole?.has('626121766061867020') || userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
 };
+/**
+ * Do this user has privileges for Custom Command?
+ * @param {CommandContext} context
+ * @returns `true` if this user has privileges for Custom Command
+ */
+export const isCustomCommandPrivilege = async context => {
+	if (user_plenitude_privilege.includes(context.author_id)) return true;
+	if (!guild_plenitude.includes(context.getGuildId)) return false;
+	const user = await (await context.getGuild())?.members?.fetch(context.author_id);
+	if (!user) return false;
+	const userRole = user.roles?.cache;
+	// admin || Jiogo
+	return userRole?.has('652843400646885376') || userRole?.has('816090157207650355');
+};
 
 export class SecurityCommand {
 	#securityPlace;

@@ -2,6 +2,7 @@ import { Collection } from 'discord.js';
 import DiscordBot from '../../bot/bot.js';
 import CommandStored from '../../bot/command/commandStored.js';
 import { CommandLevelOptions, ReceivedCommand } from '../../bot/command/received.js';
+import { isCustomCommandPrivilege } from '../../bot/command/security.js';
 import { DatabaseTable } from '../../lib/database.js';
 import { getFrenchDate, getFrenchTime } from '../../lib/date.js';
 import { EmbedMaker } from '../../lib/messageMaker.js';
@@ -35,6 +36,7 @@ export default {
 	security: {
 		interaction: true,
 		place: 'public',
+		isAllowedToUse: isCustomCommandPrivilege,
 	},
 
 	// format: get [name], set [name] [content], exec [name]
@@ -220,10 +222,10 @@ async function execCommand(name, cmdData, args) {
 	content = await replaceContent(content, /\{date\}/gi, () => getFrenchDate(Date.now(), { noTimezone: true, noArticle: true, noTime: true }));
 	content = await replaceContent(content, /\{user\}/gi, () => cmdData.author.username);
 	content = await replaceContent(content, /\{channel\}/gi, async () => (await cmdData.context.getChannel()).name);
-	content = await replaceContent(content, /\{\$(\d+)\}/i, match => args[parseInt(match[1])]);
+	content = await replaceContent(content, /\{\$(\d+)\}/i, match => args[parseInt(match[1])] || '');
 	var choices = [];
-	content = await replaceContent(content, /\{choose(\d+):([^\}]+)\}/i, match => {
-		const chooseId = parseInt(match[1]);
+	content = await replaceContent(content, /\{choose(\d*):([^\}]+)\}/i, match => {
+		const chooseId = parseInt(match[1]) || 0;
 		const chooseValues = match[2].split(';');
 
 		const choiceIndex = Math.ceil(Math.random() * chooseValues.length);
@@ -233,7 +235,7 @@ async function execCommand(name, cmdData, args) {
 
 		return '';
 	});
-	content = await replaceContent(content, /\{choice(\d+)\}/i, match => choices[parseInt(match[1])] || match[0]);
+	content = await replaceContent(content, /\{choice(\d*)\}/i, match => choices[parseInt(match[1]) || 0] || match[0]);
 
 	return new EmbedMaker(name, content);
 }
