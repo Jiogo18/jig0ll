@@ -167,7 +167,7 @@ async function loadCustomCommands() {
  * @param {string} name
  */
 function getCustomCommand(name) {
-	return commandsCallback.get(name);
+	return commandsCallback.get(name.toLowerCase());
 }
 
 /**
@@ -215,27 +215,25 @@ async function setCustomCommand(name, content) {
  */
 async function execCommand(name, cmdData, args) {
 	var content = getCustomCommand(name);
-
 	if (!content) return `La commande n'existe pas`;
+	cmdData.customCommand = name;
 
-	content = await replaceContent(content, /\{time\}/gi, () => getFrenchTime(Date.now(), false));
-	content = await replaceContent(content, /\{date\}/gi, () => getFrenchDate(Date.now(), { noTimezone: true, noArticle: true, noTime: true }));
-	content = await replaceContent(content, /\{user\}/gi, () => cmdData.author.username);
-	content = await replaceContent(content, /\{channel\}/gi, async () => (await cmdData.context.getChannel()).name);
-	content = await replaceContent(content, /\{\$(\d+)\}/i, match => args[parseInt(match[1])] || '');
+	for (const replaceRule of replaceBasicRules) {
+		content = await replaceContent(content, replaceRule[0], replaceRule[1], cmdData);
+	}
+
 	var choices = [];
-	content = await replaceContent(content, /\{choose(\d*):([^\}]+)\}/i, match => {
+	content = await replaceContent(content, /{choose(\d*):([^\{\}]+)}/i, match => {
 		const chooseId = parseInt(match[1]) || 0;
 		const chooseValues = match[2].split(';');
-
-		const choiceIndex = Math.ceil(Math.random() * chooseValues.length);
-		const choice = chooseValues[choiceIndex];
-
-		choices[chooseId] = choice;
-
+		choices[chooseId] = chooseValues[Math.ceil(Math.random() * chooseValues.length)];
 		return '';
 	});
-	content = await replaceContent(content, /\{choice(\d*)\}/i, match => choices[parseInt(match[1]) || 0] || match[0]);
+	content = await replaceContent(content, /{choice(\d*)}/i, match => choices[parseInt(match[1]) || 0] || match[0]);
+
+	for (const replaceRule of replaceWithHiddenAction) {
+		content = await replaceContent(content, replaceRule[0], replaceRule[1], cmdData);
+	}
 
 	return new EmbedMaker(name, content);
 }
@@ -244,21 +242,82 @@ async function execCommand(name, cmdData, args) {
  * @param {string} content
  * @param {RegExp} regex
  * @param {Function} callback
+ * @param {ReceivedCommand} cmdData
  */
-async function replaceContent(content, regex, callback) {
-	if (!content.search(regex)) return content;
+async function replaceContent(content, regex, callback, cmdData) {
+	if (content.search(regex) === -1) return content;
 
 	if (regex.global) {
-		const replaceWith = await callback();
+		const replaceWith = await callback(cmdData);
 		return content.replace(regex, replaceWith);
 	} else {
 		while (content.search(regex) !== -1) {
 			const match = content.match(regex);
-			content = content.replace(match[0], await callback(match));
+			content = content.replace(match[0], await callback(match, cmdData));
 		}
 		return content;
 	}
 }
+
+/** @type {[RegExp,Function][]} */
+const replaceBasicRules = [
+	[/{time}/gi, () => getFrenchTime(Date.now(), false)],
+	[/{date}/gi, () => getFrenchDate(Date.now(), { noTimezone: true, noArticle: true, noTime: true })],
+	[/{user}/gi, cmdData => `<@!${cmdData.author.id}>`],
+	[/{channel}/gi, cmdData => `<#${cmdData.context.channel_id}>`],
+	[/{\$(\d+)}/i, match => args[parseInt(match[1])] || ''],
+];
+/** @type {[RegExp,Function][]} */
+const replaceWithHiddenAction = [
+	[
+		/{!role *<@!?(\d{10,30})> *([t\+\-]?) *<@&(\d{10,30})> *}\n?/i,
+		/**
+		 * @param {RegExpMatchArray} match
+		 * @param {ReceivedCommand} cmdData
+		 */
+		async (match, cmdData) => {
+			const userId = match[1];
+			var action = match[2] || '+';
+			const roleId = match[3];
+
+			const guild = await cmdData.context.getGuild();
+			if (!guild) return `{Not in a guild}`;
+			const user = await guild.members.fetch(userId);
+			if (!user) return `{Unknown User ${userId}}`;
+
+			try {
+				if (action === 't') action = user.roles.has(roleId) ? '-' : '+'; // Toggle
+				if (action === '+') await user.roles.add(roleId, `Custom Command '${cmdData.customCommand}'`);
+				else if (action === '-') await user.roles.remove(roleId, `Custom Command '${cmdData.customCommand}'`);
+				else return `{Unknown action ${action}}`;
+			} catch (error) {
+				console.error(`Can't edit role <@&${roleId}> for <@!${user.id}>`);
+				return '{Require roles permissions}';
+			}
+
+			return '';
+		},
+	],
+	[
+		/{!announce *<#(\d{10,30})>}\s*([^\n]*)\n?/i,
+		/**
+		 * @param {RegExpMatchArray} match
+		 * @param {ReceivedCommand} cmdData
+		 */
+		async (match, cmdData) => {
+			const channelId = match[1];
+			const message = match[2];
+
+			const guild = await cmdData.context.getGuild();
+			const channel = (await guild?.channels?.fetch(channelId)) || (await cmdData.context.getGuild());
+
+			if (channel) channel.send(new EmbedMaker('', message).getForMessage());
+			else cmdData.sendAnswer(new EmbedMaker('', message));
+
+			return '';
+		},
+	],
+];
 
 const commandHandler = new CommandStored({
 	name: 'custom',
