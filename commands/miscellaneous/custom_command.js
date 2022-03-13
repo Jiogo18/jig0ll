@@ -219,7 +219,7 @@ async function execCommand(name, cmdData, args) {
 	cmdData.customCommand = name;
 
 	for (const replaceRule of replaceBasicRules) {
-		content = await replaceContent(content, replaceRule[0], replaceRule[1], cmdData);
+		content = await replaceContent(content, replaceRule[0], replaceRule[1], cmdData, args);
 	}
 
 	var choices = [];
@@ -243,8 +243,9 @@ async function execCommand(name, cmdData, args) {
  * @param {RegExp} regex
  * @param {Function} callback
  * @param {ReceivedCommand} cmdData
+ * @param {string[]} args
  */
-async function replaceContent(content, regex, callback, cmdData) {
+async function replaceContent(content, regex, callback, cmdData, args) {
 	if (content.search(regex) === -1) return content;
 
 	if (regex.global) {
@@ -253,7 +254,7 @@ async function replaceContent(content, regex, callback, cmdData) {
 	} else {
 		while (content.search(regex) !== -1) {
 			const match = content.match(regex);
-			content = content.replace(match[0], await callback(match, cmdData));
+			content = content.replace(match[0], await callback(match, cmdData, args));
 		}
 		return content;
 	}
@@ -265,7 +266,7 @@ const replaceBasicRules = [
 	[/{date}/gi, () => getFrenchDate(Date.now(), { noTimezone: true, noArticle: true, noTime: true })],
 	[/{user}/gi, cmdData => `<@!${cmdData.author.id}>`],
 	[/{channel}/gi, cmdData => `<#${cmdData.context.channel_id}>`],
-	[/{\$(\d+)}/i, match => args[parseInt(match[1])] || ''],
+	[/{\$(\d+)}/i, (match, cmdData, args) => args[parseInt(match[1])] || ''],
 ];
 /** @type {[RegExp,Function][]} */
 const replaceWithHiddenAction = [
