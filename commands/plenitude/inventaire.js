@@ -615,9 +615,17 @@ async function getInventory(id) {
  * @return {Promise<Inventory[]>} Almost the same object
  */
 async function getInventoryListOf(user_mention) {
-	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channelDatabase.channel)).values());
+	const messagesSnowflake = Array.from((await getEveryMessageSnowflake(channelDatabase.channel)).values())
+		.filter(m => m.author.id === bot.user.id && m.embeds.length > 0 && m.embeds[0].description.startsWith('inventaire:'));
 
-	messagesSnowflake.forEach(m => (m.data = YAML.parse(m.embeds?.[0]?.description || '')));
+		messagesSnowflake.forEach(m => {
+			try {
+				const content = m.embeds[0].description || '';
+				m.data = YAML.parse(content);
+			} catch (e) {
+				bot.consoleLogger.error(`Error while parsing inventory message ${m.id}, for ${user_mention} (${content})`, e);
+			}
+		});
 
 	return messagesSnowflake.filter(m => m.data?.proprietaire === user_mention).map(m => m.data);
 }
