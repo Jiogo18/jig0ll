@@ -115,7 +115,7 @@ export default {
 		kvInvite.setDatabase(bot.database);
 
 		bot.onReady.then(() => {
-			const channelDailyWeatherAuto = process.env.WIPOnly ? '891608045128388638' : '661991986039095316';
+			const channelDailyWeatherAuto = process.env.WIPOnly ? '891608045128388638' : '1005193918150889622';
 			bot.channels
 				.fetch(channelDailyWeatherAuto)
 				.then(channel => {
@@ -167,7 +167,7 @@ async function updateDailyWeather(channelDailyWeather) {
 
 	const updateHour = Number(hour) + (Number(minute) > 55); // l'heure ou bientôt l'heure
 
-	if (updateHour == 10 || updateHour == 14 || updateHour == 18) {
+	if (updateHour == 11) {
 		const answer = await getMeteo();
 		channelDailyWeather.send(answer.getForMessage());
 	}
