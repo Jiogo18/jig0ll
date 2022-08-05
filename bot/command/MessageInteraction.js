@@ -19,8 +19,10 @@ export class MessageInteraction {
 	 * @param {MessagePayload} answer
 	 */
 	async sendAnswer(answer) {
-		if (this.answerMessage && !this.answerMessage.deleted) {
-			await this.answerMessage.edit(answer);
+		if (this.answerMessage) {
+			if (!await this.answerMessage.edit(answer)) {
+				await this.cmdData.reply(answer);
+			}
 			this.cmdData.bot.removeInteractionHandler(this.answerMessage.id);
 		} else this.answerMessage = await this.cmdData.reply(answer);
 
@@ -61,7 +63,7 @@ export class MessageInteraction {
 
 	async removeAnswerMessage() {
 		if (this.answerMessage) {
-			if (this.answerMessage.deletable && !this.answerMessage.deleted) await this.answerMessage.delete();
+			if (this.answerMessage.deletable) await this.answerMessage.delete();
 			this.cmdData.bot.removeInteractionHandler(this.answerMessage.id);
 			this.answerMessage = undefined;
 		}

@@ -74,7 +74,16 @@ export default {
 			name: 'guild',
 			description: 'Informations du serveur',
 			type: 1,
+			options: [
+				{
+					name: 'guildid',
+					description: "Serveur",
+					type: 3,
+					required: false,
+				},
+			],
 			execute: executeInfoGuild,
+			executeAttribute: executeInfoGuild,
 		},
 	],
 };
@@ -221,10 +230,12 @@ async function executeInfoRole(cmdData, levelOptions) {
 /**
  * `info guild` was called
  * @param {ReceivedCommand} cmdData
+ * @param {CommandLevelOptions} levelOptions
  * @returns informations about the guild
  */
-async function executeInfoGuild(cmdData) {
-	const guild = await cmdData.context.getGuild();
+async function executeInfoGuild(cmdData, levelOptions) {
+	const guildId = levelOptions.getArgument('guildid', 0)?.getSnowflake();
+	const guild = (guildId ? await cmdData.bot.guilds.fetch(guildId) : null )|| await cmdData.context.getGuild();
 
 	if (!guild) return EmbedMaker.Error('Info', "Vous n'êtes pas dans un serveur. Essayez `/info channel`.");
 
